@@ -3,8 +3,26 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {applyProfile,validateProfile,loadProfile,profileSchema} from '../apps/helper/network-profile.mjs';
+import {applyProfile,validateProfile,loadProfile,profileSchema,readProfile,mergeProfiles} from '../apps/helper/network-profile.mjs';
 const good=()=>({schema:profileSchema,directPeers:['192.0.2.10:49741'],rpcSources:['198.51.100.20:8899'],arweavePeers:[]});
+test('adding a profile preserves existing sources, deduplicates and keeps exports endpoint-only',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-share-'));
+ try{
+  assert.deepEqual(readProfile(dir),{schema:profileSchema,directPeers:[],rpcSources:[],arweavePeers:[]});
+  applyProfile(dir,good());
+  fs.writeFileSync(path.join(dir,'identity.json'),'never-export-this');
+  const incoming={...good(),directPeers:['[::1]:49741'],arweavePeers:['192.0.2.30:1984']};
+  const merged=mergeProfiles(readProfile(dir),incoming);applyProfile(dir,merged);
+  assert.deepEqual(readProfile(dir),merged);
+  assert.deepEqual(merged.directPeers,['192.0.2.10:49741','[::1]:49741']);
+  assert.deepEqual(merged.rpcSources,good().rpcSources);
+  assert.equal(JSON.stringify(merged).includes('never-export-this'),false);
+  assert.deepEqual(mergeProfiles(merged,incoming),merged);
+  const full={...good(),directPeers:Array.from({length:16},(_,i)=>`192.0.2.${i+1}:49741`)};
+  assert.throws(()=>mergeProfiles(full,incoming),/endpoint list/);
+  assert.deepEqual(readProfile(dir),merged);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
 test('profiles reject domains, URL credentials, secrets and invalid endpoint sets',()=>{
  for(const value of ['example.com:80','http://192.0.2.10:80','user:password@192.0.2.10:80','192.0.2.10:0','192.0.2.10:65536','192.0.2.10:1e3'])assert.throws(()=>validateProfile({...good(),rpcSources:[value]}));
  assert.throws(()=>validateProfile({...good(),privateKey:'not-a-real-key'}));

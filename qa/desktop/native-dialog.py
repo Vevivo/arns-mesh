@@ -36,7 +36,7 @@ while time.monotonic() < deadline:
     win32gui.EnumWindows(lambda hwnd, _: handles.append(hwnd), None)
     candidates = handles + [win32gui.GetForegroundWindow()]
     candidates += [last_popup(h) for h in handles]
-    matches = [h for h in candidates if 'Import connection profile' in win32gui.GetWindowText(h)]
+    matches = [h for h in candidates if ('Export connection profile' if mode == 'save' else 'Import connection profile') in win32gui.GetWindowText(h)]
     if matches:
         dialog = Desktop(backend='win32').window(handle=matches[0])
         dialog.set_focus()

@@ -13,6 +13,18 @@ function list(values,max){
  }))];
 }
 const objects=values=>values.map(value=>{const at=value.lastIndexOf(':');return {host:value.slice(0,at).replace(/^\[|\]$/g,''),port:Number(value.slice(at+1))};});
+export function readProfile(directory){
+ const read=(name)=>{try{return JSON.parse(fs.readFileSync(path.join(directory,name),'utf8'));}catch(error){if(error.code==='ENOENT')return [];throw error;}};
+ return {schema:profileSchema,directPeers:read('mesh-ip-peers.json'),rpcSources:read('solana-rpc-seeds.json').map(format),arweavePeers:read('arweave-peers.json').map(format)};
+}
+export function mergeProfiles(current,incoming){
+ const next=validateProfile(incoming);
+ return validateProfile({schema:profileSchema,
+  directPeers:[...new Set([...list(current.directPeers||[],16),...next.directPeers])],
+  rpcSources:[...new Set([...list(current.rpcSources||[],8),...next.rpcSources])],
+  arweavePeers:[...new Set([...list(current.arweavePeers||[],16),...next.arweavePeers])],
+ });
+}
 export function validateProfile(value){
  if(!value||value.schema!==profileSchema)throw new Error('Unsupported connection profile.');
  if(Object.keys(value).some(k=>!['schema','directPeers','rpcSources','arweavePeers'].includes(k)))throw new Error('Unexpected profile fields. Profiles contain endpoint addresses only.');

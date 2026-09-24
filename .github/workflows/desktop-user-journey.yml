@@ -6,7 +6,7 @@ permissions:
   contents: read
   actions: read
 jobs:
-  original-package:
+  candidate-package:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -17,20 +17,20 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Download the original draft portable package
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - run: npm test
+      - name: Build the candidate with verified Electron
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 35994955843 --repo "$env:GITHUB_REPOSITORY" --name windows-preview --dir "$env:RUNNER_TEMP/mesh-original"
+          python scripts/download-electron.py --out "$env:RUNNER_TEMP/electron-runtime"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $zip = Get-ChildItem "$env:RUNNER_TEMP/mesh-original/*.zip" | Select-Object -First 1
-          $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne '2113a72a8aaf6735806fae90624f82714d242d0bbffadde2764f978730761e07') { throw 'Original package checksum mismatch' }
-          Expand-Archive -Path $zip.FullName -DestinationPath "$env:RUNNER_TEMP/mesh-original/extracted"
-          "QA_EXE=$env:RUNNER_TEMP/mesh-original/extracted/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          python scripts/package-windows.py --runtime "$env:RUNNER_TEMP/electron-runtime" --out dist
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
           "QA_OUTPUT=$env:RUNNER_TEMP/mesh-user-evidence" >> $env:GITHUB_ENV
           "QA_TOOLS=$env:RUNNER_TEMP/mesh-qa-tools" >> $env:GITHUB_ENV
+          "QA_VARIANT=candidate" >> $env:GITHUB_ENV
       - name: Install isolated UI driving tools
         shell: pwsh
         run: |
@@ -38,15 +38,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip install pywinauto==0.6.9 Pillow==11.3.0 imageio-ffmpeg==0.6.0
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Drive the unmodified app as a new user
+      - name: Drive the candidate through real Windows UI
         run: node qa/desktop/user-journey.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: original-windows-user-experience
+          name: candidate-windows-user-experience
           path: |
             ${{ runner.temp }}/mesh-user-evidence/*.png
             ${{ runner.temp }}/mesh-user-evidence/*.mp4
             ${{ runner.temp }}/mesh-user-evidence/results.json
             ${{ runner.temp }}/mesh-user-evidence/electron.log
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: candidate-windows-package
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build.json
           retention-days: 14

@@ -27,6 +27,11 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    fake.dialog.showOpenDialog=async()=>({canceled:false,filePaths:[profileFile]});
    assert.deepEqual(await call('import-profile'),{imported:true,meshPeers:1,rpcSources:1});
    assert.equal(call('get-settings').rpcSources,'127.0.0.1:8899');
+   const exportFile=path.join(dir,'exported.json');
+   fake.dialog.showSaveDialog=async()=>({canceled:false,filePath:exportFile});
+   assert.deepEqual(await call('export-profile'),{exported:true});
+   assert.deepEqual(JSON.parse(fs.readFileSync(exportFile)),call('get-settings').connectionProfile);
+   assert.throws(()=>fake.handlers.get('export-profile')({sender:content.webContents,senderFrame:content.webContents.mainFrame}),/untrusted/);
    await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,200);
    await call('toggle-bookmark');assert.equal(call('get-browser-data').bookmarks.length,1);
    const id=await call('new-tab','unit-two');assert.equal(fake.views.length,3);assert.notEqual(fake.views[1].webContents.session,fake.views[2].webContents.session);
