@@ -4,6 +4,11 @@ from pathlib import Path
 from PIL import ImageGrab
 from pywinauto import Desktop, keyboard
 import win32gui
+import ctypes
+from ctypes import wintypes
+last_popup = ctypes.windll.user32.GetLastActivePopup
+last_popup.argtypes = [wintypes.HWND]
+last_popup.restype = wintypes.HWND
 
 mode, value = sys.argv[1:3]
 if mode == 'capture':
@@ -30,7 +35,7 @@ while time.monotonic() < deadline:
     handles = []
     win32gui.EnumWindows(lambda hwnd, _: handles.append(hwnd), None)
     candidates = handles + [win32gui.GetForegroundWindow()]
-    candidates += [win32gui.GetLastActivePopup(h) for h in handles]
+    candidates += [last_popup(h) for h in handles]
     matches = [h for h in candidates if 'Import connection profile' in win32gui.GetWindowText(h)]
     if matches:
         dialog = Desktop(backend='win32').window(handle=matches[0])
