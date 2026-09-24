@@ -1,0 +1,5 @@
+@font-face{font-family:'Plus Jakarta Sans';src:url('fonts/plus-jakarta-sans.woff2') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
+@font-face{font-family:Besley;src:url('fonts/besley.woff2') format('woff2');font-weight:400 900;font-style:normal;font-display:swap}
+:root{--primary:#5427c8;--lavender:#dfd6f7;--ink:#23232d;--white:#fff;--deep:#0e0a1c;--accent:#d4c6ff;--wash:#f1ecff;--warm:#f6f4ef;--border:#e6e4ef;font-family:'Plus Jakarta Sans','Segoe UI',sans-serif;font-synthesis:none}
+h1,h2,h3{font-family:Besley,Georgia,serif;font-weight:800}
+*{box-sizing:border-box}

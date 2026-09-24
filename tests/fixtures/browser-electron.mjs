@@ -19,3 +19,5 @@ class Contents extends EventEmitter{
 export class WebContentsView{
  constructor(options){this.options=options;this.webContents=new Contents(options.webPreferences.session);views.push(this);}setBackgroundColor(){}setBounds(bounds){this.bounds=bounds;}setVisible(visible){this.visible=visible;}
 }
+
+export const Menu={setApplicationMenu(){},buildFromTemplate(){return {popup(){}};}};

@@ -4,7 +4,7 @@ ArNS isimlerine masaüstü tarayıcıdan erişmek ve gönüllü düğümlerle bu
 
 Amaç: IP bağlantısı çalışırken domain, DNS veya gateway hizmetleri kullanılamasa da erişilebilir gerçek ArNS içeriğini açabilmek. Ulaşılamayan dosya üretilmez; otomatik gateway geri dönüşü yapılmaz.
 
-**Sürüm: 0.5.0-preview.3.** Tamamlanmış final sürüm değildir. Gerçek Windows sayfa görüntüleme, Raspberry Pi donanımı ve bütün süreçleri kapsayan kesinti kabulü henüz tamamlanmadı. Bağımsız topluluk projesidir; resmî AR.IO dağıtımı değildir.
+**Sürüm: 0.5.0-preview.4.** Tamamlanmış final sürüm değildir. Gerçek Windows sayfa görüntüleme, Raspberry Pi donanımı ve bütün süreçleri kapsayan kesinti kabulü henüz tamamlanmadı. Bağımsız topluluk projesidir; resmî AR.IO dağıtımı değildir.
 
 ## Sana uygun başlangıç
 

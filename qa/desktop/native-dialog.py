@@ -29,7 +29,29 @@ if mode == 'record':
         writer.close()
     raise SystemExit(0)
 
+if mode == 'clipboard':
+    import win32clipboard
+    win32clipboard.OpenClipboard()
+    try:
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardText(value, win32clipboard.CF_UNICODETEXT)
+    finally:
+        win32clipboard.CloseClipboard()
+    raise SystemExit(0)
+
 from pywinauto import Desktop, keyboard
+
+if mode == 'paste':
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        for menu in Desktop(backend='uia').windows(control_type='Menu'):
+            for item in menu.descendants(control_type='MenuItem'):
+                if item.window_text().replace('&', '') == 'Paste' and item.is_enabled():
+                    item.click_input()
+                    print('Clicked Paste in the native context menu with the mouse.')
+                    raise SystemExit(0)
+        time.sleep(.2)
+    raise SystemExit('Enabled native Paste menu item did not appear.')
 
 deadline = time.monotonic() + 20
 while time.monotonic() < deadline:
