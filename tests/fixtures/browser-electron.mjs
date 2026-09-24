@@ -14,6 +14,7 @@ export class BaseWindow extends EventEmitter{
 class Contents extends EventEmitter{
  constructor(ses){super();this.session=ses;this.mainFrame={url:''};this.navigationHistory={canGoBack:()=>false,canGoForward:()=>false};this.destroyed=false;this.loading=false;this.zoom=1;}
  async loadURL(url){this.mainFrame.url=url;this.loading=true;this.emit('did-start-navigation',{},url,false,true);const fn=this.session.protocol.rows.get(new URL(url).protocol.slice(0,-1));if(!fn)throw new Error('Missing protocol: '+url);this.response=await fn(new Request(url));this.loading=false;this.emit('did-finish-load');this.emit('did-stop-loading');}
+ reload(){this.pendingReload=this.loadURL(this.getURL());}
  getURL(){return this.mainFrame.url;}getTitle(){return this.mainFrame.url;}isLoading(){return this.loading;}isDestroyed(){return this.destroyed;}getZoomFactor(){return this.zoom;}setZoomFactor(x){this.zoom=x;}setWindowOpenHandler(fn){this.openHandler=fn;}setWebRTCIPHandlingPolicy(){}stop(){this.loading=false;}send(name,data){messages.push({name,data});}close(){this.destroyed=true;}
 }
 export class WebContentsView{

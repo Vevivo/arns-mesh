@@ -128,7 +128,12 @@ async function closeTab(id){
   if(!tabs.rows.size)await newTab();else{layout();send();}
 }
 function stop(tab=tabs.active){tabs.stop(tab.id);tab.view.webContents.stop();send();}
-function reload(){cache.clear();return navigate(tabs.active.url);}
+function reload(){
+  const tab=tabs.active;cache.clear();tabs.begin(tab.id,tab.url);send();
+  // loadURL on an unchanged URL with a fragment can be an in-page navigation.
+  // A browser reload must actually request and verify the document again.
+  tab.view.webContents.reload();
+}
 function historyMove(direction){const h=tabs.active.view.webContents.navigationHistory;if(direction<0&&h.canGoBack())h.goBack();if(direction>0&&h.canGoForward())h.goForward();}
 function toggleBookmark(){const tab=tabs.active;if(!tab.url)throw new Error('Open an ArNS page first.');const added=library.toggle(tab.url,tab.title||tab.url);send({libraryChanged:true});return added;}
 function zoom(delta){if(![-1,0,1].includes(delta))throw new Error('invalid_zoom');const wc=tabs.active.view.webContents;wc.setZoomFactor(delta===0?1:Math.max(.5,Math.min(3,wc.getZoomFactor()+delta*.1)));send();}
