@@ -14,6 +14,8 @@ You only need the Windows x64 desktop ZIP and a connection profile from a suppor
 
 The public package has no operator addresses preloaded. A profile gives the reader initial Mesh peer addresses, numeric-IP Solana RPC sources and optional raw Arweave nodes. It contains no password or wallet key. Use profiles from operators you trust: RPC responses influence live name mappings. A syntactically valid profile does not prove its endpoints are online.
 
+Connection setup now opens automatically on a fresh profile. Imports add sources by default; you can explicitly replace them. Use **Check connections** and **Export profile** in the same panel. [Where to get a profile and what the connection list proves](connections.md).
+
 ## Everyday use
 
 - Use `+` for another tab, the star for a bookmark, and back/forward/reload/stop for navigation.

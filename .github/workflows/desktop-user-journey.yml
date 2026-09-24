@@ -1,0 +1,61 @@
+name: Desktop user journey on Windows
+on:
+  push:
+    branches: [qa/desktop-user-journey]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  candidate-package:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - run: npm test
+      - name: Build the candidate with verified Electron
+        shell: pwsh
+        run: |
+          python scripts/download-electron.py --out "$env:RUNNER_TEMP/electron-runtime"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/package-windows.py --runtime "$env:RUNNER_TEMP/electron-runtime" --out dist
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          "QA_OUTPUT=$env:RUNNER_TEMP/mesh-user-evidence" >> $env:GITHUB_ENV
+          "QA_TOOLS=$env:RUNNER_TEMP/mesh-qa-tools" >> $env:GITHUB_ENV
+          "QA_VARIANT=candidate" >> $env:GITHUB_ENV
+      - name: Install isolated UI driving tools
+        shell: pwsh
+        run: |
+          npm install --prefix "$env:QA_TOOLS" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pywinauto==0.6.9 Pillow==11.3.0 imageio-ffmpeg==0.6.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Drive the candidate through real Windows UI
+        run: node qa/desktop/user-journey.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: candidate-windows-user-experience
+          path: |
+            ${{ runner.temp }}/mesh-user-evidence/*.png
+            ${{ runner.temp }}/mesh-user-evidence/*.mp4
+            ${{ runner.temp }}/mesh-user-evidence/results.json
+            ${{ runner.temp }}/mesh-user-evidence/electron.log
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: candidate-windows-package
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build.json
+          retention-days: 14

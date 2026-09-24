@@ -6,7 +6,8 @@ import {app,BaseWindow,WebContentsView,protocol,session,ipcMain,dialog} from 'el
 import {resolveArUrl,coreRoot} from '../helper/core-adapter.mjs';
 import {configureRuntime,saveRpcSources,saveDirectPeers,parseTrustedPeers} from '../helper/runtime.mjs';
 import {VerifiedContentStore} from '../../src/content-store.mjs';
-import {loadProfile,applyProfile} from '../helper/network-profile.mjs';
+import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from '../helper/network-profile.mjs';
+import {checkConnections} from '../helper/connection-check.mjs';
 import {ResponseCache} from '../helper/response-cache.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
 import {WorkBudget,transferBudgetStatus} from '../../src/resource-budget.mjs';
@@ -20,6 +21,7 @@ const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/we
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
 let win,toolbar,runtime,store,pinner,library,settingsFile,timer,panelOpen=false,shuttingDown=false;
 let accessPolicy='live',trustedPeers=[],witnessQuorum=2;
+let connectionCheck=null;
 process.chdir(coreRoot);
 process.env.ARNS_MESH_DIRECT_ONLY='1';
 process.env.ARNS_MESH_HEAD_START_MS='2500';
@@ -42,11 +44,12 @@ function send(extra={}){
     loading:wc?.isLoading()||false,canGoBack:wc?.navigationHistory.canGoBack()||false,canGoForward:wc?.navigationHistory.canGoForward()||false,
     canBookmark:Boolean(tab?.url),bookmarked:library?.has(tab?.url)||false,zoom:Math.round((wc?.getZoomFactor()||1)*100),
     phase:tab?.phase||'ready',message:tab?.message||'Enter an ArNS address.',meta:tab?.meta||null,progress:tab?.progress.snapshot(),resources:tab?.resources,
-    mode:'p2p',accessPolicy,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
+    mode:'p2p',accessPolicy,connectionConfigured:runtime?connectionConfigured():false,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
     discovery:runtime?.discovery.status(),network:{...audit,events:audit.events.slice(-8)},
     resourceBudget:{role:'client',pageCacheBytes:cache.bytes,pageCacheLimit:cache.maxBytes,pageRequests:requests.status(),transfers:transferBudgetStatus()},...extra,
   });
 }
+function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean(p.rpcSources.length&&(p.directPeers.length||p.arweavePeers.length));}
 function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
   if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','welcome.js','mesh.svg'].includes(name))return new Response('Not found',{status:404});
@@ -148,9 +151,9 @@ function shortcuts(wc){wc.on('before-input-event',(event,input)=>{
 function guardTab(tab){
   const wc=tab.view.webContents;shortcuts(wc);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
   wc.setWindowOpenHandler(({url})=>{if(url.startsWith('ar://'))void newTab(url).catch(error=>report(error,tab));else report(new Error('External link blocked. This browser opens ar:// addresses.'),tab);return {action:'deny'};});
-  wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url===WELCOME)void navigate('',tab);else if(url.startsWith('ar://'))void navigate(url,tab);else report(new Error('External navigation blocked.'),tab);});
+  wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){send({command:'settings'});return;}if(url===WELCOME)void navigate('',tab);else if(url.startsWith('ar://'))void navigate(url,tab);else report(new Error('External navigation blocked.'),tab);});
   wc.on('will-redirect',(event,url)=>{if(!url.startsWith('ar://'))event.preventDefault();});
-  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(url&&!url.startsWith('ar://')&&url!==WELCOME)event.preventDefault();});
+  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){event.preventDefault();send({command:'settings'});return;}if(url&&!url.startsWith('ar://')&&url!==WELCOME)event.preventDefault();});
   wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;const canonical=url===WELCOME?'':normalizeAddress(url);if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
   wc.on('did-navigate-in-page',(_event,url,main)=>{if(main&&url.startsWith('ar://')){tab.url=normalizeAddress(url);send();}});
   wc.on('page-title-updated',(_event,title)=>{tab.title=String(title).slice(0,300);if(tab.id===tabs.activeId)win?.setTitle(tab.title+' — ArNS Mesh Browser');send();});
@@ -169,21 +172,36 @@ handle('navigate',raw=>navigate(raw));handle('new-tab',raw=>newTab(raw||''));han
 handle('back',()=>historyMove(-1));handle('forward',()=>historyMove(1));handle('reload',reload);handle('stop',()=>stop());handle('home',()=>navigate(''));
 handle('toggle-bookmark',toggleBookmark);handle('get-browser-data',()=>library.snapshot());handle('remove-bookmark',url=>{library.remove(url);send({libraryChanged:true});});handle('clear-history',()=>library.clearHistory());handle('zoom',zoom);
 handle('panel',open=>{panelOpen=Boolean(open);layout();});handle('ready',()=>send());
-handle('get-settings',()=>({version:app.getVersion(),executable:app.getPath('exe'),rpcSources:JSON.parse(fs.readFileSync(runtime.rpcFile)).map(x=>x.host+':'+x.port).join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:JSON.parse(fs.readFileSync(process.env.ARNS_IP_PEERS)).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'}));
-handle('import-profile',async()=>{
+handle('get-settings',()=>({version:app.getVersion(),executable:app.getPath('exe'),connectionProfile:readProfile(runtime.dataDir),rpcSources:readProfile(runtime.dataDir).rpcSources.join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:JSON.parse(fs.readFileSync(process.env.ARNS_IP_PEERS)).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'}));
+handle('import-profile',async(mode='merge')=>{
+  if(!['merge','replace'].includes(mode))throw new Error('Unknown import mode.');
   const choice=await dialog.showOpenDialog(win,{title:'Import connection profile',properties:['openFile'],filters:[{name:'Connection profile',extensions:['json']}]});
   if(choice.canceled||choice.filePaths.length!==1)return {canceled:true};
-  const profile=loadProfile(choice.filePaths[0]);
+  const incoming=loadProfile(choice.filePaths[0]);
+  const profile=mode==='merge'?mergeProfiles(readProfile(runtime.dataDir),incoming):incoming;
+  connectionCheck?.abort();
   for(const tab of tabs.rows.values())stop(tab);
   applyProfile(runtime.dataDir,profile);cache.clear();send();
   return {imported:true,meshPeers:profile.directPeers.length,rpcSources:profile.rpcSources.length};
+});
+handle('export-profile',async()=>{
+  const profile=validateProfile(readProfile(runtime.dataDir));
+  const choice=await dialog.showSaveDialog(win,{title:'Export connection profile',defaultPath:'mesh-connection-profile.json',filters:[{name:'Connection profile',extensions:['json']}]});
+  if(choice.canceled||!choice.filePath)return {canceled:true};
+  fs.writeFileSync(choice.filePath,JSON.stringify(profile,null,2)+'\n',{mode:0o600});
+  return {exported:true};
+});
+handle('check-connections',async()=>{
+  connectionCheck?.abort();const controller=new AbortController();connectionCheck=controller;
+  try{return await checkConnections(readProfile(runtime.dataDir),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});}
+  finally{if(connectionCheck===controller)connectionCheck=null;}
 });
 handle('save-settings',data=>{
   if(!data||typeof data!=='object')throw new Error('invalid_settings');
   const nextTrusted=parseTrustedPeers(data.trustedPeers||''),rpcTemp=runtime.rpcFile+'.candidate',peerTemp=process.env.ARNS_IP_PEERS+'.candidate';
   try{
     const n=saveRpcSources(rpcTemp,data.rpcSources);saveDirectPeers(peerTemp,data.directPeers||'');
-    for(const tab of tabs.rows.values())stop(tab);
+    connectionCheck?.abort();for(const tab of tabs.rows.values())stop(tab);
     fs.renameSync(rpcTemp,runtime.rpcFile);fs.renameSync(peerTemp,process.env.ARNS_IP_PEERS);trustedPeers=nextTrusted;witnessQuorum=data.witnessQuorum===1?1:2;savePrefs();cache.clear();return {rpcSources:n};
   }finally{fs.rmSync(rpcTemp,{force:true});fs.rmSync(peerTemp,{force:true});}
 });
@@ -222,11 +240,11 @@ async function start(){
   win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);win.on('resize',layout);
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
-  timer=setInterval(()=>send(),1000);send();
+  timer=setInterval(()=>send(),1000);send();if(accessPolicy==='live'&&!connectionConfigured())send({command:'settings'});
 }
 if(!app.requestSingleInstanceLock())app.quit();else{
   app.on('second-instance',(_event,argv)=>{win?.show();win?.focus();const url=argv.find(x=>x.startsWith('ar://'));if(url&&win)void newTab(url).catch(error=>report(error));});
   app.whenReady().then(start).catch(error=>{console.error(error);dialog.showErrorBox('ArNS Mesh Browser could not start',String(error.message||error));app.quit();});
 }
 app.on('window-all-closed',()=>app.quit());
-app.on('will-quit',()=>{clearInterval(timer);runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});
+app.on('will-quit',()=>{clearInterval(timer);connectionCheck?.abort();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});

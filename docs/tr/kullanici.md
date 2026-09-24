@@ -14,6 +14,8 @@ Gereken yalnızca **Windows x64 masaüstü ZIP'i ve bir destekçinin bağlantı 
 
 **Profil ne?** İlk bağlanılacak Mesh peer, IP üzerinden Solana RPC ve isteğe bağlı ham Arweave düğümlerinin servis adresleri. Parola, cüzdan veya gizli anahtar içermez. Genel pakete işletmecinin özel sunucu adresleri gömülmez. Bu yüzden çalışan profil gerekir; repodaki örnek dosya çalışır sunucu listesi değildir. Güvendiğin destekçiden al: isim eşleşmesinde RPC yanıtına güven devam ediyor.
 
+Yeni kurulumda bağlantı ekranı otomatik açılır. Profil varsayılan olarak mevcut kaynaklara eklenir; değiştirme ayrıca seçilir. Aynı ekranda **Check connections** ve **Export profile** bulunur. [Profil kimden alınır, bağlantı listesi neyi gösterir?](baglantilar.md)
+
 ## Kullanım ve hata ayrımı
 
 **Page information** dosya doğrulamasını, isim gözlemini ve erişim hatasını ayrı gösterir. Uygulama içi ağ kaydı, işletim sistemi seviyesinde bütün ağın kaydı değildir.

@@ -6,7 +6,7 @@ The goal is to retain access when ordinary domain names, DNS or gateway services
 
 This is an independent community project. It is not an official AR.IO, Arweave or Solana release.
 
-**Status: 0.5.0-preview.2.** Windows packaging and core tests are available. Real Windows page rendering, Raspberry Pi hardware and a complete DNS/gateway-blocked multi-node acceptance test are still pending. Do not describe this preview as universally available or fully trustless.
+**Status: 0.5.0-preview.3.** Windows packaging and core tests are available. Real Windows page rendering, Raspberry Pi hardware and a complete DNS/gateway-blocked multi-node acceptance test are still pending. Do not describe this preview as universally available or fully trustless.
 
 [Türkçe başlangıç](README.tr.md) · [Current status](docs/en/status.md) · [Trust and dependencies](docs/en/architecture.md)
 
@@ -49,3 +49,5 @@ Use [the supporter guide](docs/en/supporter.md) for installation, systemd, resou
 Start with [CONTRIBUTING.md](CONTRIBUTING.md). Priority work includes independently produced location records, name-update scheduling separate from content quotas, RPC failover, multi-peer replication and real hardware/network acceptance. Never add individual names to make a test appear successful.
 
 [License](LICENSE) · [Attribution](NOTICE.txt) · [Security reporting](SECURITY.md)
+
+**Connection setup and profile requests:** [Read this first](docs/en/connections.md). The in-app list contains your configured sources; a public supporter directory and access approval are not implemented.

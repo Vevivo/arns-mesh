@@ -1,13 +1,14 @@
 const $=id=>document.getElementById(id),api=window.arnsMesh;
 const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel'];
-let activePanel=null,lastState={},pendingUrl=null,libraryKind='history',savedKey='',previousFocus=null;
+let activePanel=null,lastState={},pendingUrl=null,libraryKind='history',savedKey='',previousFocus=null,uiError='';
 const busy=s=>s.loading||['resolving','content','loading'].includes(s.phase);
-const report=error=>{$('message').textContent=error.message||String(error);};
+const errorText=error=>String(error.message||error).replace(/^Error invoking remote method '[^']+':\s*(?:Error:\s*)?/,'');
+const report=error=>{uiError=errorText(error);$('message').textContent=uiError;};
 const run=fn=>Promise.resolve().then(fn).catch(report);
 function closePanel(){const wasOpen=activePanel;activePanel=null;for(const id of panelIds)$(id).classList.add('hidden');$('backdrop').classList.add('hidden');$('menu-button').setAttribute('aria-expanded','false');run(()=>api.panel(false));if(wasOpen)previousFocus?.focus();}
 function openPanel(id){if(!activePanel)previousFocus=document.activeElement;activePanel=id;for(const name of panelIds)$(name).classList.toggle('hidden',name!==id);$('backdrop').classList.remove('hidden');$('menu-button').setAttribute('aria-expanded',String(id==='menu-panel'));run(()=>api.panel(true));$(id).querySelector('button,input,select,summary')?.focus();}
 function togglePanel(id){activePanel===id?closePanel():openPanel(id);}
-function submitAddress(){const value=$('address').value.trim();if(!value||pendingUrl===value)return;pendingUrl=value;closePanel();run(()=>api.navigate(value)).finally(()=>{if(pendingUrl===value)pendingUrl=null;});$('address').blur();}
+function submitAddress(){const value=$('address').value.trim();if(!value||pendingUrl===value)return;uiError='';pendingUrl=value;closePanel();run(()=>api.navigate(value)).finally(()=>{if(pendingUrl===value)pendingUrl=null;});$('address').blur();}
 $('nav').addEventListener('submit',event=>{event.preventDefault();submitAddress();});
 $('address').addEventListener('keydown',event=>{if(event.key==='Escape'){$('address').value=lastState.url||'';$('address').blur();}});
 for(const button of document.querySelectorAll('[data-close]'))button.onclick=closePanel;
@@ -22,9 +23,17 @@ $('menu-button').onclick=()=>togglePanel('menu-panel');
 $('saved-toggle').onchange=()=>run(()=>api.setAccessPolicy($('saved-toggle').checked?'saved':'live'));
 for(const id of ['pin-site','save-current'])$(id).onclick=()=>{openPanel('saved-panel');run(()=>api.pinSite());};
 for(const [id,delta] of [['zoom-out',-1],['zoom-reset',0],['zoom-in',1]])$(id).onclick=()=>run(()=>api.zoom(delta));
-async function showSettings(){try{const s=await api.getSettings();$('build-info').textContent='Version '+s.version+' · '+s.executable;$('rpc').value=s.rpcSources;$('quorum').value=String(s.witnessQuorum);$('trusted-peers').value=s.trustedPeers||'';$('direct-peers').value=s.directPeers||'';$('own-peer-id').textContent=s.peerId||'Peer has not started yet.';$('settings-result').textContent='';openPanel('settings-panel');}catch(e){report(e);}}
-$('settings-button').onclick=showSettings;$('mode-badge').onclick=()=>togglePanel('menu-panel');
-$('save-settings').onclick=async()=>{try{const result=await api.saveSettings({rpcSources:$('rpc').value,witnessQuorum:Number($('quorum').value),trustedPeers:$('trusted-peers').value,directPeers:$('direct-peers').value});$('settings-result').textContent=`Saved ${result.rpcSources} RPC sources. Reload the page to retry. Other tabs stay stopped until reloaded.`;}catch(e){$('settings-result').textContent=e.message;}};
+function settingsResult(text,error=false){$('settings-result').textContent=text;$('settings-result').classList.toggle('error',error);}
+function renderConnections(profile,results=[]){
+ const rows=[...(profile.directPeers||[]).map(address=>({kind:'Mesh peer',address})),...(profile.rpcSources||[]).map(address=>({kind:'Solana RPC',address})),...(profile.arweavePeers||[]).map(address=>({kind:'Raw Arweave',address}))];
+ $('connection-list').replaceChildren();$('connection-summary').textContent=rows.length?`${rows.length} configured sources · Check them before opening a page.`:'No connections yet. Import a profile to get started.';
+ for(const row of rows){const found=results.find(r=>r.kind===row.kind&&r.address===row.address);const item=document.createElement('div');item.className='connection-row';const source=document.createElement('div'),label=document.createElement('strong'),address=document.createElement('small'),status=document.createElement('span');label.textContent=row.kind;address.textContent=row.address;source.append(label,address);status.className='connection-status '+(found?.status||'');status.textContent=found?found.status==='responded'?`Responded · ${found.elapsedMs} ms`:'Unavailable':'Not checked';if(found)status.title=found.checkedAt+(found.error?' · '+found.error:'');item.append(source,status);$('connection-list').append(item);}
+ $('export-profile').disabled=!(profile.rpcSources?.length&&(profile.directPeers?.length||profile.arweavePeers?.length));$('check-connections').disabled=!rows.length;
+}
+let settingsProfile={directPeers:[],rpcSources:[],arweavePeers:[]};
+async function showSettings(){try{uiError='';const s=await api.getSettings();$('build-info').textContent='Version '+s.version+' · '+s.executable;$('rpc').value=s.rpcSources;$('quorum').value=String(s.witnessQuorum);$('trusted-peers').value=s.trustedPeers||'';$('direct-peers').value=s.directPeers||'';$('own-peer-id').textContent=s.peerId||'Reader';settingsProfile=s.connectionProfile;renderConnections(settingsProfile);settingsResult('');openPanel('settings-panel');}catch(e){report(e);}}
+$('settings-button').onclick=showSettings;$('mode-badge').onclick=showSettings;
+$('save-settings').onclick=async()=>{try{const result=await api.saveSettings({rpcSources:$('rpc').value,witnessQuorum:Number($('quorum').value),trustedPeers:$('trusted-peers').value,directPeers:$('direct-peers').value});await showSettings();settingsResult(`Saved ${result.rpcSources} RPC sources. Reload the page to retry. Other tabs stay stopped until reloaded.`);}catch(e){settingsResult(errorText(e),true);}};
 $('export').onclick=async()=>{try{$('export-result').textContent=await api.diagnostics()?'Saved.':'';}catch(e){report(e);}};
 async function renderLibrary(){const data=await api.getBrowserData(),rows=data[libraryKind]||[];const history=libraryKind==='history';$('library-title').textContent=history?'History':'Bookmarks';$('library-hint').textContent=history?'Your last 200 successfully opened ArNS addresses. Stored on this device.':'Bookmarks remember an address. Use Saved pages to keep the content for offline access.';$('clear-history').classList.toggle('hidden',!history||!rows.length);$('library-list').replaceChildren();if(!rows.length)empty($('library-list'),history?'No browsing history yet.':'No bookmarks yet. Use the star in the address bar.');for(const row of rows){const box=document.createElement('div');box.className='library-row';const link=document.createElement('button');link.className='library-link';const title=document.createElement('strong');title.textContent=row.title;const url=document.createElement('small');url.textContent=row.url;link.append(title,url);link.onclick=()=>{closePanel();run(()=>api.navigate(row.url));};box.append(link);if(history){const time=document.createElement('time');time.textContent=new Date(row.at).toLocaleDateString('en-US',{month:'short',day:'numeric'});box.append(time);}else{const remove=document.createElement('button');remove.className='icon';remove.textContent='×';remove.setAttribute('aria-label','Remove bookmark '+row.title);remove.onclick=()=>run(async()=>{await api.removeBookmark(row.url);await renderLibrary();});box.append(remove);}$('library-list').append(box);}}
 function showLibrary(kind){libraryKind=kind;run(async()=>{await renderLibrary();openPanel('library-panel');});}
@@ -34,7 +43,7 @@ function empty(parent,text){const p=document.createElement('p');p.className='emp
 api.onState(s=>{
  const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id;
  lastState=s;renderTabs(s);if(switched)$('address').value=s.url||'';
- if(s.command==='close-panel')closePanel();if(s.command==='history')showLibrary('history');if(s.command==='bookmarks')showLibrary('bookmarks');
+ if(s.command==='close-panel')closePanel();if(s.command==='history')showLibrary('history');if(s.command==='bookmarks')showLibrary('bookmarks');if(s.command==='settings')run(showSettings);
  if(s.focusAddress){closePanel();$('address').focus();$('address').select();}
  if(document.activeElement!==$('address'))$('address').value=s.url||'';
  $('back').disabled=!s.canGoBack;$('forward').disabled=!s.canGoForward;
@@ -42,8 +51,9 @@ api.onState(s=>{
  $('bookmark').disabled=!s.canBookmark;$('bookmark').classList.toggle('active',Boolean(s.bookmarked));$('bookmark').setAttribute('aria-label',s.bookmarked?'Remove bookmark':'Bookmark this page');$('bookmark').title=(s.bookmarked?'Remove bookmark':'Bookmark this page')+' (Ctrl+D)';
  $('zoom-reset').textContent=(s.zoom||100)+'%';$('build-version').textContent=s.version||'';
  $('saved-toggle').checked=s.accessPolicy==='saved';
- $('message').textContent=s.message||'Ready to explore.';$('indicator').className='indicator'+(loading?' busy':s.phase==='error'?' error':'');
- $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':'P2P · Live';
+ const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
+ $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':'');
+ $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':'P2P · Live';
  renderSaved(s);renderDetails(s);renderElapsed();
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
 });
@@ -85,7 +95,9 @@ function renderTabs(s){
  }
  $('new-tab').disabled=(s.tabs?.length||0)>=s.tabLimit;
 }
-$('new-tab').onclick=()=>{closePanel();run(()=>api.newTab());};
+$('new-tab').onclick=()=>{uiError='';closePanel();run(()=>api.newTab());};
 $('download-document').onclick=()=>{closePanel();run(()=>api.saveDocument());};
 
-$('import-profile').onclick=()=>run(async()=>{const result=await api.importProfile();if(!result.canceled){await showSettings();$('settings-result').textContent='Profile imported. Reload an ArNS page to connect.';}});
+$('import-profile').onclick=async()=>{settingsResult('');try{const mode=$('import-mode').value;const result=await api.importProfile(mode);if(!result.canceled){await showSettings();settingsResult((mode==='merge'?'Connections added.':'Connections replaced.')+' Check connections, then reload an ArNS page.');}}catch(e){settingsResult(errorText(e),true);}};
+$('export-profile').onclick=async()=>{settingsResult('');try{const result=await api.exportProfile();if(result.exported)settingsResult('Profile exported. It contains service addresses only. Share it with people allowed to use those sources.');}catch(e){settingsResult(errorText(e),true);}};
+$('check-connections').onclick=async()=>{const expected=settingsProfile;$('check-connections').disabled=true;settingsResult('Checking configured sources…');try{const results=await api.checkConnections();if(settingsProfile!==expected)return;renderConnections(settingsProfile,results);settingsResult(`${results.filter(r=>r.status==='responded').length} of ${results.length} sources responded. This checks reachability, not site availability.`);}catch(e){settingsResult(errorText(e),true);}finally{$('check-connections').disabled=false;}};
