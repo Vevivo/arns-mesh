@@ -9,7 +9,7 @@ const profile=JSON.parse(process.env.MESH_QA_PROFILE||'null');
 if(profile&&profile.schema!=='arns-mesh-network-profile/v1')throw new Error('Invalid operator profile for the live test.');
 const privateValues=profile?[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).sort((a,b)=>b.length-a.length):[];
 const sanitize=value=>{let s=typeof value==='string'?value:JSON.stringify(value);for(const v of privateValues)s=s.split(v).join('[operator-endpoint]');return s;};
-const report={scope:profile?'Unmodified published 0.5.0-preview.5 Windows ZIP, real desktop, live public ArNS names, fresh client with existing operator sources':'Unmodified published 0.5.0-preview.5 Windows ZIP, first launch without a connection profile; live retrieval not tested',sha256:'68adc236bb8e6a3a6ffc3152646f67a30d00b29caba343785e0a45435e6afa03',startedAt:new Date().toISOString(),fixture:false,osPacketCapture:false,steps:[],pages:[],rendererErrors:[]};
+const report={scope:profile?'Unmodified published 0.5.0-preview.5 Windows ZIP, real desktop, live public ArNS names, fresh client with existing operator sources':'Unmodified published 0.5.0-preview.5 Windows ZIP, first launch without a connection profile; live retrieval not tested',sha256:'68adc236bb8e6a3a6ffc3152646f67a30d00b29caba343785e0a45435e6afa03',startedAt:new Date().toISOString(),fixture:false,osPacketCapture:false,steps:[],pages:[],rendererErrors:[],consoleErrors:[],failedRequests:[]};
 const save=()=>fs.writeFileSync(path.join(out,'results.json'),sanitize(report));
 const note=(id,value)=>{report.steps.push({id,at:new Date().toISOString(),...value});save();console.log(id,sanitize(value));};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -35,8 +35,9 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
   for(let n=0;n<40;n++){ui=context.pages().find(p=>p.url()==='arnsui://app/index.html');if(ui)break;await pause(250);}
   if(!ui)throw new Error('Desktop toolbar did not appear.');
   ui.setDefaultTimeout(10000);await ui.locator('#address').waitFor();await pause(1000);
-  for(const p of context.pages())p.on('pageerror',e=>report.rendererErrors.push(sanitize(e.message)));
-  context.on('page',p=>p.on('pageerror',e=>report.rendererErrors.push(sanitize(e.message))));
+  function watch(p){p.on('pageerror',e=>report.rendererErrors.push({url:p.url(),error:sanitize(e.message)}));p.on('console',m=>{if(['error','warning'].includes(m.type()))report.consoleErrors.push({url:p.url(),type:m.type(),text:sanitize(m.text())});});p.on('requestfailed',r=>report.failedRequests.push({url:r.url(),error:r.failure()?.errorText}));}
+  for(const p of context.pages())watch(p);
+  context.on('page',watch);
   note('fresh-start',{settingsOpen:await ui.locator('#settings-panel').isVisible(),status:await ui.locator('#message').innerText(),version:await ui.locator('#build-info').innerText()});
   await screenshot('01-new-user');
   await ui.locator('#settings-panel [data-close]').click();
@@ -47,18 +48,31 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
   await ui.locator('#settings-button').click();await ui.locator('#import-profile').click();await native('open',file);await pause(1000);
   note('profile-import',{message:await ui.locator('#settings-result').innerText(),meshSources:profile.directPeers.length,rpcSources:profile.rpcSources.length,rawSources:profile.arweavePeers.length});
   await ui.locator('#check-connections').click();await ui.waitForFunction(()=>!document.getElementById('check-connections').disabled,null,{timeout:50000});
-  note('connection-check',{message:await ui.locator('#settings-result').innerText(),rows:await ui.locator('#connection-list').innerText()});
+  note('connection-check',{message:await ui.locator('#settings-result').innerText(),rows:await ui.locator('#connection-list').innerText(),details:await ui.locator('.connection-status').evaluateAll(xs=>xs.map(x=>({text:x.textContent,detail:x.title})))});
   await ui.locator('#settings-panel [data-close]').click();
   const names=['internetfireplace','vevivo','apple','kh-laboratory','permahistory'];
   for(let i=0;i<names.length;i++){
-    const name=names[i];await ui.locator('#new-tab').click();const start=Date.now(),auditStart=audit().length;
+    const name=names[i],existingPages=new Set(context.pages());await ui.locator('#new-tab').click();
+    let page;for(let n=0;n<40;n++){page=context.pages().find(p=>!existingPages.has(p));if(page)break;await pause(100);}if(!page)throw new Error('New desktop tab did not appear.');
+    const start=Date.now(),auditStart=audit().length;
     await ui.locator('#address').fill('ar://'+name);await ui.locator('#open-address').click();
     const terminal=await waitTerminal();const firstResultMs=Date.now()-start;
     const opened=await ui.locator('#access-stages [data-stage="open"].done').count()>0;
     if(opened)await pause(6000);
-    const page=context.pages().find(p=>p.url().startsWith('ar://'+name+'/'));
     const row={name,terminal,opened,firstResultMs,status:await ui.locator('#message').innerText(),stageDetail:await ui.locator('#stage-detail').innerText(),content:await ui.locator('#content-status').innerText(),nameRecord:await ui.locator('#name-status').innerText(),proof:await ui.locator('#proof').innerText(),stages:await ui.locator('#access-stages').innerText(),network:auditSummary(audit().slice(auditStart))};
-    if(page){row.url=page.url();row.title=await page.title();row.document=await page.evaluate(()=>({readyState:document.readyState,text:document.body?.innerText.slice(0,5000),images:[...document.images].map(x=>({src:x.getAttribute('src'),loaded:x.complete&&x.naturalWidth>0})).slice(0,30),scripts:[...document.scripts].filter(x=>x.src).map(x=>x.getAttribute('src')).slice(0,30),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(x=>({href:x.getAttribute('href'),loaded:Boolean(x.sheet)})).slice(0,30),media:[...document.querySelectorAll('video,audio')].map(x=>({src:x.getAttribute('src'),readyState:x.readyState,error:x.error?.code||null})),links:[...document.querySelectorAll('a[href]')].map(x=>({text:x.innerText.slice(0,80),href:x.getAttribute('href')})).slice(0,20)}));}
+    if(page){row.url=page.url();row.title=await page.title();row.document=await page.evaluate(()=>({readyState:document.readyState,text:document.body?.innerText.slice(0,2000),images:[...document.images].map(x=>({src:(x.getAttribute('src')||'').slice(0,100),loaded:x.complete&&x.naturalWidth>0})).slice(0,30),scripts:[...document.scripts].filter(x=>x.src).map(x=>x.getAttribute('src')).slice(0,30),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(x=>({href:x.getAttribute('href'),sheetPresent:Boolean(x.sheet),ruleCount:(()=>{try{return x.sheet?.cssRules.length??null;}catch{return 'inaccessible';}})()})).slice(0,30),media:[...document.querySelectorAll('video,audio')].map(x=>({src:x.getAttribute('src'),readyState:x.readyState,error:x.error?.code||null})),links:[...document.querySelectorAll('a[href]')].map(x=>({text:x.innerText.slice(0,80),href:x.getAttribute('href')})).slice(0,20)}));}
+    if(opened&&name==='internetfireplace'){
+      const play=page.getByRole('button',{name:'PLAY',exact:true});
+      if(await play.count()){await play.click();await pause(2000);row.playAttempt=await page.evaluate(()=>({text:document.body.innerText.slice(0,1500),media:[...document.querySelectorAll('video,audio')].map(x=>({readyState:x.readyState,networkState:x.networkState,paused:x.paused,currentTime:x.currentTime,error:x.error?.code||null,errorMessage:x.error?.message||null}))}));}
+    }
+    if(opened&&name==='kh-laboratory'){
+      const link=page.getByRole('link',{name:'KH Laboratory File Directory',exact:false});
+      if(await link.count()){await link.click();await pause(500);row.externalLink={status:await ui.locator('#message').innerText(),pageUrl:page.url()};}
+    }
+    if(opened&&name==='permahistory'){
+      const register=page.getByRole('button',{name:/REGISTER NOW/});
+      if(await register.count()){await register.click();await pause(700);row.registrationView={title:await page.title(),text:(await page.locator('body').innerText()).slice(0,1500)};}
+    }
     report.pages.push(row);save();console.log('LIVE_RESULT',sanitize(row));await screenshot('page-'+(i+1)+'-'+name,page);
     if(!terminal&&await ui.locator('#reload').getAttribute('aria-label')==='Stop loading')await ui.locator('#reload').click();
   }
