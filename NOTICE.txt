@@ -1,0 +1,25 @@
+ArNS Mesh Browser and Supporter, independent community project.
+This is not an official AR.IO, Arweave, Solana or Electron distribution.
+
+This public source edition derives from the project's Mesh source checkpoint
+and desktop preview. It retains the applicable Wayfinder provenance:
+https://github.com/ar-io/wayfinder
+Base commit: ac695f8c4fdfa0415b53c5fb80dab1422adfeec7
+Copyright (C) 2022-2025 Permanent Data Solutions, Inc.
+The original Apache-2.0 license is preserved in WAYFINDER-LICENSE and LICENSE.
+Existing file-specific copyright notices are retained.
+
+Changes include a standalone tabbed desktop UI, bookmarks, ar:// protocol,
+Mesh access, bounded client resources, network profile import, and separate
+supporter installation. The standalone browser uses bundled Electron/Chromium.
+The source repository does not include that binary runtime or node_modules.
+
+The LMDB reader uses the published format and index metadata documented at:
+https://github.com/permaweb/HyperBEAM/blob/5142ab9515b86f9a2c4938672a657faa39c67bf9/src/core/store/hb_store_arlmdb.erl
+Published index metadata is not a current-coverage guarantee.
+Historical CDB index descriptions retain source URLs in resources/.
+
+Third-party packages retain their respective licenses. Binary distributions
+must include dependency license files and Electron LICENSE/LICENSES.chromium.html.
+Private operational records, private endpoint profiles and identity material
+are excluded from this public source edition.

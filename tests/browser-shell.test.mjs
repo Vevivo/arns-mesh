@@ -1,0 +1,39 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+import {fileURLToPath} from 'node:url';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+test('shell lifecycle and privileged IPC with Electron doubles (not a browser acceptance test)',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-shell-'));
+ process.env.ARNS_MESH_USER_DATA=dir;process.env.BROWSER_TEST_CORE_ROOT=fileURLToPath(new URL('..',import.meta.url));
+ const electron=new URL('./fixtures/browser-electron.mjs',import.meta.url).href;
+ const adapter=new URL('./fixtures/browser-adapter.mjs',import.meta.url).href;
+ const hook=registerHooks({resolve(specifier,context,next){if(specifier==='electron')return {url:electron,shortCircuit:true};if(specifier==='../helper/core-adapter.mjs'&&context.parentURL.endsWith('/browser/main.mjs'))return {url:adapter,shortCircuit:true};return next(specifier,context);}});
+ const fake=await import(electron);
+ try{
+   await import('../apps/browser/main.mjs');
+   for(let i=0;i<100&&fake.views.length<2&&!fake.errors.length;i++)await new Promise(r=>setTimeout(r,10));
+   await new Promise(r=>setTimeout(r,10));assert.deepEqual(fake.errors,[]);assert.equal(fake.views.length,2);
+   const toolbar=fake.views[0],content=fake.views[1];
+   const event={sender:toolbar.webContents,senderFrame:toolbar.webContents.mainFrame};
+   const call=(name,...args)=>fake.handlers.get(name)(event,...args);
+   assert.throws(()=>fake.handlers.get('navigate')({sender:content.webContents,senderFrame:content.webContents.mainFrame},'unit-one'),/untrusted/);
+   assert.throws(()=>fake.handlers.get('navigate')({...event,senderFrame:{url:'arnsui://app/index.html'}},'unit-one'),/untrusted/);
+   await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,502);
+   assert.deepEqual(await call('import-profile'),{canceled:true});
+   const profileFile=path.join(dir,'profile.json');fs.writeFileSync(profileFile,JSON.stringify({schema:'arns-mesh-network-profile/v1',directPeers:['127.0.0.1:49741'],rpcSources:['127.0.0.1:8899'],arweavePeers:[]}));
+   fake.dialog.showOpenDialog=async()=>({canceled:false,filePaths:[profileFile]});
+   assert.deepEqual(await call('import-profile'),{imported:true,meshPeers:1,rpcSources:1});
+   assert.equal(call('get-settings').rpcSources,'127.0.0.1:8899');
+   await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,200);
+   await call('toggle-bookmark');assert.equal(call('get-browser-data').bookmarks.length,1);
+   const id=await call('new-tab','unit-two');assert.equal(fake.views.length,3);assert.notEqual(fake.views[1].webContents.session,fake.views[2].webContents.session);
+   let blocked;fake.views[2].webContents.session.webRequest.filter({url:'https://example.com/',resourceType:'script'},r=>blocked=r.cancel);assert.equal(blocked,true);
+   await call('close-tab',id);assert.equal(fake.views[2].webContents.isDestroyed(),true);
+   await call('ready');const state=fake.messages.at(-1).data;assert.equal(state.tabs.length,1);assert.equal(state.url,'ar://unit-one/path?q=1');assert.equal(state.bookmarked,true);
+   assert.equal(content.options.webPreferences.sandbox,true);assert.equal(content.options.webPreferences.nodeIntegration,false);assert.equal(content.options.webPreferences.preload,undefined);
+   assert.equal(state.peer.serving,false);assert.equal(state.discovery.enabled,false);assert.equal(state.network.requests,0);
+ }finally{fake.app.quit();hook.deregister();fs.rmSync(dir,{recursive:true,force:true});}
+});

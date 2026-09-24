@@ -1,0 +1,77 @@
+name: Verify source and build preview
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - run: npm test
+      - run: node scripts/doctor.mjs examples/network-profile.example.json
+      - if: runner.os == 'Linux'
+        run: bash scripts/test-install.sh
+  windows-package:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Get and verify pinned Electron runtime
+        run: python scripts/download-electron.py --out "$env:RUNNER_TEMP/electron-runtime"
+      - name: Build clean portable package
+        run: python scripts/package-windows.py --runtime "$env:RUNNER_TEMP/electron-runtime" --out dist
+      - name: Executable version check (not GUI acceptance)
+        shell: pwsh
+        run: |
+          $env:ELECTRON_RUN_AS_NODE='1'
+          & ./dist/Mesh-Browser/Mesh-Browser.exe --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item Env:ELECTRON_RUN_AS_NODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-preview
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build.json
+          retention-days: 14
+      - name: Prepare draft release for maintainer review
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tag = "v$version"
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($releases | Where-Object { $_.tag_name -eq $tag }) {
+            Write-Output 'Existing release preserved. New build is in workflow artifacts.'
+            exit 0
+          }
+          gh release create $tag "dist/ArNS-Mesh-Browser-Windows-x64-$version.zip" dist/SHA256SUMS.txt dist/build.json --draft --prerelease --target "$env:GITHUB_SHA" --title "ArNS Mesh $version (Preview)" --notes-file docs/en/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

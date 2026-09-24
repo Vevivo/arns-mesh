@@ -1,0 +1,6 @@
+{
+  "schema": "arns-mesh-network-profile/v1",
+  "directPeers": ["192.0.2.10:49741", "198.51.100.10:49741"],
+  "rpcSources": ["203.0.113.20:8899"],
+  "arweavePeers": ["192.0.2.30:1984"]
+}

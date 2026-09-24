@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
+import {verifyPortableChainProof} from '../src/portable-proof.mjs';
+import {verifyEmbeddedTowerVotes} from '../src/chain-proof.mjs';
+import {verifySavedAntUpdateProof} from '../src/ant-update-proof.mjs';
+import {verifyJournal} from '../src/transition-journal.mjs';
+import {verifyArNSAccountProofBundle} from '../src/account-proof-verifier.mjs';
+import {assessArNSVerification} from '../src/verification-policy.mjs';
+import {MeshPeer} from '../apps/peer/embedded-peer.mjs';
+import {saveRpcSources} from '../apps/helper/runtime.mjs';
+import {parseInput} from '../src/swarm-access.mjs';
+const rec={antId:'11111111111111111111111111111111'};
+const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
+const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
+function resign(p){const q={...p};delete q.proofHash;delete q.verifierPublicKeyPem;delete q.verifierSignature;const pair=crypto.generateKeyPairSync('ed25519');p.proofHash=sha(Buffer.from(stable(q)));p.verifierPublicKeyPem=pair.publicKey.export({type:'spki',format:'pem'});p.verifierSignature=crypto.sign(null,Buffer.from(p.proofHash),pair.privateKey).toString('base64url');return p;}
+test('asserted zk flag cannot become a cryptographic proof',()=>assert.equal(verifyArNSAccountProofBundle({schema:'arns-mesh-account-proof/v2',proofType:'external-zk',zkVerifier:{locallyVerified:true}}).ok,false));
+test('verification policy never promotes an unproven account flag',()=>{const r=assessArNSVerification({stateEvidence:{checks:{accountInclusionMerkleProof:true}}});assert.equal(r.fullyTrustless,false);assert.equal(r.accountInclusionProof,false);});
+test('URLs separate path from query and fragment',()=>{assert.deepEqual(parseInput('ar://example/index.html?v=1#top'),{name:'example',requestedPath:'index.html'});assert.throws(()=>parseInput('https://example.com'),/invalid_ar_address/);assert.throws(()=>parseInput('ar://example/%2e%2e%2fsecret'),/invalid_ar_path/);});
+test('RPC settings require IP addresses and deduplicate sources',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-settings-'));try{const f=path.join(dir,'rpc.json');assert.equal(saveRpcSources(f,'127.0.0.1:8899\n127.0.0.1:8899'),1);assert.throws(()=>saveRpcSources(f,'example.com:443'));}finally{fs.rmSync(dir,{recursive:true,force:true});}});
+test('manifest child IDs can be shared; no stale or unbound observations',async()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-share-'));try{const peer=new MeshPeer({dataDir:dir,bootstrapFile:'hyper-bootstrap.json'});const record={name:'example',antId:rec.antId,txId:'A'.repeat(43),expiresAt:new Date(Date.now()+60000).toISOString()};const bundle={schema:'arns-mesh-verified-share/v1',name:'example',record,content:{dataId:'B'.repeat(43),rootDataId:record.txId,manifestUsed:true,signatureVerified:true},stateEvidence:{name:'example',antId:rec.antId,txId:record.txId,generatedAt:new Date().toISOString(),checks:{pdaDerivedLocally:true,accountOwnersMatchExpectedPrograms:true,accountBytesDecodedLocally:true},observations:[{ok:true,arns:{processId:rec.antId},ant:{txId:record.txId}}]},locations:[{dataId:record.txId,rootTxId:'C'.repeat(43)},{dataId:'B'.repeat(43),rootTxId:'D'.repeat(43)}]};await peer.ingest(bundle);assert.equal(peer.cache.locations['B'.repeat(43)].rootTxId,'D'.repeat(43));bundle.stateEvidence.generatedAt='2000-01-01';await assert.rejects(peer.ingest(bundle),/recent_state_observation/);}finally{fs.rmSync(dir,{recursive:true,force:true});}});
