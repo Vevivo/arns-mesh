@@ -61,18 +61,19 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
     if(opened)await pause(6000);
     const row={name,terminal,opened,firstResultMs,status:await ui.locator('#message').innerText(),stageDetail:await ui.locator('#stage-detail').innerText(),content:await ui.locator('#content-status').innerText(),nameRecord:await ui.locator('#name-status').innerText(),proof:await ui.locator('#proof').innerText(),stages:await ui.locator('#access-stages').innerText(),network:auditSummary(audit().slice(auditStart))};
     if(page){row.url=page.url();row.title=await page.title();row.document=await page.evaluate(()=>({readyState:document.readyState,text:document.body?.innerText.slice(0,2000),images:[...document.images].map(x=>({src:(x.getAttribute('src')||'').slice(0,100),loaded:x.complete&&x.naturalWidth>0})).slice(0,30),scripts:[...document.scripts].filter(x=>x.src).map(x=>x.getAttribute('src')).slice(0,30),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(x=>({href:x.getAttribute('href'),sheetPresent:Boolean(x.sheet),ruleCount:(()=>{try{return x.sheet?.cssRules.length??null;}catch{return 'inaccessible';}})()})).slice(0,30),media:[...document.querySelectorAll('video,audio')].map(x=>({src:x.getAttribute('src'),readyState:x.readyState,error:x.error?.code||null})),links:[...document.querySelectorAll('a[href]')].map(x=>({text:x.innerText.slice(0,80),href:x.getAttribute('href')})).slice(0,20)}));}
-    if(opened&&name==='internetfireplace'){
-      const play=page.getByRole('button',{name:'PLAY',exact:true});
-      if(await play.count()){await play.click();await pause(2000);row.playAttempt=await page.evaluate(()=>({text:document.body.innerText.slice(0,1500),media:[...document.querySelectorAll('video,audio')].map(x=>({readyState:x.readyState,networkState:x.networkState,paused:x.paused,currentTime:x.currentTime,error:x.error?.code||null,errorMessage:x.error?.message||null}))}));}
+    try{if(opened&&name==='internetfireplace'){
+      const play=page.getByRole('button',{name:/^play$/i});
+      row.playControls=await play.count();
+      if(row.playControls){await play.click({noWaitAfter:true,timeout:5000});await pause(2000);row.playAttempt=await page.evaluate(()=>({text:document.body.innerText.slice(0,500),media:[...document.querySelectorAll('video,audio')].map(x=>({readyState:x.readyState,networkState:x.networkState,paused:x.paused,currentTime:x.currentTime,error:x.error?.code||null,errorMessage:x.error?.message||null}))}));}
     }
     if(opened&&name==='kh-laboratory'){
       const link=page.getByRole('link',{name:'KH Laboratory File Directory',exact:false});
-      if(await link.count()){await link.click();await pause(500);row.externalLink={status:await ui.locator('#message').innerText(),pageUrl:page.url()};}
+      if(await link.count()){await link.click({noWaitAfter:true,timeout:5000});await pause(500);row.externalLink={status:await ui.locator('#message').innerText(),pageUrl:page.url()};}
     }
     if(opened&&name==='permahistory'){
-      const register=page.getByRole('button',{name:/REGISTER NOW/});
-      if(await register.count()){await register.click();await pause(700);row.registrationView={title:await page.title(),text:(await page.locator('body').innerText()).slice(0,1500)};}
-    }
+      const register=page.getByRole('button',{name:/register now/i});
+      if(await register.count()){await register.click({noWaitAfter:true,timeout:5000});await pause(700);row.registrationView={title:await page.title(),text:(await page.locator('body').innerText()).slice(0,800)};}
+    }}catch(e){row.interactionError=sanitize(e.message);row.afterInteraction={status:await ui.locator('#message').innerText(),pageUrl:page.url()};}
     report.pages.push(row);save();console.log('LIVE_RESULT',sanitize(row));await screenshot('page-'+(i+1)+'-'+name,page);
     if(!terminal&&await ui.locator('#reload').getAttribute('aria-label')==='Stop loading')await ui.locator('#reload').click();
   }
