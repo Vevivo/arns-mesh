@@ -53,7 +53,7 @@ function send(extra={}){
 function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean(p.rpcSources.length&&(p.directPeers.length||p.arweavePeers.length));}
 function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
-  if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
+  if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','ario-full-black.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
   const type=name.endsWith('.woff2')?'font/woff2':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html';
   return new Response(fs.readFileSync(path.join(here,'ui',name)),{headers:{'content-type':type+(name.endsWith('.woff2')?'':'; charset=utf-8'),'content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
 }
@@ -116,7 +116,7 @@ async function newTab(raw=''){
   const tab=tabs.create(raw),ses=session.fromPartition('mesh-tab-'+tab.id,{cache:false});
   try{
     filterSession(ses);ses.protocol.handle('ar',request=>arHandler(tab,request));
-    ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
+    ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
     tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
     tab.view.setBackgroundColor('#f6f4ef');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
     await navigate(raw,tab);send({focusAddress:!raw});return tab.id;

@@ -6,7 +6,7 @@ The goal is to retain access when ordinary domain names, DNS or gateway services
 
 This is an independent community project. It is not an official AR.IO, Arweave or Solana release.
 
-**Status: 0.5.0-preview.4.** Windows packaging and core tests are available. Real Windows page rendering, Raspberry Pi hardware and a complete DNS/gateway-blocked multi-node acceptance test are still pending. Do not describe this preview as universally available or fully trustless.
+**Status: 0.5.0-preview.4.** Windows packaging, core tests and a desktop GUI test workflow are available. Complete public ArNS browsing acceptance, Raspberry Pi hardware and a complete DNS/gateway-blocked multi-node acceptance test are still pending. Do not describe this preview as universally available or fully trustless.
 
 [Türkçe başlangıç](README.tr.md) · [Current status](docs/en/status.md) · [Trust and dependencies](docs/en/architecture.md)
 

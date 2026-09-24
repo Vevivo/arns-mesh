@@ -17,7 +17,7 @@ export function contentResponse(result,request){
   return new Response(request.method==='HEAD'?null:body.subarray(start,end+1),{status,headers});
 }
 export function isAllowedRendererUrl(raw){
-  try{const u=new URL(raw);return (u.protocol==='ar:'&&!u.username&&!u.password&&!u.port&&/^[a-z0-9_-]{1,255}$/i.test(u.hostname))||/^arnsui:\/\/app\/(?:welcome\.(?:html|css)|brand\.css|mesh\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(raw)||['data:','blob:'].includes(u.protocol);}catch{return false;}
+  try{const u=new URL(raw);return (u.protocol==='ar:'&&!u.username&&!u.password&&!u.port&&/^[a-z0-9_-]{1,255}$/i.test(u.hostname))||/^arnsui:\/\/app\/(?:welcome\.(?:html|css)|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(raw)||['data:','blob:'].includes(u.protocol);}catch{return false;}
 }
 export function plainError(error){
   const value=String(error.message||error);

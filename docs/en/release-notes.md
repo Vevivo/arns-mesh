@@ -1,9 +1,9 @@
-# ArNS Mesh desktop and supporter preview
+# ArNS Mesh desktop usability preview
 
-Two setup paths: ordinary users extract the Windows desktop ZIP and import a supporter-provided connection profile; supporters follow the VPS/Raspberry Pi guide to run a separate headless peer/index worker.
+One top address field, one Settings button, a native right-click edit menu, and a live access-stage row. The home page uses the ar.io brand palette and locally bundled Besley/Plus Jakarta Sans fonts. A small official ar.io wordmark and Vevivo community credit appear in its footer. This remains an independent community project.
 
-The public build contains no private operator endpoints or prepared private catalogs. A working profile is required. No server/indexer is required on a reader's computer. Profiles contain service addresses, not credentials.
+Ordinary users extract the Windows ZIP and open Mesh-Browser.exe. A working supporter connection profile is required; no private endpoints are bundled. Existing users should close the old app, retain their data backup and extract the preview into a separate folder. The desktop keeps the same user-data directory. No VPS update is needed for these UI changes.
 
-This is an unsigned experimental Windows x64 portable package. Source tests, packaging and executable version checks are distinct from real GUI/page acceptance. Raspberry Pi hardware, complete OS-level blocked-network acceptance and independent-host outage tests are pending. Live names still rely on Solana RPC observations; unknown content-location coverage remains incomplete.
+Use the release's acceptance record for the exact tested artifact. The Windows GUI workflow uses real renderers, native mouse menus and file dialogs; its signed saved-page fixture is not live public ArNS access. Unknown-location coverage, full blocked-network acceptance, independent-host outage, retail Windows installation and Raspberry Pi hardware remain separate incomplete gates.
 
-Use the user and supporter guides in the repository. Check `SHA256SUMS.txt` after downloading. This draft is for maintainer review; publishing it does not by itself certify the pending acceptance checks.
+This portable preview is unsigned. Check SHA256SUMS.txt after downloading. No automatic gateway fallback is introduced. See the English and Turkish user/supporter guides in the repository.

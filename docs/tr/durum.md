@@ -1,6 +1,6 @@
 # Önizleme durumu ve doğrulama sınırları
 
-**0.5.0-preview.2**, bağımsız masaüstü okuyucusunu ve destekçi çekirdeğini paylaşmaya hazırlayan sürümdür. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
+**0.5.0-preview.4**, bağımsız masaüstü okuyucusunu ve destekçi çekirdeğini paylaşmaya hazırlayan sürümdür. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
 
 | Konu | Kanıtın kapsamı |
 |---|---|
@@ -28,3 +28,9 @@ bash scripts/test-install.sh
 ```
 
 Tam kabul; temiz profil, kayıt kaynağından farklı örnekler, undername/değişen hedef/manifest, bütün yerel varlıklar, bozuk veri, iptal, bağımsız peer kaybı, gerçek Windows/Pi kaynak ölçümü ve süreçlerin tam ağ kaydını gerektirir. Yeşil CI bu kabulün yerine geçmez. Ayrıntılı deney ayrımı ve engel kaydı [English status](../en/status.md), mimari ve kaynak üretimi [architecture](../en/architecture.md) içinde.
+
+## Masaüstü arayüz deneyi
+
+`qa/desktop/user-journey.cjs` paketlenmiş Windows uygulamasını açar; yerel sağ tık ve dosya menülerini, profil içe/dışa aktarımını, hata gösterimini ve yeniden başlatmayı kullanır. HTML/CSS/JS/resim, geri/ileri ve yenileme için gerçek imzalı dosyalardan oluşan kontrollü bir saklanmış sayfa kullanır. Bu deneydeki `mesh-qa` ismi sentetiktir; canlı ArNS kaydı veya yeni içerik keşfi kanıtı değildir. Deney verileri dağıtıma girmez. Tam koşu, ekran kaydı ve sınırlar sürümün kabul kaydında belirtilir.
+
+Yeni tasarım tek adres alanı ve tek Settings girişi kullanır. İlerleme şeridi gerçek motor olaylarını gösterir; Open page, ana belgenin yüklemesi tamamlanınca işaretlenir. Yerel fontlar ve alt kısımdaki resmî ar.io logosu için CDN çağrısı yoktur. Bağımsız topluluk projesi kimliği korunur.

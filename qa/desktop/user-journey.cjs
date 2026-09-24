@@ -109,7 +109,7 @@ async function close(){
   const fixture=await import(pathToFileURL(path.join(__dirname,'seed-saved-fixture.mjs')).href);
   record('controlled-saved-fixture',await fixture.seed(path.join(root,'user-data')));
   await launch();await ui.locator('#address').fill('ar://mesh-qa/');await ui.locator('#open-address').click();
-  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'));
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});
   const page=context.pages().find(p=>p.url().startsWith('ar://mesh-qa/'));assert.ok(page);
   assert.equal(await page.locator('#script-status').innerText(),'Local JavaScript loaded');
   assert.equal(await page.locator('h1').evaluate(el=>getComputedStyle(el).color),'rgb(84, 39, 200)');
@@ -119,15 +119,21 @@ async function close(){
   assert.equal(await page.locator('#page-input').inputValue(),'Mouse paste works here too');
   record('signed-page-assets-and-editing',{url:page.url(),status:await ui.locator('#message').innerText(),stages:await ui.locator('#access-stages').innerText()});
   await page.locator('#next-page').click();await page.locator('h1').filter({hasText:'Second signed page'}).waitFor();
-  assert.match(page.url(),/next.html\?test=1#section/);await ui.locator('#back').click();await page.locator('#script-status').waitFor();
+  assert.match(page.url(),/next.html\?test=1#section/);
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('link-opened',{status:await ui.locator('#message').innerText()});
+  await ui.locator('#back').click();await page.locator('#script-status').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('back-opened',{status:await ui.locator('#message').innerText()});
   await ui.locator('#forward').click();await page.locator('#section').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('forward-opened',{status:await ui.locator('#message').innerText()});
   await ui.locator('#reload').click();await page.locator('#section').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});
   await ui.locator('#details').click();await screenshot('10-verification-panel');
   record('navigation-and-verification',{url:page.url(),content:await ui.locator('#content-status').innerText(),name:await ui.locator('#name-status').innerText()});
   assert.equal(await ui.locator('#content-status').innerText(),'Signature verified');
   assert.match(await ui.locator('#name-status').innerText(),/Saved record/);
   await ui.locator('#panel [data-close]').click();
   await ui.locator('#home').click();await screenshot('11-home-final');
+  const finalHome=context.pages().find(p=>p.url()==='arnsui://app/welcome.html');await finalHome.locator('footer').scrollIntoViewIfNeeded();assert.equal(await finalHome.locator('.powered-by img').evaluate(el=>el.complete&&el.naturalWidth>0),true);await screenshot('12-home-footer');
   assert.deepEqual(report.errors,[]);
  }catch(e){report.fatal=e.stack;console.error(e.stack);try{await screenshot('fatal-state');}catch{}process.exitCode=1;}
  finally{report.finishedAt=new Date().toISOString();fs.writeFileSync(out,JSON.stringify(report,null,2));fs.writeFileSync(path.join(root,'desktop-recording.stop'),'stop');if(recorder)await Promise.race([new Promise(r=>recorder.once('exit',r)),pause(10000)]);await close();}
