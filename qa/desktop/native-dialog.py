@@ -3,6 +3,7 @@ import sys, time
 from pathlib import Path
 from PIL import ImageGrab
 from pywinauto import Desktop, keyboard
+import win32gui
 
 mode, value = sys.argv[1:3]
 if mode == 'capture':
@@ -26,10 +27,13 @@ if mode == 'record':
 
 deadline = time.monotonic() + 20
 while time.monotonic() < deadline:
-    windows = Desktop(backend='uia').windows()
-    matches = [w for w in windows if 'Import connection profile' in w.window_text()]
+    handles = []
+    win32gui.EnumWindows(lambda hwnd, _: handles.append(hwnd), None)
+    candidates = handles + [win32gui.GetForegroundWindow()]
+    candidates += [win32gui.GetLastActivePopup(h) for h in handles]
+    matches = [h for h in candidates if 'Import connection profile' in win32gui.GetWindowText(h)]
     if matches:
-        dialog = matches[0]
+        dialog = Desktop(backend='win32').window(handle=matches[0])
         dialog.set_focus()
         if mode == 'cancel':
             keyboard.send_keys('{ESC}')
@@ -42,5 +46,5 @@ while time.monotonic() < deadline:
         break
     time.sleep(.2)
 else:
-    print('Visible window titles:', [w.window_text() for w in windows])
+    print('Visible window titles:', [win32gui.GetWindowText(h) for h in candidates if win32gui.IsWindowVisible(h)])
     raise SystemExit('Native import dialog did not appear.')
