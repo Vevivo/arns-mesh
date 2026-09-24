@@ -18,6 +18,11 @@ Yeni kurulumda bağlantı ekranı otomatik açılır. Profil varsayılan olarak 
 
 ## Kullanım ve hata ayrımı
 
+İsim yalnız **üstteki adres çubuğuna** yazılır. Sağ tık → **Paste** ile fare kullanarak yapıştırabilirsin; Ctrl+V de çalışır. Sayfalardaki yazı alanlarında aynı düzenleme menüsü vardır. Ctrl+L adres çubuğunu seçer. Çubuğun yanındaki **Settings** simgesi bağlantı ayarlarının tek girişidir.
+
+Çubuğun altındaki sıra **isim çözümü → kaynak arama → içerik konumu → indirme → doğrulama → sayfayı açma** durumlarını gösterir. Süreye göre ilerleyen bir animasyon değildir; gerçek istek bildirimlerini kullanır. İşler örtüşebilir; önbellek kullanılan adımlar atlanabilir. Adımın üzerine gelince durumu görünür. Hata veya durdurma başarı sayılmaz. Son adım ana sayfa yüklemesi bitince tamamlanır; eksik bağımlılıklar Page information bölümünde ayrı gösterilir.
+
+
 **Page information** dosya doğrulamasını, isim gözlemini ve erişim hatasını ayrı gösterir. Uygulama içi ağ kaydı, işletim sistemi seviyesinde bütün ağın kaydı değildir.
 
 **Save current page** ana belgeyi veya manifestte listelenen dosyaları saklar. Sonucun tamamlanmasını bekle. Yıldızlamak dosyaları indirmez; yarım saklama çevrimdışı tam site değildir. **Saved** modundaki isim eski gözleme dayanır, son sürüm garantisi vermez. **Live** için erişilebilir RPC ve içerik kaynağı gerekir.

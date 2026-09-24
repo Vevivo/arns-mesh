@@ -1,3 +1,23 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home · ArNS Mesh Browser</title><link rel="stylesheet" href="welcome.css"></head><body>
-<main><div class="identity"><img src="mesh.svg" alt=""><span>ARNS <b>MESH</b></span></div><p class="eyebrow">A DIFFERENT WAY TO CONNECT</p><h1>Your path to<br>the permaweb.</h1><p class="intro">Open an ArNS name. Explore content through peers.<br>Keep the pages you want within reach.</p><p class="setup"><a href="arnsui://app/connect">Connection settings</a> · First visit? Import a supporter’s connection file before opening a live page.</p><form id="start-nav"><span class="scheme">ar://</span><input id="start-address" aria-label="ArNS name" placeholder="Enter an ArNS name" spellcheck="false" autocomplete="off" autocapitalize="off" required><button type="submit" aria-label="Open address">→</button></form><p id="start-error" role="status"></p><div class="features"><div><span class="feature-icon">↗</span><h2>Go directly</h2><p>Enter a name or an ar:// address to open a site.</p></div><div><span class="feature-icon">☆</span><h2>Find your way back</h2><p>Bookmark a page with the star in the address bar.</p></div><div><span class="feature-icon">↓</span><h2>Keep a local copy</h2><p>Keep available site files on this device from the browser menu.</p></div></div></main><footer><span>ArNS Mesh Browser</span><span>Saved access needs a local copy or a reachable peer with the data.</span></footer><script src="welcome.js"></script></body></html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home · ArNS Mesh</title><link rel="stylesheet" href="welcome.css"></head>
+<body>
+<main>
+ <header class="identity"><div><img src="mesh.svg" alt=""><span>ArNS <strong>Mesh</strong></span></div><span class="project-note">Independent community project</span></header>
+ <section class="hero" aria-labelledby="welcome-title">
+  <p class="eyebrow">EXPLORE THE PERMANENT WEB</p>
+  <h1 id="welcome-title">A name.<br><em>A world to discover.</em></h1>
+  <p class="intro">Open websites and files by their ArNS name. Mesh finds available content through your connected peers and checks its signature before it reaches your screen.</p>
+  <div class="start-hint"><span class="hint-line" aria-hidden="true"></span><p>Start in the address bar above.<br><span>Type a name or paste an <code>ar://</code> address.</span></p><kbd>Ctrl + L</kbd></div>
+ </section>
+ <section class="guide" aria-labelledby="guide-title">
+  <div class="guide-intro"><p class="eyebrow">MAKE IT YOURS</p><h2 id="guide-title">Explore now.<br>Keep what matters.</h2></div>
+  <dl class="guide-rows">
+   <div><dt>Follow the journey</dt><dd>Watch the steps below the address bar, from finding a name record to opening the page. If access stops, see where it stopped.</dd></div>
+   <div><dt>Return to your favourites</dt><dd>Use the star to bookmark an address. Find your bookmarks and browsing history in the menu.</dd></div>
+   <div><dt>Keep a copy for later</dt><dd>Save available site files from the menu. A bookmark remembers the address; a saved copy keeps the content on this device.</dd></div>
+  </dl>
+ </section>
+ <footer><span>ArNS Mesh <span class="footer-divider">/</span> An explorer for named content</span><div class="footer-credit"><p>Live access needs reachable name and content sources. Saved copies may be older.</p><small><span class="powered-by">Powered by <img src="ario-full-black.svg" alt="ar.io"></span>Built by Vevivo for the ar.io community.</small></div></footer>
+</main>
+</body></html>

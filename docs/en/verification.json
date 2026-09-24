@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0-preview.2",
+  "version": "0.5.0-preview.4",
   "date": "2026-09-24",
   "localEnvironment": {
     "platform": "linux",
@@ -7,18 +7,19 @@
     "node": "24.19.0"
   },
   "nodeTests": {
-    "passed": 114,
+    "passed": 119,
     "failed": 0
   },
-  "profileImport": "Electron API double; not GUI acceptance",
+  "profileImport": "Native Windows dialog test in desktop-user-journey workflow; see release acceptance record for exact run",
   "installer": "isolated install/update smoke passed; npm test double; preserved identity, profile, saved data",
   "peerProbe": "fresh isolated local peer; cache-only endpoint responded",
   "pending": [
-    "real Windows install/render/update/remove",
+    "retail Windows install/update/remove and live public ArNS acceptance",
     "Raspberry Pi hardware",
     "complete OS-level DNS/gateway-blocked egress capture",
     "independent-host outage recovery",
     "general unknown-location coverage"
   ],
-  "ci": "See Actions for exact commit and runtime build results."
+  "ci": "See Actions for exact commit and runtime build results.",
+  "desktopGui": "Native mouse editing, profile operations and signed saved-page assets/navigation; inspect exact workflow result. No public ArNS or live-chain proof."
 }

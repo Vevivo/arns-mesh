@@ -1,7 +1,7 @@
 name: Desktop user journey on Windows
 on:
   push:
-    branches: [qa/desktop-user-journey]
+    branches: [qa/desktop-user-journey, feat/desktop-polish]
 permissions:
   contents: read
   actions: read

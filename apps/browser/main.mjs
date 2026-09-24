@@ -2,7 +2,7 @@ import '../../src/network-lockdown.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {app,BaseWindow,WebContentsView,protocol,session,ipcMain,dialog} from 'electron';
+import {app,BaseWindow,WebContentsView,protocol,session,ipcMain,dialog,Menu} from 'electron';
 import {resolveArUrl,coreRoot} from '../helper/core-adapter.mjs';
 import {configureRuntime,saveRpcSources,saveDirectPeers,parseTrustedPeers} from '../helper/runtime.mjs';
 import {VerifiedContentStore} from '../../src/content-store.mjs';
@@ -13,6 +13,7 @@ import {SitePinner} from '../../src/site-pinner.mjs';
 import {WorkBudget,transferBudgetStatus} from '../../src/resource-budget.mjs';
 import {shareQuery} from '../../src/query-work.mjs';
 import {networkAuditSnapshot,recordNetwork} from '../../src/network-audit.mjs';
+import {attachContextMenu} from './context-menu.mjs';
 import {BrowserState,normalizeAddress} from './browser-state.mjs';
 import {Tabs} from './tabs.mjs';
 import {contentResponse,isAllowedRendererUrl,plainError} from './response.mjs';
@@ -52,9 +53,9 @@ function send(extra={}){
 function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean(p.rpcSources.length&&(p.directPeers.length||p.arweavePeers.length));}
 function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
-  if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','welcome.js','mesh.svg'].includes(name))return new Response('Not found',{status:404});
-  const type=name.endsWith('.svg')?'image/svg+xml':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html';
-  return new Response(fs.readFileSync(path.join(here,'ui',name)),{headers:{'content-type':type+'; charset=utf-8','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
+  if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','ario-full-black.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
+  const type=name.endsWith('.woff2')?'font/woff2':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html';
+  return new Response(fs.readFileSync(path.join(here,'ui',name)),{headers:{'content-type':type+(name.endsWith('.woff2')?'':'; charset=utf-8'),'content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
 }
 function filterSession(ses,{ui=false}={}){
   ses.setPermissionRequestHandler((_wc,_permission,cb)=>cb(false));ses.setPermissionCheckHandler(()=>false);
@@ -88,20 +89,20 @@ async function arHandler(tab,request){
     const response=contentResponse(result,request);
     if(tabs.isCurrent(tab,epoch)){
       tab.resources.verified++;
-      if(top){tab.meta=result.meta;tab.phase='loaded';tab.progress.finish();tab.message=result.meta.recovery?'Saved name observation · '+result.meta.recovery.observedAt+' · Current mapping not checked.':'Content signature verified · Name mapping relies on RPC observations.';}
+      if(top){tab.meta=result.meta;tab.phase='rendering';tab.progress.finish();tab.message='Content verified · Opening the page…';}
     }
     return response;
   }catch(error){
     if(tabs.isCurrent(tab,epoch)&&!tab.controller.signal.aborted){
       tab.resources.failed++;tab.resources.lastError={url:raw,error:String(error.message||error).slice(0,300)};
-      if(top){tab.phase='error';tab.message=plainError(error);tab.meta={...tab.meta,error:String(error.message||error),diagnostics:error.diagnostics};tab.progress.fail();}
+      if(top){tab.phase='error';tab.message=plainError(error);tab.meta={...tab.meta,error:String(error.message||error),diagnostics:error.diagnostics};tab.progress.fail(tab.progress.active||'name');}
     }
     const message=plainError(error).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     return new Response(request.method==='HEAD'?null:`<!doctype html><html lang="en"><meta charset="utf-8"><title>Unable to open page</title><h1>This page could not be reached</h1><p>${message}</p><p>No gateway fallback. Open Page information for details.</p></html>`,{status:502,headers:{'content-type':'text/html; charset=utf-8','content-security-policy':"default-src 'none'",'cache-control':'no-store'}});
   }finally{if(tabs.isCurrent(tab,epoch))tab.resources.pending=Math.max(0,tab.resources.pending-1);send();}
 }
 function layout(){
-  if(!win||!toolbar)return;const [width,height]=win.getContentSize(),bar=126;
+  if(!win||!toolbar)return;const [width,height]=win.getContentSize(),bar=178;
   for(const tab of tabs.rows.values())if(tab.view){tab.view.setVisible(tab.id===tabs.activeId&&!panelOpen);tab.view.setBounds({x:0,y:bar,width,height:Math.max(0,height-bar)});}
   toolbar.setBounds({x:0,y:0,width,height:panelOpen?height:bar});
 }
@@ -115,9 +116,9 @@ async function newTab(raw=''){
   const tab=tabs.create(raw),ses=session.fromPartition('mesh-tab-'+tab.id,{cache:false});
   try{
     filterSession(ses);ses.protocol.handle('ar',request=>arHandler(tab,request));
-    ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.(?:css|js)|mesh\.svg)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
+    ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
     tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
-    tab.view.setBackgroundColor('#11131a');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
+    tab.view.setBackgroundColor('#f6f4ef');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
     await navigate(raw,tab);send({focusAddress:!raw});return tab.id;
   }catch(error){if(tabs.rows.has(tab.id))tabs.close(tab.id);tab.view?.webContents.close();throw error;}
 }
@@ -127,7 +128,12 @@ async function closeTab(id){
   if(!tabs.rows.size)await newTab();else{layout();send();}
 }
 function stop(tab=tabs.active){tabs.stop(tab.id);tab.view.webContents.stop();send();}
-function reload(){cache.clear();return navigate(tabs.active.url);}
+function reload(){
+  const tab=tabs.active;cache.clear();tabs.begin(tab.id,tab.url);send();
+  // loadURL on an unchanged URL with a fragment can be an in-page navigation.
+  // A browser reload must actually request and verify the document again.
+  tab.view.webContents.reload();
+}
 function historyMove(direction){const h=tabs.active.view.webContents.navigationHistory;if(direction<0&&h.canGoBack())h.goBack();if(direction>0&&h.canGoForward())h.goForward();}
 function toggleBookmark(){const tab=tabs.active;if(!tab.url)throw new Error('Open an ArNS page first.');const added=library.toggle(tab.url,tab.title||tab.url);send({libraryChanged:true});return added;}
 function zoom(delta){if(![-1,0,1].includes(delta))throw new Error('invalid_zoom');const wc=tabs.active.view.webContents;wc.setZoomFactor(delta===0?1:Math.max(.5,Math.min(3,wc.getZoomFactor()+delta*.1)));send();}
@@ -149,7 +155,7 @@ function shortcuts(wc){wc.on('before-input-event',(event,input)=>{
   if(action){event.preventDefault();Promise.resolve().then(action).catch(error=>report(error));}
 });}
 function guardTab(tab){
-  const wc=tab.view.webContents;shortcuts(wc);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
+  const wc=tab.view.webContents;shortcuts(wc);attachContextMenu(wc,Menu,()=>win);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
   wc.setWindowOpenHandler(({url})=>{if(url.startsWith('ar://'))void newTab(url).catch(error=>report(error,tab));else report(new Error('External link blocked. This browser opens ar:// addresses.'),tab);return {action:'deny'};});
   wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){send({command:'settings'});return;}if(url===WELCOME)void navigate('',tab);else if(url.startsWith('ar://'))void navigate(url,tab);else report(new Error('External navigation blocked.'),tab);});
   wc.on('will-redirect',(event,url)=>{if(!url.startsWith('ar://'))event.preventDefault();});
@@ -157,10 +163,18 @@ function guardTab(tab){
   wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;const canonical=url===WELCOME?'':normalizeAddress(url);if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
   wc.on('did-navigate-in-page',(_event,url,main)=>{if(main&&url.startsWith('ar://')){tab.url=normalizeAddress(url);send();}});
   wc.on('page-title-updated',(_event,title)=>{tab.title=String(title).slice(0,300);if(tab.id===tabs.activeId)win?.setTitle(tab.title+' — ArNS Mesh Browser');send();});
-  wc.on('did-finish-load',()=>{tab.title=wc.getTitle();if(tab.url&&tab.phase==='loaded')library.visit(tab.url,tab.title);send({libraryChanged:true});});
+  wc.on('did-finish-load',()=>{
+    tab.title=wc.getTitle();
+    if(tab.url&&tab.phase==='rendering'){
+      tab.phase='loaded';tab.progress.opened();
+      tab.message=tab.meta?.recovery?'Saved name observation · '+tab.meta.recovery.observedAt+' · Current mapping not checked.':'Page opened · Content signature verified · Name mapping relies on RPC observations.';
+      library.visit(tab.url,tab.title);
+    }
+    send({libraryChanged:true});
+  });
   wc.on('did-stop-loading',()=>send());
-  wc.on('did-fail-load',(_event,code,description,_url,main)=>{if(main&&code!==-3){tab.phase='error';report(new Error(description),tab);}});
-  wc.on('render-process-gone',(_event,details)=>{if(!tabs.rows.has(tab.id))return;tabs.stop(tab.id);tab.phase='error';report(new Error('Tab stopped: '+details.reason+'. Reload to retry.'),tab);});
+  wc.on('did-fail-load',(_event,code,description,_url,main)=>{if(main&&code!==-3){tab.phase='error';tab.progress.fail('open');report(new Error(description),tab);}});
+  wc.on('render-process-gone',(_event,details)=>{if(!tabs.rows.has(tab.id))return;tabs.stop(tab.id);tab.phase='error';tab.progress.fail('open');report(new Error('Tab stopped: '+details.reason+'. Reload to retry.'),tab);});
   wc.on('will-attach-webview',event=>event.preventDefault());
 }
 function handle(channel,fn){ipcMain.handle(channel,(event,...args)=>{
@@ -229,15 +243,16 @@ handle('diagnostics',async()=>{
   fs.writeFileSync(choice.filePath,JSON.stringify({at:new Date().toISOString(),version:app.getVersion(),platform:process.platform,role:'reader',tabs:tabs.snapshot(),accessPolicy,meta:tabs.active.meta,network:networkAuditSnapshot(),discovery:runtime.discovery.status(),historicalIndex:runtime.historical.status(),savedSites:pinner.status(),limitations:['RPC observations are not independent account inclusion proofs.','Some peer catalogs may use Turbo/Goldsky preparation; no private catalog is bundled.','One configured peer is not a resilient network.']},null,2));return true;
 });
 async function start(){
+  if(process.platform!=='darwin')Menu.setApplicationMenu(null);
   runtime=configureRuntime(coreRoot,app.getPath('userData'),{role:'client'});store=new VerifiedContentStore(path.join(runtime.dataDir,'content'));
   library=new BrowserState(path.join(runtime.dataDir,'browser-state.json'));settingsFile=path.join(runtime.dataDir,'preferences.json');
   try{const saved=JSON.parse(fs.readFileSync(settingsFile));accessPolicy=saved.accessPolicy==='saved'?'saved':'live';trustedPeers=parseTrustedPeers((saved.trustedPeers||[]).join('\n'));witnessQuorum=saved.witnessQuorum===1?1:2;}catch{}
   pinner=new SitePinner({file:path.join(runtime.dataDir,'saved-sites.json'),snapshots:runtime.snapshots,contentStore:store});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
-  win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#171521'});
+  win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef'});
   toolbar=new WebContentsView({webPreferences:{session:uiSession,preload:path.join(here,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});
   toolbar.webContents.setWindowOpenHandler(()=>({action:'deny'}));toolbar.webContents.on('will-navigate',e=>e.preventDefault());
-  win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);win.on('resize',layout);
+  win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);attachContextMenu(toolbar.webContents,Menu,()=>win);win.on('resize',layout);
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
   timer=setInterval(()=>send(),1000);send();if(accessPolicy==='live'&&!connectionConfigured())send({command:'settings'});

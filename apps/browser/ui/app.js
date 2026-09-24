@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id),api=window.arnsMesh;
 const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel'];
 let activePanel=null,lastState={},pendingUrl=null,libraryKind='history',savedKey='',previousFocus=null,uiError='';
-const busy=s=>s.loading||['resolving','content','loading'].includes(s.phase);
+const busy=s=>s.loading||['resolving','content','loading','rendering'].includes(s.phase);
 const errorText=error=>String(error.message||error).replace(/^Error invoking remote method '[^']+':\s*(?:Error:\s*)?/,'');
 const report=error=>{uiError=errorText(error);$('message').textContent=uiError;};
 const run=fn=>Promise.resolve().then(fn).catch(report);
@@ -15,7 +15,7 @@ for(const button of document.querySelectorAll('[data-close]'))button.onclick=clo
 $('backdrop').onclick=closePanel;
 $('back').onclick=()=>run(()=>api.back());$('forward').onclick=()=>run(()=>api.forward());
 $('reload').onclick=()=>run(()=>busy(lastState)?api.stop():api.reload());
-$('home').onclick=()=>{closePanel();run(()=>api.home());};
+$('home').onclick=()=>{uiError='';closePanel();run(()=>api.home());};
 $('bookmark').onclick=()=>run(()=>api.toggleBookmark());
 $('details').onclick=()=>togglePanel('panel');$('menu-details').onclick=()=>openPanel('panel');
 $('saved-button').onclick=()=>togglePanel('saved-panel');$('menu-saved').onclick=()=>openPanel('saved-panel');
@@ -32,7 +32,7 @@ function renderConnections(profile,results=[]){
 }
 let settingsProfile={directPeers:[],rpcSources:[],arweavePeers:[]};
 async function showSettings(){try{uiError='';const s=await api.getSettings();$('build-info').textContent='Version '+s.version+' · '+s.executable;$('rpc').value=s.rpcSources;$('quorum').value=String(s.witnessQuorum);$('trusted-peers').value=s.trustedPeers||'';$('direct-peers').value=s.directPeers||'';$('own-peer-id').textContent=s.peerId||'Reader';settingsProfile=s.connectionProfile;renderConnections(settingsProfile);settingsResult('');openPanel('settings-panel');}catch(e){report(e);}}
-$('settings-button').onclick=showSettings;$('mode-badge').onclick=showSettings;
+$('settings-button').onclick=showSettings;
 $('save-settings').onclick=async()=>{try{const result=await api.saveSettings({rpcSources:$('rpc').value,witnessQuorum:Number($('quorum').value),trustedPeers:$('trusted-peers').value,directPeers:$('direct-peers').value});await showSettings();settingsResult(`Saved ${result.rpcSources} RPC sources. Reload the page to retry. Other tabs stay stopped until reloaded.`);}catch(e){settingsResult(errorText(e),true);}};
 $('export').onclick=async()=>{try{$('export-result').textContent=await api.diagnostics()?'Saved.':'';}catch(e){report(e);}};
 async function renderLibrary(){const data=await api.getBrowserData(),rows=data[libraryKind]||[];const history=libraryKind==='history';$('library-title').textContent=history?'History':'Bookmarks';$('library-hint').textContent=history?'Your last 200 successfully opened ArNS addresses. Stored on this device.':'Bookmarks remember an address. Use Saved pages to keep the content for offline access.';$('clear-history').classList.toggle('hidden',!history||!rows.length);$('library-list').replaceChildren();if(!rows.length)empty($('library-list'),history?'No browsing history yet.':'No bookmarks yet. Use the star in the address bar.');for(const row of rows){const box=document.createElement('div');box.className='library-row';const link=document.createElement('button');link.className='library-link';const title=document.createElement('strong');title.textContent=row.title;const url=document.createElement('small');url.textContent=row.url;link.append(title,url);link.onclick=()=>{closePanel();run(()=>api.navigate(row.url));};box.append(link);if(history){const time=document.createElement('time');time.textContent=new Date(row.at).toLocaleDateString('en-US',{month:'short',day:'numeric'});box.append(time);}else{const remove=document.createElement('button');remove.className='icon';remove.textContent='×';remove.setAttribute('aria-label','Remove bookmark '+row.title);remove.onclick=()=>run(async()=>{await api.removeBookmark(row.url);await renderLibrary();});box.append(remove);}$('library-list').append(box);}}
@@ -42,7 +42,7 @@ $('clear-history').onclick=()=>run(async()=>{await api.clearHistory();await rend
 function empty(parent,text){const p=document.createElement('p');p.className='empty';p.textContent=text;parent.append(p);}
 api.onState(s=>{
  const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id;
- lastState=s;renderTabs(s);if(switched)$('address').value=s.url||'';
+ if(switched)uiError='';lastState=s;renderTabs(s);renderJourney(s);if(switched)$('address').value=s.url||'';
  if(s.command==='close-panel')closePanel();if(s.command==='history')showLibrary('history');if(s.command==='bookmarks')showLibrary('bookmarks');if(s.command==='settings')run(showSettings);
  if(s.focusAddress){closePanel();$('address').focus();$('address').select();}
  if(document.activeElement!==$('address'))$('address').value=s.url||'';
@@ -52,11 +52,28 @@ api.onState(s=>{
  $('zoom-reset').textContent=(s.zoom||100)+'%';$('build-version').textContent=s.version||'';
  $('saved-toggle').checked=s.accessPolicy==='saved';
  const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
- $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':'');
+ $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='loaded'?' loaded':'');
  $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':'P2P · Live';
  renderSaved(s);renderDetails(s);renderElapsed();
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
 });
+let journeyKey='';
+function renderJourney(s){
+ const stages=s.progress?.stages||[],key=JSON.stringify(stages.map(({id,status})=>({id,status})));
+ if(key===journeyKey)return;journeyKey=key;$('access-stages').replaceChildren();
+ const states={pending:'Waiting',active:'In progress',done:'Complete',skipped:'Not needed for this request',error:'Failed',interrupted:'Stopped'};
+ stages.forEach((stage,i)=>{
+  const row=document.createElement('li');row.className=stage.status;row.dataset.stage=stage.id;
+  row.title=stage.label+' · '+states[stage.status];row.setAttribute('aria-label',row.title);
+  if(stage.status==='active')row.setAttribute('aria-current','step');
+  const marker=document.createElement('span');marker.className='stage-marker';marker.setAttribute('aria-hidden','true');
+  if(stage.status==='done'){
+   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),line=document.createElementNS('http://www.w3.org/2000/svg','path');
+   svg.setAttribute('viewBox','0 0 16 16');line.setAttribute('d','M3 8l3 3 7-7');svg.append(line);marker.append(svg);
+  }else marker.textContent=stage.status==='error'?'!':stage.status==='interrupted'?'–':String(i+1);
+  const label=document.createElement('span');label.textContent=stage.label;row.append(marker,label);$('access-stages').append(row);
+ });
+}
 function renderDetails(s){const m=s.meta||{},v=m.verification||{},p=s.peer||{},nr=m.nameResolution||{};
  $('transport').textContent='IP · Mesh + raw Arweave';
  $('content-status').textContent=m.contentSignatureVerified?'Signature verified':s.phase==='error'?'Unavailable':'Waiting';
@@ -100,4 +117,4 @@ $('download-document').onclick=()=>{closePanel();run(()=>api.saveDocument());};
 
 $('import-profile').onclick=async()=>{settingsResult('');try{const mode=$('import-mode').value;const result=await api.importProfile(mode);if(!result.canceled){await showSettings();settingsResult((mode==='merge'?'Connections added.':'Connections replaced.')+' Check connections, then reload an ArNS page.');}}catch(e){settingsResult(errorText(e),true);}};
 $('export-profile').onclick=async()=>{settingsResult('');try{const result=await api.exportProfile();if(result.exported)settingsResult('Profile exported. It contains service addresses only. Share it with people allowed to use those sources.');}catch(e){settingsResult(errorText(e),true);}};
-$('check-connections').onclick=async()=>{const expected=settingsProfile;$('check-connections').disabled=true;settingsResult('Checking configured sources…');try{const results=await api.checkConnections();if(settingsProfile!==expected)return;renderConnections(settingsProfile,results);settingsResult(`${results.filter(r=>r.status==='responded').length} of ${results.length} sources responded. This checks reachability, not site availability.`);}catch(e){settingsResult(errorText(e),true);}finally{$('check-connections').disabled=false;}};
+$('check-connections').onclick=async()=>{const expected=settingsProfile;$('check-connections').disabled=true;settingsResult('Checking configured sources…');try{const results=await api.checkConnections();if(settingsProfile!==expected)return;renderConnections(settingsProfile,results);settingsResult(`${results.filter(r=>r.status==='responded').length} of ${results.length} sources responded. This checks reachability, not site availability.`,!results.some(r=>r.status==='responded'));}catch(e){settingsResult(errorText(e),true);}finally{$('check-connections').disabled=false;}};

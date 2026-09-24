@@ -23,3 +23,14 @@ Third-party packages retain their respective licenses. Binary distributions
 must include dependency license files and Electron LICENSE/LICENSES.chromium.html.
 Private operational records, private endpoint profiles and identity material
 are excluded from this public source edition.
+
+Desktop visual styling follows the AR.IO brand kit (2026-08-07):
+https://ar.io/brand-kit/agents.json
+Besley and Plus Jakarta Sans are bundled locally under the SIL Open Font License.
+Their licenses and source hashes are in apps/browser/ui/fonts/.
+The Mesh name and logo identify an independent community project, not endorsement.
+
+The ar.io wordmark in the home footer is the unmodified official dark SVG from
+https://ar.io/brand/ario-full-black.svg
+SHA-256: 8e047146a4e337806c25a6d2e485763a24f2563e1bfac6fbb35149d463688ada
+The ar.io name and logo remain trademarks of their respective owner.

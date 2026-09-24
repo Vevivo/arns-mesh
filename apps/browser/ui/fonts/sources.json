@@ -1,0 +1,14 @@
+[
+  {
+    "family": "besley",
+    "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/besley/Besley%5Bwght%5D.ttf",
+    "sourceSha256": "71f352d8859c787631a0978161d48497a72caa69dcae6996d6712a564df86c1e",
+    "woff2Sha256": "abfd6e6013a92f92dd8c34b4732a41bf1560d358c93b7c3e192f93490c5f4e41"
+  },
+  {
+    "family": "plus-jakarta-sans",
+    "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/plusjakartasans/PlusJakartaSans%5Bwght%5D.ttf",
+    "sourceSha256": "89b3fb38aa0d275d7a731d0d817a4f1622b316b4d7fbdedcf02ee9099ff68bc8",
+    "woff2Sha256": "3e35e2163e97bbfd7ef2c0f502937a48b1d0aeeff10a984cec24d3735fede352"
+  }
+]

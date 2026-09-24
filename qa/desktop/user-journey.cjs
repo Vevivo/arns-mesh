@@ -16,7 +16,7 @@ let app,browser,ui,context,recorder;
 async function screenshot(name){await pause(300);await native('capture',path.join(root,name+'.png'));}
 async function settings(){
   if(await ui.locator('#settings-panel').isVisible())return;
-  await ui.locator('#menu-button').click();await ui.locator('#settings-button').click();
+  await ui.locator('#settings-button').click();
   await ui.locator('#import-profile').waitFor();
 }
 async function importFile(file){
@@ -26,7 +26,7 @@ async function importFile(file){
 }
 async function launch(){
   const log=fs.openSync(path.join(root,'electron.log'),'a');
-  app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1'],{env:{...process.env,ARNS_MESH_USER_DATA:path.join(root,'user-data')},stdio:['ignore',log,log]});
+  app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1','--force-renderer-accessibility'],{env:{...process.env,ARNS_MESH_USER_DATA:path.join(root,'user-data')},stdio:['ignore',log,log]});
   app.once('exit',(code,signal)=>console.log('Application exit',code,signal));
   for(let n=0;n<60;n++){
     try{browser=await chromium.connectOverCDP('http://127.0.0.1:9223',{timeout:1000});break;}catch(e){if(n===59)throw e;await pause(500);}
@@ -53,8 +53,17 @@ async function close(){
   record('first-launch',{pages:context.pages().map(p=>p.url()),status:await ui.locator('#message').innerText(),homeText:welcome?await welcome.locator('body').innerText():null});
   if(candidate){assert.equal(await ui.locator('#settings-panel').isVisible(),true);await ui.locator('#settings-panel [data-close]').click();}
   if(welcome){
-    await welcome.locator('#start-address').fill('internetfireplace');await welcome.locator('[type=submit]').click();await pause(1800);
-    record('home-address-without-profile',{url:welcome.url(),status:await ui.locator('#message').innerText(),text:await welcome.locator('body').innerText()});
+    assert.equal(await welcome.locator('input,form').count(),0);
+    assert.equal(await ui.locator('#settings-button').count(),1);
+    await screenshot('01b-home-redesign');
+    const fonts=await welcome.evaluate(async()=>{await document.fonts.ready;return {heading:document.fonts.check('800 40px Besley'),body:document.fonts.check('500 14px "Plus Jakarta Sans"')};});
+    assert.deepEqual(fonts,{heading:true,body:true});record('local-brand-fonts',fonts);
+    await native('clipboard','internetfireplace');await ui.locator('#address').click({button:'right'});
+    await screenshot('01c-native-paste-menu');await native('paste','none');
+    assert.equal(await ui.locator('#address').inputValue(),'internetfireplace');
+    record('mouse-paste-address',{value:await ui.locator('#address').inputValue()});
+    await ui.locator('#open-address').click();await pause(1800);
+    record('address-without-profile',{url:welcome.url(),status:await ui.locator('#message').innerText(),text:await welcome.locator('body').innerText()});
     await screenshot('02-no-profile-page');
   }
   await settings();await screenshot('03-connection-settings');
@@ -95,6 +104,37 @@ async function close(){
   record('bookmarks',{text:await ui.locator('#library-list').innerText()});await screenshot('07-bookmarks');
   await close();await launch();await settings();
   record('restart-preservation',{peers:await ui.locator('#direct-peers').inputValue(),rpc:await ui.locator('#rpc').inputValue(),tabs:await ui.locator('[role=tab]').count()});await screenshot('08-restart-settings');if(candidate)assert.equal(await ui.locator('#direct-peers').inputValue(),'127.0.0.1:59001\n127.0.0.1:59002');assert.deepEqual(report.errors,[]);
+  await close();
+  const {pathToFileURL}=require('node:url');
+  const fixture=await import(pathToFileURL(path.join(__dirname,'seed-saved-fixture.mjs')).href);
+  record('controlled-saved-fixture',await fixture.seed(path.join(root,'user-data')));
+  await launch();await ui.locator('#address').fill('ar://mesh-qa/');await ui.locator('#open-address').click();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});
+  const page=context.pages().find(p=>p.url().startsWith('ar://mesh-qa/'));assert.ok(page);
+  assert.equal(await page.locator('#script-status').innerText(),'Local JavaScript loaded');
+  assert.equal(await page.locator('h1').evaluate(el=>getComputedStyle(el).color),'rgb(84, 39, 200)');
+  assert.equal(await page.locator('img').evaluate(el=>el.complete&&el.naturalWidth>0),true);
+  await screenshot('09-signed-saved-page');
+  await native('clipboard','Mouse paste works here too');await page.locator('#page-input').click({button:'right'});await native('paste','none');
+  assert.equal(await page.locator('#page-input').inputValue(),'Mouse paste works here too');
+  record('signed-page-assets-and-editing',{url:page.url(),status:await ui.locator('#message').innerText(),stages:await ui.locator('#access-stages').innerText()});
+  await page.locator('#next-page').click();await page.locator('h1').filter({hasText:'Second signed page'}).waitFor();
+  assert.match(page.url(),/next.html\?test=1#section/);
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('link-opened',{status:await ui.locator('#message').innerText()});
+  await ui.locator('#back').click();await page.locator('#script-status').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('back-opened',{status:await ui.locator('#message').innerText()});
+  await ui.locator('#forward').click();await page.locator('#section').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});record('forward-opened',{status:await ui.locator('#message').innerText()});
+  await ui.locator('#reload').click();await page.locator('#section').waitFor();
+  await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done'),null,{timeout:20000});
+  await ui.locator('#details').click();await screenshot('10-verification-panel');
+  record('navigation-and-verification',{url:page.url(),content:await ui.locator('#content-status').innerText(),name:await ui.locator('#name-status').innerText()});
+  assert.equal(await ui.locator('#content-status').innerText(),'Signature verified');
+  assert.match(await ui.locator('#name-status').innerText(),/Saved record/);
+  await ui.locator('#panel [data-close]').click();
+  await ui.locator('#home').click();await screenshot('11-home-final');
+  const finalHome=context.pages().find(p=>p.url()==='arnsui://app/welcome.html');await finalHome.locator('footer').scrollIntoViewIfNeeded();assert.equal(await finalHome.locator('.powered-by img').evaluate(el=>el.complete&&el.naturalWidth>0),true);await screenshot('12-home-footer');
+  assert.deepEqual(report.errors,[]);
  }catch(e){report.fatal=e.stack;console.error(e.stack);try{await screenshot('fatal-state');}catch{}process.exitCode=1;}
  finally{report.finishedAt=new Date().toISOString();fs.writeFileSync(out,JSON.stringify(report,null,2));fs.writeFileSync(path.join(root,'desktop-recording.stop'),'stop');if(recorder)await Promise.race([new Promise(r=>recorder.once('exit',r)),pause(10000)]);await close();}
 })();

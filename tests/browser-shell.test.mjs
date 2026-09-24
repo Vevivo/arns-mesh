@@ -33,6 +33,8 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    assert.deepEqual(JSON.parse(fs.readFileSync(exportFile)),call('get-settings').connectionProfile);
    assert.throws(()=>fake.handlers.get('export-profile')({sender:content.webContents,senderFrame:content.webContents.mainFrame}),/untrusted/);
    await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,200);
+   await call('reload');await content.webContents.pendingReload;
+   assert.equal(fake.messages.at(-1).data.phase,'loaded');assert.equal(fake.messages.at(-1).data.progress.stages.find(x=>x.id==='open').status,'done');
    await call('toggle-bookmark');assert.equal(call('get-browser-data').bookmarks.length,1);
    const id=await call('new-tab','unit-two');assert.equal(fake.views.length,3);assert.notEqual(fake.views[1].webContents.session,fake.views[2].webContents.session);
    let blocked;fake.views[2].webContents.session.webRequest.filter({url:'https://example.com/',resourceType:'script'},r=>blocked=r.cancel);assert.equal(blocked,true);
