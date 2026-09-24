@@ -1,0 +1,26 @@
+name: Request a connection profile
+description: Ask the maintainer or a volunteer supporter about access to a live peer and RPC.
+title: "Connection profile request"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Do not post private IPs, browsing history, keys or diagnostic files.
+        A volunteer must offer access before there is a working connection profile. This request does not guarantee service.
+        The desktop does not yet include a public supporter directory or an approval protocol.
+  - type: input
+    id: version
+    attributes:
+      label: Desktop version
+      placeholder: 0.5.0-preview.3
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: I want to
+      options:
+        - Use the desktop reader
+        - Operate a supporter peer
+    validations:
+      required: true

@@ -2,7 +2,6 @@
 import sys, time
 from pathlib import Path
 from PIL import ImageGrab
-from pywinauto import Desktop, keyboard
 import win32gui
 import ctypes
 from ctypes import wintypes
@@ -29,6 +28,8 @@ if mode == 'record':
     finally:
         writer.close()
     raise SystemExit(0)
+
+from pywinauto import Desktop, keyboard
 
 deadline = time.monotonic() + 20
 while time.monotonic() < deadline:
