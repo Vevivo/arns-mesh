@@ -4,6 +4,7 @@ on:
     branches: [qa/desktop-user-journey]
 permissions:
   contents: read
+  actions: read
 jobs:
   original-package:
     runs-on: windows-latest
@@ -21,7 +22,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download v0.5.0-preview.2 --repo "$env:GITHUB_REPOSITORY" --pattern '*.zip' --dir "$env:RUNNER_TEMP/mesh-original"
+          gh run download 35994955843 --repo "$env:GITHUB_REPOSITORY" --name windows-preview --dir "$env:RUNNER_TEMP/mesh-original"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $zip = Get-ChildItem "$env:RUNNER_TEMP/mesh-original/*.zip" | Select-Object -First 1
           $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLower()
@@ -35,7 +36,7 @@ jobs:
         run: |
           npm install --prefix "$env:QA_TOOLS" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m pip install pywinauto==0.6.9 Pillow==11.3.0
+          python -m pip install pywinauto==0.6.9 Pillow==11.3.0 imageio-ffmpeg==0.6.0
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Drive the unmodified app as a new user
         run: node qa/desktop/user-journey.cjs
@@ -45,6 +46,7 @@ jobs:
           name: original-windows-user-experience
           path: |
             ${{ runner.temp }}/mesh-user-evidence/*.png
+            ${{ runner.temp }}/mesh-user-evidence/*.mp4
             ${{ runner.temp }}/mesh-user-evidence/results.json
             ${{ runner.temp }}/mesh-user-evidence/electron.log
           retention-days: 14

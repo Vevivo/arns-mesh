@@ -10,7 +10,7 @@ const out = path.join(root,'results.json');
 const record = (id,data) => {report.steps.push({id,at:new Date().toISOString(),...data});fs.writeFileSync(out,JSON.stringify(report,null,2));console.log(id,JSON.stringify(data));};
 const pause = ms => new Promise(r=>setTimeout(r,ms));
 const native = (mode,value) => new Promise((resolve,reject)=>cp.execFile('python',[path.join(__dirname,'native-dialog.py'),mode,value],{timeout:30000},(e,stdout,stderr)=>e?reject(new Error(stdout+stderr+e.message)):resolve(stdout)));
-let app,browser,ui,context;
+let app,browser,ui,context,recorder;
 async function screenshot(name){await pause(300);await native('capture',path.join(root,name+'.png'));}
 async function settings(){
   if(await ui.locator('#settings-panel').isVisible())return;
@@ -44,7 +44,9 @@ async function close(){
 }
 (async()=>{
  try{
-  await launch();await screenshot('01-first-launch');
+  await launch();
+  recorder=cp.spawn('python',[path.join(__dirname,'native-dialog.py'),'record',path.join(root,'desktop-recording.mp4')],{stdio:'inherit'});
+  await screenshot('01-first-launch');
   const welcome=context.pages().find(p=>p.url()==='arnsui://app/welcome.html');
   record('first-launch',{pages:context.pages().map(p=>p.url()),status:await ui.locator('#message').innerText(),homeText:welcome?await welcome.locator('body').innerText():null});
   if(welcome){
@@ -76,5 +78,5 @@ async function close(){
   await close();await launch();await settings();
   record('restart-preservation',{peers:await ui.locator('#direct-peers').inputValue(),rpc:await ui.locator('#rpc').inputValue(),tabs:await ui.locator('[role=tab]').count()});await screenshot('08-restart-settings');
  }catch(e){report.fatal=e.stack;console.error(e.stack);try{await screenshot('fatal-state');}catch{}process.exitCode=1;}
- finally{report.finishedAt=new Date().toISOString();fs.writeFileSync(out,JSON.stringify(report,null,2));await close();}
+ finally{report.finishedAt=new Date().toISOString();fs.writeFileSync(out,JSON.stringify(report,null,2));fs.writeFileSync(path.join(root,'desktop-recording.stop'),'stop');if(recorder)await Promise.race([new Promise(r=>recorder.once('exit',r)),pause(10000)]);await close();}
 })();
