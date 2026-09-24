@@ -26,7 +26,7 @@ async function importFile(file){
 }
 async function launch(){
   const log=fs.openSync(path.join(root,'electron.log'),'a');
-  app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1'],{env:{...process.env,ARNS_MESH_USER_DATA:path.join(root,'user-data')},stdio:['ignore',log,log]});
+  app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1','--force-renderer-accessibility'],{env:{...process.env,ARNS_MESH_USER_DATA:path.join(root,'user-data')},stdio:['ignore',log,log]});
   app.once('exit',(code,signal)=>console.log('Application exit',code,signal));
   for(let n=0;n<60;n++){
     try{browser=await chromium.connectOverCDP('http://127.0.0.1:9223',{timeout:1000});break;}catch(e){if(n===59)throw e;await pause(500);}

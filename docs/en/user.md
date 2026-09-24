@@ -18,6 +18,11 @@ Connection setup now opens automatically on a fresh profile. Imports add sources
 
 ## Everyday use
 
+The top address bar is the only name-entry field. Right-click it and choose **Paste**, or use Ctrl+V. The same native editing menu works in page text fields. Ctrl+L focuses the address bar. The **Settings** slider icon beside the address bar is the single connection-settings entry.
+
+The row below the address bar reports **Resolve name → Find sources → Locate content → Download → Verify → Open page**. It follows actual request events, not a timed animation. Work can overlap; cached content may skip unused stages. Hover over a step for its state. A failed or stopped stage is not a completed one. **Open page** completes when the main page finishes loading; individual missing dependencies remain visible in Page information.
+
+
 - Use `+` for another tab, the star for a bookmark, and back/forward/reload/stop for navigation.
 - **Page information** separates content verification, name observation, transport and errors. Its network log is an application log, not a complete operating-system packet capture.
 - **Save current page** retains a main document or the files enumerated by its manifest. Wait for the save result. A bookmarked address is not a saved website, and a partial save is not a complete offline copy.

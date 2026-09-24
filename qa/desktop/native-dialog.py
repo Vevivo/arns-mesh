@@ -44,13 +44,19 @@ from pywinauto import Desktop, keyboard
 if mode == 'paste':
     deadline = time.monotonic() + 15
     while time.monotonic() < deadline:
-        for menu in Desktop(backend='uia').windows(control_type='Menu'):
-            for item in menu.descendants(control_type='MenuItem'):
+        for menu in Desktop(backend='uia').windows():
+            if not menu.class_name().startswith('Chrome_WidgetWin'):
+                continue
+            for item in menu.descendants():
                 if item.window_text().replace('&', '') == 'Paste' and item.is_enabled():
                     item.click_input()
                     print('Clicked Paste in the native context menu with the mouse.')
                     raise SystemExit(0)
         time.sleep(.2)
+    for window in Desktop(backend='uia').windows():
+        if window.class_name().startswith('Chrome_WidgetWin'):
+            print('Menu search window:', window.window_text(), window.class_name(), window.rectangle())
+            print('Visible controls:', [(x.window_text(), x.element_info.control_type) for x in window.descendants() if x.is_visible()][:100])
     raise SystemExit('Enabled native Paste menu item did not appear.')
 
 deadline = time.monotonic() + 20
