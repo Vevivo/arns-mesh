@@ -91,6 +91,7 @@ async function resourceHandler(tab,request){
     // Only immutable public bytes are exposed; credentials and cookies are not
     // forwarded. Fonts/module scripts/fetch need CORS across ar: and https:.
     response.headers.set('access-control-allow-origin','*');
+    response.headers.set('access-control-expose-headers','content-length, content-range, x-arns-mesh-data-id, x-arns-mesh-transport');
     response.headers.set('x-arns-mesh-data-id',result.meta.dataId);
     response.headers.set('x-arns-mesh-transport','verified-content');
     if(tabs.isCurrent(tab,epoch))tab.resources.verified++;
