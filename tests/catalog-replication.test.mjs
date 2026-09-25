@@ -12,6 +12,7 @@ import {MeshPeer} from '../apps/peer/embedded-peer.mjs';
 import {startDirectPeerServer} from '../src/direct-peer.mjs';
 import {createSwarmMeshClient} from '../src/swarm-client.mjs';
 import {peerIdFromPublicKey} from '../src/common.mjs';
+import {saveDiscoveredLocations} from '../src/discovery-store.mjs';
 
 function fixture(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'catalog-replication-'));
@@ -21,7 +22,7 @@ function fixture(t){
  Object.assign(process.env,{ARWEAVE_PEERS:empty,ARWEAVE_PEER_SEEDS:empty,HYPER_BOOTSTRAP:empty,HYPER_PEER_CACHE:path.join(dir,'learned.json'),ARNS_LOCATIONS:path.join(dir,'locations.json')});
  t.after(()=>{for(const k of keys)if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];fs.rmSync(dir,{recursive:true,force:true});});
  const peer=name=>{
-  const p=new MeshPeer({dataDir:path.join(dir,name),allowRemoteFetch:false});
+  const p=new MeshPeer({dataDir:path.join(dir,name),locationsFile:path.join(dir,name+'-locations.json'),allowRemoteFetch:false});
   const keys=crypto.generateKeyPairSync('ed25519');p.identity={publicKeyPem:keys.publicKey.export({format:'pem',type:'spki'}),privateKeyPem:keys.privateKey.export({format:'pem',type:'pkcs8'})};p.witnessPeerId=peerIdFromPublicKey(p.identity.publicKeyPem);return p;
  };
  return {dir,peer};
@@ -45,6 +46,7 @@ test('catalog automatically replicates a verified manifest graph and survives so
  const item=async(data,type)=>{const d=createData(data,signer,{tags:[{name:'Content-Type',value:type}]});await d.sign(signer);await a.contentStore.put(d.id,d.getRaw());return d;};
  const html=await item('<h1>Catalog replica</h1>','text/html'),css=await item('h1{color:teal}','text/css');
  const root=await item(JSON.stringify({manifest:'arweave/paths',version:'0.2.0',index:{id:html.id},paths:{'style.css':{id:css.id}}}),'application/x.arweave-manifest+json');
+ for(const original of [root,html,css])saveDiscoveredLocations(a.locationIndex.file,[[original.id,{dataId:original.id,weaveOffset:0,itemSize:original.getRaw().length}]]);
  let serverA=await startDirectPeerServer(a,{host:'127.0.0.1',port:0}),serverB;
  try{
   const worker=new CatalogWorker({dataDir:path.join(dir,'b'),peer:b,endpoint:'http://127.0.0.1:1',client:direct(serverA,{excludeWitnesses:[b.witnessPeerId]})});
@@ -55,10 +57,12 @@ test('catalog automatically replicates a verified manifest graph and survives so
   assert.equal(worker.status().meshReplicated,3);assert.equal(worker.status().completed,3);
   assert.equal(worker.status().lastSuccess.source,'p2p-content');assert.ok(worker.status().dayResponseBytes>0);
   assert.equal(worker.status().queued,0);assert.equal(b.contentStore.stats().files.length,3);
+  assert.equal(worker.state.locationsReplicated,3);
   await serverA.close();serverA=null;
   serverB=await startDirectPeerServer(b,{host:'127.0.0.1',port:0});
   const fresh=direct(serverB);
   for(const original of [root,html,css])assert.deepEqual((await fresh.content(original.id)).rawItem,original.getRaw());
+  for(const original of [root,html,css])assert.equal((await fresh.locateCandidates(original.id))[0].record.itemSize,original.getRaw().length);
   const resumed=new CatalogWorker({dataDir:path.join(dir,'b'),peer:b,endpoint:'http://127.0.0.1:1',client:fresh});
   assert.equal(resumed.status().meshReplicated,3);assert.equal(resumed.status().dayResponseBytes,worker.status().dayResponseBytes);
   // Exclusion is enforced by signed identity, even if an endpoint is aliased.

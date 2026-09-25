@@ -82,14 +82,16 @@ test('direct IP replication serves a fresh client after the original peer stops,
  const root=await make(JSON.stringify({manifest:'arweave/paths',version:'0.1.0',index:{path:'index.html'},paths:{'index.html':{id:html.id},'style.css':{id:css.id}}}),'application/x.arweave-manifest+json');
  const record=snapshot('alpha',{txId:root.id});
  const namesA=new NameSnapshotStore(path.join(dir,'a-names.json'));namesA.put(record,{kind:'local-rpc'});
- const a=new MeshPeer({dataDir:path.join(dir,'a'),snapshotStore:namesA});identity(a);
+ const a=new MeshPeer({dataDir:path.join(dir,'a'),snapshotStore:namesA,allowRemoteFetch:false});identity(a);
  for(const item of [root,html,css])await a.contentStore.put(item.id,item.getRaw());
  let serverA=await startDirectPeerServer(a,{host:'127.0.0.1',port:0});
  const namesB=new NameSnapshotStore(path.join(dir,'b-names.json'));
  // Both providers independently have the same controlled name observation.
  // This fixture is not evidence of Solana account inclusion or live ArNS access.
  namesB.put(record,{kind:'local-rpc'});
- const b=new MeshPeer({dataDir:path.join(dir,'b'),snapshotStore:namesB});identity(b);
+ // Keep this corruption fixture cache-only. An active supporter may repair
+ // its damaged copy from C while answering a missing-location request.
+ const b=new MeshPeer({dataDir:path.join(dir,'b'),snapshotStore:namesB,allowRemoteFetch:false});identity(b);
  let serverB;
  try{
   fs.writeFileSync(process.env.ARNS_IP_PEERS,JSON.stringify(['127.0.0.1:'+serverA.address.port]));
@@ -114,7 +116,7 @@ test('direct IP replication serves a fresh client after the original peer stops,
   const corrupted=Buffer.from(css.getRaw());corrupted[corrupted.length-1]^=1;
   fs.writeFileSync(b.contentStore.file(css.id),corrupted);
   fs.unlinkSync(freshStore.file(css.id));
-  const c=new MeshPeer({dataDir:path.join(dir,'c')});identity(c);await c.contentStore.put(css.id,css.getRaw());
+  const c=new MeshPeer({dataDir:path.join(dir,'c'),allowRemoteFetch:false});identity(c);await c.contentStore.put(css.id,css.getRaw());
   const serverC=await startDirectPeerServer(c,{host:'127.0.0.1',port:0});
   try{
    fs.writeFileSync(process.env.ARNS_IP_PEERS,JSON.stringify(['127.0.0.1:'+serverB.address.port,'127.0.0.1:'+serverC.address.port]));

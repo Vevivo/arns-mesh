@@ -1,16 +1,16 @@
 # Önizleme durumu ve doğrulama sınırları
 
-**0.5.0-preview.4**, bağımsız masaüstü okuyucusunu ve destekçi çekirdeğini paylaşmaya hazırlayan sürümdür. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
+**0.5.0-preview.6** yayımlanmış masaüstü sürümüdür. 25 Eylül 2026 DNS/gateway kesinti ölçümleri ve destekçi konum çoğaltma değişikliği [deney kaydında](../disaster-network.md) açıklanır. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
 
 | Konu | Kanıtın kapsamı |
 |---|---|
 | Çekirdek testleri | İmza/kimlik, konum, manifest, bütçe, iptal, katalog ve aynı cihazda iki peer denemeleri. Kesin commit sonucu GitHub Actions'ta. |
 | Masaüstü kabuğu | Electron API test çiftleriyle sekme, IPC ve profil aktarımı; gerçek çizilmiş sayfa testi değil. |
 | Destekçi kurucusu | Ayrı geçici dizinde kurulum/güncelleme; kimlik, veri ve profil korunması. Bağımlılık indirme bu duman testinde taklit edilir, CI'da gerçek `npm ci` ayrıca çalışır. |
-| Windows paketi | Paketleme/çalıştırılabilir sürüm kontrolü, gerçek Windows sayfa ve SmartScreen kabulü değil. |
+| Windows paketi | Yayımlanmış ZIP özeti doğrulandı; gerçek masaüstünde dört ArNS ana belgesi ağ engeli altında açıldı. Harici varlıklar nedeniyle eksik sayfalar var. |
 | Önceki canlı veri deneyi | Boş Linux okuyucu, dolu peer'den gerçek HTML doğruladı; saklanan kopya ayrı modda açıldı. Özel kayıtlar repoda yok; bütün isimleri bağımsız bulma kanıtı değil. |
-| Gerçek Windows / Raspberry Pi | Tam kurulum, sayfa, güncelleme/kaldırma ve Pi donanım kabulü bekliyor. |
-| Bütün ağın bağımsızlığı | IP ağ kontrolleri var; DNS/DoH/IPv6/WebRTC dahil işletim sistemi seviyesinde tam engelleme/kayıt kabulü bekliyor. |
+| Gerçek Windows / Raspberry Pi | Windows sayfa deneyi yapıldı; tam kurulum, güncelleme/kaldırma, SmartScreen ve Pi donanım kabulü bekliyor. |
+| Ağ kesintisi | Windows Firewall ile izinli IP uçları dışındaki erişim, DNS, IPv6 ve UDP engellendi. DNS, gateway ve DoH olumlu/olumsuz kontrolleri geçti; tam paket kaydı yapılmadı. |
 | Bağımsız sunucu kaybı | Tek cihazdaki iki süreç testi var; farklı cihaz/sağlayıcı testi tamamlanmadı. |
 | Bilinmeyen konum | Genel keşif tamamlanmadı. Bazı eski kataloglar Turbo/Goldsky hazırlığına dayanıyordu; bunlar repoda değil. |
 

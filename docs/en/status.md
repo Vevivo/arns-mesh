@@ -1,6 +1,6 @@
 # Preview status and evidence boundaries
 
-Version: **0.5.0-preview.4**. This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
+Published desktop version: **0.5.0-preview.6**. See the [25 September outage experiment and supporter routing update](../disaster-network.md). This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
 
 | Area | Evidence / status |
 |---|---|
@@ -10,9 +10,9 @@ Version: **0.5.0-preview.4**. This repository packages the existing standalone r
 | Windows package | Automated build pins Electron and dependencies; packaging and executable version checks are not real page rendering or SmartScreen acceptance. |
 | Earlier content experiment | A new Linux reader verified a real HTML document from an already populated peer, then explicit saved access used the retained copy. Private addresses/logs and prepared catalogs are excluded. This is a warm-peer observation, not universal or fresh-index coverage. |
 | Windows desktop GUI | `qa/desktop/user-journey.cjs` drives the packaged executable and native dialogs, captures the Windows desktop, and checks signed saved-page HTML/CSS/JS/image/navigation. It does not substitute production resolver or dialog APIs. Its generated `mesh-qa` name is a synthetic saved observation, not a public ArNS registration; fixtures are excluded from the release. See the [workflow](../../.github/workflows/desktop-user-journey.yml) and release acceptance record for the exact successful run. |
-| Windows end-to-end | Full install/render/update/remove acceptance with live public ArNS content is pending. Prior extension screenshots are not acceptance for this desktop package. |
+| Windows end-to-end | Four real main documents opened in the published app during the outage experiment. Some pages have blocked external assets. Full install/update/remove and SmartScreen acceptance remain pending. |
 | Raspberry Pi | Installation instructions and intended ARM64 route; no real hardware acceptance yet. |
-| DNS/gateway independence | IP-only controls and regression tests exist. Complete OS-level DNS/DoH/IPv6/WebRTC/sockets capture under controlled blocking is pending. |
+| DNS/gateway independence | Windows Firewall allowlist, IPv6/UDP and system DNS blocking were exercised with the published app and fresh data directories. Unguarded executable probes checked DNS, gateway HTTPS and DoH before/after. Full packet capture remains pending. |
 | Independent-host failover | Pending. Two loopback peers on one machine are not independent infrastructure. |
 | Unknown locations | General first-discovery coverage is incomplete. Old prepared catalogs can depend on prior Turbo/Goldsky preparation. |
 
