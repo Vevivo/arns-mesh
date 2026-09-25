@@ -7,6 +7,7 @@ import {getHistoricalIndex} from './cdb64-index.mjs';
 import {firstVerified} from './query-work.mjs';
 import {withTransferBudget} from './resource-budget.mjs';
 import {manifestTargetIds} from './manifest-path.mjs';
+import {replicateLocationHint} from './location-replication.mjs';
 export {firstVerified} from './query-work.mjs';
 
 function sourceError(error,depth=0){
@@ -17,10 +18,10 @@ function sourceError(error,depth=0){
  return detail;
 }
 
-export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||0))}={}){
+export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),replicateLocation=false,meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||0))}={}){
  if(!/^[A-Za-z0-9_-]{43}$/.test(dataId))throw new Error('invalid_data_id');
  const cached=contentStore?.get(dataId);
- if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind};}catch{}}
+ if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
  const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId);
  // Give the broader published index a short first opportunity. Launching 72
  // L1 probes and three older index lookups for every bundled asset caused
@@ -109,6 +110,9 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
    const bytes=result.direct.storedBytes||result.direct.rawItem;
    if(bytes&&contentStore)await contentStore.put(dataId,bytes);
   }catch(error){result.cacheError=String(error.message||error);}
+  // Supporters retain this small hint within the caller's time/byte budget.
+  // Reader navigation and saved/offline opening perform no extra request.
+  if(replicateLocation&&!result.cacheError)result.locationReplication=await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal});
   return result;
  }catch(error){
   signal?.throwIfAborted();

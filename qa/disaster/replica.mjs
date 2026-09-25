@@ -9,7 +9,29 @@ import {configureNetworkAudit,networkAuditSnapshot} from '../../src/network-audi
 const dir=path.resolve(process.env.QA_REPLICA_DIR),mode=process.argv[2];
 fs.mkdirSync(dir,{recursive:true});
 process.env.ARNS_MESH_DIRECT_ONLY='1';
-if(mode==='seed'){
+if(mode==='prepare-index'){
+ // Run before origin isolation. Retain metadata through the same production
+ // replication function used by catalog/supporter peers, using signed content
+ // obtained during the first Windows phase. No gateway preparation is run here.
+ const {applyProfile,validateProfile}=await import('../../apps/helper/network-profile.mjs');
+ const {configureRuntime}=await import('../../apps/helper/runtime.mjs');
+ const {coreRoot}=await import('../../apps/helper/core-adapter.mjs');
+ const {VerifiedContentStore}=await import('../../src/content-store.mjs');
+ const {replicateLocationHint}=await import('../../src/location-replication.mjs');
+ const {createSwarmMeshClient}=await import('../../src/swarm-client.mjs');
+ const profile=validateProfile(JSON.parse(process.env.MESH_QA_PROFILE));delete process.env.MESH_QA_PROFILE;
+ applyProfile(dir,{...profile,arweavePeers:[]});configureRuntime(coreRoot,dir,{role:'index'});
+ const store=new VerifiedContentStore(path.join(process.env.QA_SEED_DIR,'content'));
+ const locationsFile=path.join(dir,'locations.json');
+ const client=createSwarmMeshClient({dhtEnabled:false,cacheOnly:true});
+ const rows=[];
+ for(const {dataId} of store.stats().files){
+  const copied=await replicateLocationHint(dataId,{client,contentStore:store,locationsFile,timeoutMs:5000});
+  rows.push({dataId,...copied});
+ }
+ fs.writeFileSync(path.join(dir,'seed-report.json'),JSON.stringify({fixture:false,preparedFrom:'Signed routing replies from original Mesh peer before outage',samePhysicalHost:true,contentCopied:0,rows}));
+ console.log(JSON.stringify({event:'routing-replicated',rows}));
+}else if(mode==='seed'){
  const {applyProfile,validateProfile}=await import('../../apps/helper/network-profile.mjs');
  const {configureRuntime}=await import('../../apps/helper/runtime.mjs');
  const {resolveArUrl,coreRoot}=await import('../../apps/helper/core-adapter.mjs');
@@ -41,14 +63,14 @@ if(mode==='seed'){
  await import('../../src/network-lockdown.mjs');
  configureNetworkAudit(path.join(dir,'serving-audit'));
  const snapshots=new NameSnapshotStore(path.join(dir,'name-snapshots.json'));
- const peer=new MeshPeer({dataDir:path.join(dir,'peer'),allowRemoteFetch:false,snapshotStore:snapshots,locationsFile:path.join(dir,'empty-locations.json')});
+ const peer=new MeshPeer({dataDir:path.join(dir,'peer'),allowRemoteFetch:false,snapshotStore:snapshots,locationsFile:path.join(dir,'locations.json')});
  await peer.start();
  const port=Number(process.env.QA_REPLICA_PORT||49741);
  const server=await startDirectPeerServer(peer,{host:'0.0.0.0',port});
  const reportFile=path.join(dir,'serving-report.json');
- const save=()=>fs.writeFileSync(reportFile,JSON.stringify({replica:process.env.QA_REPLICA_ID,remoteFetchEnabled:peer.allowRemoteFetch,witnessPeerId:peer.witnessPeerId,requestsServed:peer.requestsServed,contentChunksServed:peer.contentChunksServed,contentBytesServed:peer.contentBytesServed,network:networkAuditSnapshot(),seed:JSON.parse(fs.readFileSync(path.join(dir,'seed-report.json')))}));
+ const save=()=>fs.writeFileSync(reportFile,JSON.stringify({replica:process.env.QA_REPLICA_ID,remoteFetchEnabled:peer.allowRemoteFetch,witnessPeerId:peer.witnessPeerId,requestsServed:peer.requestsServed,contentFiles:peer.contentStore.stats().files.length,contentChunksServed:peer.contentChunksServed,contentBytesServed:peer.contentBytesServed,network:networkAuditSnapshot(),seed:JSON.parse(fs.readFileSync(path.join(dir,'seed-report.json')))}));
  save();fs.writeFileSync(path.join(dir,'ready.json'),JSON.stringify({host:process.env.QA_PUBLIC_IP,port:server.address.port,witnessPeerId:peer.witnessPeerId,replica:process.env.QA_REPLICA_ID,fixture:false}));
  const timer=setInterval(save,1000);
  const stop=async()=>{clearInterval(timer);save();await server.close();await peer.stop();process.exit(0);};
  process.on('SIGTERM',stop);process.on('SIGINT',stop);setTimeout(stop,18*60*1000).unref();
-}else throw new Error('Expected seed or serve');
+}else throw new Error('Expected seed, prepare-index or serve');

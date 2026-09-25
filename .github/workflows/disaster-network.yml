@@ -89,6 +89,8 @@ jobs:
           python-version: '3.12'
       - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
       - run: npm run check:public
+      - name: Test the supporter routing replication changes
+        run: npm test
       - name: Download and verify the exact published Windows release
         shell: pwsh
         run: |

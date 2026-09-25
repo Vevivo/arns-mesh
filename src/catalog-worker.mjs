@@ -81,13 +81,14 @@ export class CatalogWorker {
    // must not silently drop an item, nor mark an unverified object completed.
    this.save();
    try{
-    const result=await phase(passBudget-used,controller,()=>this.fetchContent(job.id,{client:this.client,contentStore:this.peer.contentStore,locationsFile:this.peer.locationIndex.file,signal:controller.signal}));
+    const result=await phase(passBudget-used,controller,()=>this.fetchContent(job.id,{client:this.client,contentStore:this.peer.contentStore,locationsFile:this.peer.locationIndex.file,signal:controller.signal,replicateLocation:true}));
     if(result.cacheError)throw new Error('catalog_cache_failed: '+result.cacheError);
     const stored=Boolean((result.direct.storedBytes||result.direct.rawItem)&&this.peer.contentStore.get(job.id));
     if(!stored)throw new Error('catalog_content_not_stored');
     const source=result.direct.transport||result.loc?.transport||(result.direct.peer?.host==='local-cache'?'local-cache':'raw-arweave');
     if(!job.fetchedAt&&['p2p-content','mesh-index'].includes(source))this.state.meshReplicated=(this.state.meshReplicated||0)+1;
-    this.state.lastSuccess={dataId:job.id,source,stored,storageKind:result.storageKind||result.direct.storageKind||'ans104',at:new Date().toISOString()};
+    if(result.locationReplication?.status==='replicated')this.state.locationsReplicated=(this.state.locationsReplicated||0)+1;
+    this.state.lastSuccess={dataId:job.id,source,stored,locationReplication:result.locationReplication?.status||null,storageKind:result.storageKind||result.direct.storageKind||'ans104',at:new Date().toISOString()};
     if(!job.fetchedAt){job.fetchedAt=Date.now();this.state.completed++;}
     this.state.lastError=null;let graphPending=false;
     if(result.direct.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.includes('application/x.arweave-manifest'))){
@@ -123,7 +124,7 @@ export class CatalogWorker {
   }
   return this.status();
  }
- status(){return {catalog:this.catalog.status(),queued:this.state.jobs.length,maxQueued:this.maxJobs,deferredRoots:this.state.deferredRoots||0,pendingGraphs:this.state.jobs.filter(j=>j.graphPending).length,completed:this.state.completed,meshReplicated:this.state.meshReplicated||0,lastSuccess:this.state.lastSuccess||null,failed:this.state.failed,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,byteScope:'HTTP response bodies and Mesh response streams; excludes UDP discovery/control overhead',lastError:this.state.lastError,catalogError:this.state.catalogError||null,catalogFailures:this.state.catalogFailures||0,lastGraphError:this.state.lastGraphError||null,generalCoverage:false};}
+ status(){return {catalog:this.catalog.status(),queued:this.state.jobs.length,maxQueued:this.maxJobs,deferredRoots:this.state.deferredRoots||0,pendingGraphs:this.state.jobs.filter(j=>j.graphPending).length,completed:this.state.completed,meshReplicated:this.state.meshReplicated||0,locationsReplicated:this.state.locationsReplicated||0,lastSuccess:this.state.lastSuccess||null,failed:this.state.failed,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,byteScope:'HTTP response bodies and Mesh response streams; excludes UDP discovery/control overhead',lastError:this.state.lastError,catalogError:this.state.catalogError||null,catalogFailures:this.state.catalogFailures||0,lastGraphError:this.state.lastGraphError||null,generalCoverage:false};}
  start(){if(!this.stopped)return;this.stopped=false;const loop=async()=>{if(this.stopped)return;await this.pass().catch(e=>{this.state.lastError=e.message;});if(!this.stopped){this.timer=setTimeout(loop,this.intervalMs);this.timer.unref?.();}};void loop();}
  stop(){this.stopped=true;clearTimeout(this.timer);this.controller?.abort(new Error('catalog_stopped'));}
 }

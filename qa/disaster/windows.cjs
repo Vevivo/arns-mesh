@@ -72,12 +72,15 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
    phase.pages.push(row);save();console.log('DISASTER_PAGE',clean({phase:id,name,opened:row.opened,elapsedMs,network:row.network,status:row.status}));
    const visible=row.status+' '+row.document.text;
    if(!privateValues.some(v=>visible.includes(v)))await native('capture',path.join(out,id+'-'+name+'.png'));
+   try{
    assert.equal(row.opened,true,id+': '+name+' must open');assert.match(row.content,/verified/i);assert.match(row.mode,/Live/);assert.equal(row.network.cutSourceResponses,0);
-   if(extra.rawOnly){assert.equal(row.network.meshResponses,0);assert.ok(row.network.purposes.includes('raw-arweave'),'Fresh client must obtain bytes from the independent raw storage nodes');}
+   if(extra.rawOnly){if(!extra.indexOnly)assert.equal(row.network.meshResponses,0);assert.ok(row.network.purposes.includes('raw-arweave'),'Fresh client must obtain bytes from the independent raw storage nodes');}
    else {assert.ok(row.network.meshResponses>0,'A fresh client must receive data from Mesh');assert.equal(row.network.purposes.includes('raw-arweave'),false,'No raw server is configured in this replica-only experiment');}
    await native('check-errors');
+   }catch(e){row.validationError=clean(e.message);if(!extra.collectFailures)throw e;}
   }
-  phase.passed=true;
+  phase.passed=phase.pages.length===4&&phase.pages.every(p=>!p.validationError);
+  if(!phase.passed)throw new Error(id+': '+phase.pages.filter(p=>p.validationError).map(p=>p.name).join(', ')+' failed');
  }catch(e){phase.error=clean(e.message);phase.passed=false;throw e;}
  finally{phase.finishedAt=new Date().toISOString();save();await stopBrowser();}
  return dataDir;
@@ -86,10 +89,15 @@ let externalChecks=[];
 async function localFallback(seedDir){
  const binaryDir=path.join(out,'isolated-peer-binary');fs.mkdirSync(binaryDir,{recursive:true});const node=path.join(binaryDir,'node.exe');fs.copyFileSync(process.execPath,node);localPeerPrograms.push(node);
  const results=[];
- for(const [i,id] of ['a','b'].entries()){
+ for(const [i,id] of ['a','b','index'].entries()){
   const dir=path.join(out,'local-replica-'+id);fs.mkdirSync(path.join(dir,'peer'),{recursive:true});
-  fs.cpSync(path.join(seedDir,'content'),path.join(dir,'peer','content'),{recursive:true});fs.copyFileSync(path.join(seedDir,'name-snapshots.json'),path.join(dir,'name-snapshots.json'));
-  fs.writeFileSync(path.join(dir,'seed-report.json'),JSON.stringify({fixture:false,preparedFrom:'Windows phase dns-cut',samePhysicalHost:true}));
+  if(id==='index'){
+   const prepared=await exec(node,[path.join(__dirname,'replica.mjs'),'prepare-index'],{env:{...process.env,QA_REPLICA_DIR:dir,QA_SEED_DIR:seedDir,MESH_QA_PROFILE:JSON.stringify(profile)},timeout:90000});
+   note('routing-preparation',{result:JSON.parse(prepared.trim())});
+  }else{
+   fs.cpSync(path.join(seedDir,'content'),path.join(dir,'peer','content'),{recursive:true});fs.copyFileSync(path.join(seedDir,'name-snapshots.json'),path.join(dir,'name-snapshots.json'));
+   fs.writeFileSync(path.join(dir,'seed-report.json'),JSON.stringify({fixture:false,preparedFrom:'Windows phase dns-cut',samePhysicalHost:true}));
+  }
   const port=0,logPath=path.join(out,'local-'+id+'-private.txt'),log=fs.openSync(logPath,'a');
   const proc=cp.spawn(node,[path.join(__dirname,'replica.mjs'),'serve'],{env:{...process.env,QA_REPLICA_DIR:dir,QA_REPLICA_PORT:String(port),QA_REPLICA_ID:id,QA_PUBLIC_IP:'127.0.0.1'},stdio:['ignore',log,log]});fs.closeSync(log);localPeers.push(proc);
   for(let n=0;n<80;n++){if(fs.existsSync(path.join(dir,'ready.json'))||proc.exitCode!==null)break;await delay(250);}
@@ -123,13 +131,22 @@ async function localFallback(seedDir){
   // Also measure cold access through the operator's existing raw Arweave
   // storage peers. No saved bytes, location hints or Mesh replica are supplied.
   if(profile.arweavePeers.length){try{
-   await runPhase('raw-peers-only',profile.directPeers,[...profile.arweavePeers,...profile.rpcSources],profile.directPeers,{scope:'Cold client, original Mesh source blocked, only configured raw Arweave storage peers and RPC reachable',rawOnly:true});report.rawPeerFallbackPassed=true;
+   await runPhase('raw-peers-only',profile.directPeers,[...profile.arweavePeers,...profile.rpcSources],profile.directPeers,{scope:'Cold client, original Mesh source blocked, only configured raw Arweave storage peers and RPC reachable',rawOnly:true,collectFailures:true});report.rawPeerFallbackPassed=true;
   }catch(e){report.rawPeerFallbackPassed=false;note('raw-peer-fallback-gap',{error:clean(e.message)});}}
+  const index=replicas.find(r=>r.id==='index');
+  if(index&&profile.arweavePeers.length){
+   await runPhase('index-replica-raw',[...profile.directPeers,index.endpoint],[index.endpoint,...profile.arweavePeers,...profile.rpcSources],profile.directPeers,{scope:'Original Mesh source blocked; prepared index-only replica has no content; fresh client reads real raw Arweave peers',rawOnly:true,indexOnly:true,collectFailures:true});
+   await delay(1100);
+   const serving=JSON.parse(fs.readFileSync(path.join(out,'local-replica-index','serving-report.json')));
+   assert.equal(serving.contentFiles,0);assert.equal(serving.contentBytesServed,0);assert.equal(serving.remoteFetchEnabled,false);
+   report.indexReplicaRawPassed=true;
+  }
  }catch(e){report.fatal=clean(e.stack);report.testPassed=false;console.error(report.fatal);process.exitCode=1;}
  finally{
   await stopBrowser();for(const proc of localPeers)if(proc.exitCode===null)cp.spawnSync('taskkill',['/pid',String(proc.pid),'/T','/F'],{stdio:'ignore'});
-  for(const id of ['a','b']){const file=path.join(out,'local-replica-'+id,'serving-report.json');if(fs.existsSync(file))(report.localReplicaEvidence??=[]).push(JSON.parse(fs.readFileSync(file)));}
+  for(const id of ['a','b','index']){const file=path.join(out,'local-replica-'+id,'serving-report.json');if(fs.existsSync(file))(report.localReplicaEvidence??=[]).push(JSON.parse(fs.readFileSync(file)));}
   try{report.restoration=JSON.parse((await exec('pwsh',['-NoProfile','-File',path.join(__dirname,'firewall.ps1'),'-Mode','clear','-Group',group])).trim());}catch(e){report.restoration={error:clean(e.message)};process.exitCode=1;}
+  report.disasterGoalFullyVerified=report.testPassed===true&&report.independentHostFailover===true&&report.rawPeerFallbackPassed===true;
   report.finishedAt=new Date().toISOString();save();
  }
 })();

@@ -61,7 +61,8 @@ export class MeshPeer {
   }
   _warmLocation(dataId){
     if(!this.allowRemoteFetch)return;
-    if(!validDataId(dataId)||this.contentStore.has(dataId)||this.historyLookups.has(dataId))return;
+    if(!validDataId(dataId)||this.historyLookups.has(dataId))return;
+    if(this.contentStore.has(dataId)&&this.locationIndex.get(dataId))return;
     const resolver=getHistoricalIndex();
     const now=Date.now();this.historyStarts=this.historyStarts.filter(t=>now-t<60000);
     if(this.historyStarts.length>=12||this.historyLookups.size>=2)return;
@@ -70,7 +71,7 @@ export class MeshPeer {
     // One bounded replication hop. A downstream cache-only request cannot
     // start or await another warm lookup, preventing cycles between empty peers.
     const cachedPeers=createSwarmMeshClient({directPeers,dhtEnabled:false,cacheOnly:true,excludeWitnesses:[this.witnessPeerId]});
-    const job=fetchMeshContent(dataId,{client:cachedPeers,meshHeadStartMs:2500,contentStore:this.contentStore,locationsFile:this.locationIndex.file,signal:AbortSignal.timeout(45000)}).then(async()=>{
+    const job=fetchMeshContent(dataId,{client:cachedPeers,meshHeadStartMs:2500,contentStore:this.contentStore,locationsFile:this.locationIndex.file,signal:AbortSignal.timeout(45000),replicateLocation:true}).then(async()=>{
       await this._announceTopic('content:'+dataId,contentTopic(dataId));
     }).catch(()=>null).finally(()=>{this.historyLookups.delete(dataId);});
     this.historyLookups.set(dataId,job);
