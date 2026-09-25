@@ -1,5 +1,7 @@
 # Preview status and evidence boundaries
 
+Source candidate **0.5.0-preview.7** adds direct immutable Arweave resources and bounded static-reference replication/pinning. See [measured resource behavior](../arweave-resources.md); the live embedded media gap remains.
+
 Published desktop version: **0.5.0-preview.6**. See the [25 September outage experiment and supporter routing update](../disaster-network.md). This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
 
 | Area | Evidence / status |

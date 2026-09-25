@@ -1,5 +1,7 @@
 # Önizleme durumu ve doğrulama sınırları
 
+Kaynakta **0.5.0-preview.7 aday sürümü** Arweave dosya adreslerini gateway’e bağlanmadan yerel veri yoluna alır; sabit Arweave bağlantılarını kopyalama ve saklamaya ekler. [129 test ve gerçek Windows ölçümü](../arweave-resources.md) mevcut; canlı video/sesin konum keşfi henüz tamamlanmadı.
+
 **0.5.0-preview.6** yayımlanmış masaüstü sürümüdür. 25 Eylül 2026 DNS/gateway kesinti ölçümleri ve destekçi konum çoğaltma değişikliği [deney kaydında](../disaster-network.md) açıklanır. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
 
 | Konu | Kanıtın kapsamı |
