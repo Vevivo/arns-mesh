@@ -4,7 +4,7 @@ Immutable Arweave resource URLs in pages are now served inside the browser throu
 
 Save page and supporter catalog replication now follow bounded literal Arweave references in signed HTML/CSS/JavaScript/JSON as well as manifest files. Saved resources retain their pins across restart and open locally in saved mode. Dynamic URLs and third-party services are not included; missing files remain visible as an incomplete copy.
 
-129 source tests passed on Linux and Windows. The real Windows candidate passed DNS/gateway OS blocking, four main-document opens and a separate real-document resource transport control. This does **not** establish complete embedded assets: internetfireplace video/audio locations are still missing from available indexes, and permahistory still depends on external CDNs. See [direct-resource evidence and limits](../arweave-resources.md). This candidate is not yet the published release.
+129 source tests passed on Linux and Windows. The real Windows candidate passed DNS/gateway OS blocking, four main-document opens and a separate real-document resource transport control. This does **not** establish complete embedded assets: internetfireplace video/audio locations are still missing from available indexes, and permahistory still depends on external CDNs. See [direct-resource evidence and limits](../arweave-resources.md). A bounded fallback now searches nearby native Arweave blocks from a verified parent page when ordinary resource lookup fails. The separate Linux experiment found and signature-verified all three missing media items without new gateway metadata. The new Windows video/audio playback gate is pending. This candidate is not yet the published release.
 
 # Supporter routing replication — source update
 

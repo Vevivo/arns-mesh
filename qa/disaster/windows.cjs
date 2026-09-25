@@ -79,6 +79,12 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
    let resources;
    if(extra.resourceTest){
     const play=page.getByRole('button',{name:/^play$/i});if(await play.count())await play.first().click({timeout:5000}).catch(()=>{});
+    if(name==='internetfireplace'){
+     const deadline=Date.now()+270000;
+     while(Date.now()<deadline&&new Set(resourceResponses.map(r=>r.url)).size<3)await delay(250);
+     await native('dismiss-alert','Playback was blocked');
+     if(await play.count())await play.first().click({timeout:5000}).catch(()=>{});
+    }
     await delay(name==='internetfireplace'?15000:2000);
     if(name==='internetfireplace')await native('dismiss-alert','Playback was blocked');
     resources={responses:[...resourceResponses],failures:[...resourceFailures],consoleErrors:[...resourceConsole],dom:await page.evaluate(()=>({media:[...document.querySelectorAll('video,audio')].map(e=>({tag:e.tagName,src:e.currentSrc||e.getAttribute('src'),readyState:e.readyState,currentTime:e.currentTime,paused:e.paused,error:e.error?{code:e.error.code,message:e.error.message}:null})),sources:[...document.querySelectorAll('source,script[src],link[href]')].map(e=>({tag:e.tagName,url:e.src||e.href||e.getAttribute('src')})).filter(e=>e.url?.startsWith('https://arweave.net/'))}))};
@@ -152,6 +158,9 @@ async function localFallback(seedDir){
    report.resourceTransportControls=report.phases[0].pages.flatMap(p=>p.arweaveResources?.transportControl?[p.arweaveResources.transportControl]:[]);
    assert.equal(report.resourceTransportControls.length,1,'The real-document resource transport control must pass under OS blocking');
    report.embeddedArweaveResourcesPassed=report.verifiedResourceResponses.length>0&&report.phases[0].pages.every(p=>(p.arweaveResources?.responses||[]).every(r=>[200,206].includes(r.status)));
+   const media=report.phases[0].pages.find(p=>p.name==='internetfireplace')?.arweaveResources?.dom.media||[];
+   report.mediaPlaybackPassed=media.length===2&&media.every(m=>m.readyState>=2&&m.currentTime>1&&!m.error);
+   if(process.env.QA_REQUIRE_MEDIA==='1'){assert.equal(report.embeddedArweaveResourcesPassed,true,'All observed Arweave media requests must verify');assert.equal(report.mediaPlaybackPassed,true,'Real video and audio must advance under OS network blocking');}
    report.testScope='Verified HTTPS resource interception, GET/HEAD/range controls and main documents under OS firewall; embedded asset coverage reported separately';
    if(!report.embeddedArweaveResourcesPassed)report.limitations.push('Embedded live Arweave media is not fully available. The separate real-document control does not establish media playback or general content-location coverage.');
    report.testPassed=true;return;

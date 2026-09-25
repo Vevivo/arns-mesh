@@ -31,6 +31,7 @@ jobs:
           "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
           "QA_BUILD_INFO=$env:GITHUB_WORKSPACE/dist/build.json" >> $env:GITHUB_ENV
           "QA_RESOURCE_TEST=1" >> $env:GITHUB_ENV
+          "QA_REQUIRE_MEDIA=1" >> $env:GITHUB_ENV
           "QA_OUTPUT=$env:RUNNER_TEMP/mesh-live-evidence" >> $env:GITHUB_ENV
           "QA_TOOLS=$env:RUNNER_TEMP/mesh-live-tools" >> $env:GITHUB_ENV
       - name: Install isolated desktop UI drivers

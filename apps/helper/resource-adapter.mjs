@@ -6,13 +6,21 @@ import {resolveManifestPath} from '../../src/manifest-path.mjs';
 
 // This adapter has no HTTP URL fetch operation. The URL supplies only an item
 // ID/path; the ordinary signed-content path selects Mesh/raw Arweave sources.
-export async function resolveArweaveResource(raw,{contentStore,localOnly=false,signal,client:providedClient}={}){
+export async function resolveArweaveResource(raw,{contentStore,localOnly=false,signal,client:providedClient,onMissing,requestWork=work=>work()}={}){
  const parsed=parseArweaveResourceUrl(raw);if(!parsed)throw new Error('unsupported_arweave_resource_url');
  const client=localOnly?null:(providedClient??createSwarmMeshClient());
  const fetchOne=async dataId=>{
   signal?.throwIfAborted();
   if(localOnly){const bytes=contentStore?.get(dataId);if(!bytes)throw new Error('arweave_resource_not_saved');return verifyStoredContent(bytes,dataId);}
-  const result=await fetchMeshContent(dataId,{client,contentStore,signal});return result.direct;
+  const fetch=()=>requestWork(()=>fetchMeshContent(dataId,{client,contentStore,signal}));
+  let result;
+  try{result=await fetch();}
+  catch(error){
+   signal?.throwIfAborted();
+   if(!onMissing||!String(error.message).startsWith('content_location_unavailable'))throw error;
+   await onMissing({dataId,client,signal});signal?.throwIfAborted();result=await fetch();
+  }
+  return result.direct;
  };
  const contentType=item=>item.tags?.find(t=>t.name.toLowerCase()==='content-type')?.value||'application/octet-stream';
  try{

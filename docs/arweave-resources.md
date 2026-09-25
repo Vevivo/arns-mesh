@@ -56,8 +56,9 @@ separate public-gateway comparison established that the three assets existed;
 it supplied no bytes or hints to the Windows experiment or production stores.
 Using those externally reported heights as diagnostic inputs, raw native block
 headers exposed the assets' bundle entries. That comparison is not autonomous
-discovery. Experiments deriving nearby blocks directly from a page position
-remain on `qa/resource-discovery` and are not part of the production resolver.
+discovery. A later diagnostic, [run 36087953098](https://github.com/Vevivo/arns-mesh/actions/runs/36087953098), derived block 1,995,047 directly from the existing page weave position using 21 native block probes, then found all three media items within 63 nearby blocks. It used no public publication metadata for that search. Approximately 53 MB of response bodies located the objects; subsequent raw downloads verified all three full IDs/signatures. This remains anchored on the page's existing Mesh location, whose earlier external preparation provenance is retained.
+
+The candidate now invokes this bounded nearby-block discovery only after ordinary resource lookup fails. It shares one scan per parent document, verifies the stored parent, keeps navigation cancellation and scans only the anchor block plus at most 64 predecessors/256 transactions per block. Outer bundle headers are considered; nested/general history coverage is not established. Scans reserve up to 96 MiB before starting, with a persistent 256 MiB/day reader allowance, one active scan/four queued and a three-minute deadline. Ordinary page fetch slots remain available during the scan. The resulting hints cannot authorize content: the retry must still verify complete signed bytes. Saved mode does not invoke discovery. The new live Windows playback gate is pending; the successful earlier transport-only result above does not establish playback.
 
 Existing prepared-index recovery from PR #4 remains valid. Universal cold
 location coverage, complete site assets and independent-host Mesh failover
