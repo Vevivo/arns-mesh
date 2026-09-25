@@ -7,7 +7,7 @@ permissions:
 jobs:
   discover:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -23,6 +23,11 @@ jobs:
         run: node qa/disaster/public-resource-reference.cjs
         env:
           QA_OUTPUT: ${{ runner.temp }}/resource-discovery
+      - name: Compare declared block contents through raw numeric-IP nodes
+        run: node qa/disaster/raw-publication-check.mjs
+        env:
+          MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+          QA_OUTPUT: ${{ runner.temp }}/resource-discovery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -30,4 +35,5 @@ jobs:
           path: |
             ${{ runner.temp }}/resource-discovery/asset-discovery.json
             ${{ runner.temp }}/resource-discovery/public-reference.json
+            ${{ runner.temp }}/resource-discovery/raw-publication.json
           retention-days: 14
