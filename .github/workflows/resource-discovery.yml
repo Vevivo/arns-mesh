@@ -18,6 +18,7 @@ jobs:
         env:
           MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
           QA_OUTPUT: ${{ runner.temp }}/resource-discovery
+          QA_ANCHOR_ONLY: '1'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

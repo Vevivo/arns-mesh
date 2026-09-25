@@ -9,6 +9,7 @@ import {VerifiedContentStore} from '../../src/content-store.mjs';
 import {parseArweaveResourceUrl} from '../../src/arweave-resource-url.mjs';
 import {fetchMeshContent} from '../../src/content-fetcher.mjs';
 import {networkAuditSnapshot} from '../../src/network-audit.mjs';
+import {probeAnchor} from './bundle-anchor-probe.mjs';
 const dir=path.resolve(process.env.QA_OUTPUT),name=process.argv[2];fs.mkdirSync(dir,{recursive:true});
 const profile=validateProfile(JSON.parse(process.env.MESH_QA_PROFILE));delete process.env.MESH_QA_PROFILE;
 const privateValues=[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).sort((a,b)=>b.length-a.length);
@@ -26,8 +27,10 @@ try{
  for(const dataId of [...new Set([...roots,...urls.map(u=>parseArweaveResourceUrl(u).dataId)])].filter(Boolean)){
   const row={dataId,root:roots.includes(dataId),urls:urls.filter(u=>parseArweaveResourceUrl(u).dataId===dataId)};report.rows.push(row);
   try{row.locations=(await client.locateCandidates(dataId,{signal:AbortSignal.timeout(6000)})).map(r=>r.record);}catch(e){row.locationError=e.message;}
-  if(!row.root){try{const result=await fetchMeshContent(dataId,{client,contentStore:store,signal:AbortSignal.timeout(30000)});row.content={verified:true,bytes:result.direct.payload.length,tags:result.direct.tags,location:result.loc};}catch(e){row.contentError=e.message;row.diagnostics=e.diagnostics;}}
+  if(!row.root&&!process.env.QA_ANCHOR_ONLY){try{const result=await fetchMeshContent(dataId,{client,contentStore:store,signal:AbortSignal.timeout(30000)});row.content={verified:true,bytes:result.direct.payload.length,tags:result.direct.tags,location:result.loc};}catch(e){row.contentError=e.message;row.diagnostics=e.diagnostics;}}
   save();console.log(clean(row));
  }
+ const anchor=report.rows.find(r=>r.dataId===page.meta.dataId)?.locations?.find(r=>Number.isSafeInteger(r.weaveOffset));
+ if(anchor){try{report.anchor=await probeAnchor(anchor,urls.map(u=>parseArweaveResourceUrl(u).dataId),{signal:AbortSignal.timeout(180000)});}catch(e){report.anchorError=e.message;}save();console.log(clean({anchor:report.anchor,anchorError:report.anchorError}));}
 }catch(e){report.error=e.message;process.exitCode=1;}
 finally{report.network=networkAuditSnapshot();save();await client.stop();}
