@@ -19,9 +19,15 @@ jobs:
           MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
           QA_OUTPUT: ${{ runner.temp }}/resource-discovery
           QA_ANCHOR_ONLY: '1'
+      - name: Compare public availability outside the outage (never used as routing input)
+        run: node qa/disaster/public-resource-reference.cjs
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/resource-discovery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: resource-discovery
-          path: ${{ runner.temp }}/resource-discovery/asset-discovery.json
+          path: |
+            ${{ runner.temp }}/resource-discovery/asset-discovery.json
+            ${{ runner.temp }}/resource-discovery/public-reference.json
           retention-days: 14
