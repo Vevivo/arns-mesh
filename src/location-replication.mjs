@@ -8,14 +8,14 @@ import {firstVerified} from './query-work.mjs';
 // the requested ID and item signature. External preparation provenance survives.
 export async function replicateLocationHint(dataId,{client,contentStore,locationsFile,signal,timeoutMs=2000}={}){
  if(!locationsFile||!client?.locateCandidates||!contentStore)return {status:'unavailable'};
- const index=new LocationIndex(locationsFile);
- if(index.get(dataId))return {status:'existing'};
- const bytes=contentStore.get(dataId);
- if(!bytes)return {status:'content-not-stored'};
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(new Error('location_replication_timeout')),Math.max(1,Math.min(5000,timeoutMs)));
  const combined=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
  try{
+  const index=new LocationIndex(locationsFile);
+  if(index.get(dataId))return {status:'existing'};
+  const bytes=contentStore.get(dataId);
+  if(!bytes)return {status:'content-not-stored'};
   await verifyStoredContent(bytes,dataId);
   return await firstVerified([async s=>{
    const candidates=await client.locateCandidates(dataId,{signal:s});

@@ -77,4 +77,5 @@ test('hint replication is bounded, rejects mismatched hints, and preserves an ex
  assert.equal(kept.status,'existing');assert.equal(replica.locationIndex.get(item.id).weaveOffset,12);
  const empty=peer('empty');
  assert.equal((await replicateLocationHint(item.id,{...options,contentStore:empty.contentStore,locationsFile:empty.locationIndex.file,client:{locateCandidates:()=>{throw new Error('must not fetch arbitrary unsolicited IDs');}}})).status,'content-not-stored');
+ assert.equal((await replicateLocationHint(item.id,{...options,locationsFile:empty.locationIndex.file,contentStore:{get(){throw new Error('disk unavailable');}},client:{locateCandidates(){}}})).status,'unavailable','optional routing replication cannot fail a successful content fetch on a disk error');
 });
