@@ -22,6 +22,7 @@ export function isAllowedRendererUrl(raw){
 export function plainError(error){
   const value=String(error.message||error);
   if(/saved_name_unavailable/.test(value))return 'No saved name record is available. Live resolution requires a reachable Solana RPC source.';
+  if(/arns_lease_expired/.test(value))return 'The name lease is expired according to the RPC observation and this computer’s clock. No current mapping was accepted. Open Page information for details.';
   if(/current_name_state_unavailable|no_state_evidence|rpc_sources_conflict/.test(value))return 'A current name record could not be obtained, or the sources disagree. Saved records are available only by your explicit selection.';
   if(/content_location_unavailable/.test(value))return 'The name resolved, but its content location could not be found. No gateway fallback was used.';
   if(/manifest_path/.test(value))return 'This path is not present in the site manifest.';

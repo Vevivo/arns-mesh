@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {normalizeAddress} from './browser-state.mjs';
 import {NavigationProgress} from './progress.mjs';
+import {emptyResources} from './page-health.mjs';
 
 // Each tab owns its cancellation epoch. Switching tabs never cancels a page.
 export class Tabs {
@@ -9,7 +10,7 @@ export class Tabs {
   create(raw='') {
     if(this.rows.size>=this.limit)throw new Error(`Close a tab first. The limit is ${this.limit}.`);
     const url=raw?normalizeAddress(raw):'';
-    const tab={id:randomUUID(),url,title:'',epoch:0,controller:new AbortController(),progress:new NavigationProgress(),phase:'ready',message:'Enter an ArNS address.',meta:null,resources:{pending:0,verified:0,failed:0},view:null};
+    const tab={id:randomUUID(),url,title:'',epoch:0,controller:new AbortController(),progress:new NavigationProgress(),phase:'ready',message:'Enter an ArNS address.',meta:null,resources:emptyResources(),issueKeys:new Set(),view:null};
     this.rows.set(tab.id,tab); this.activeId=tab.id; return tab;
   }
   get(id) {const tab=this.rows.get(id);if(!tab)throw new Error('Tab is no longer open.');return tab;}
@@ -17,7 +18,7 @@ export class Tabs {
   begin(id,raw='') {
     const url=raw?normalizeAddress(raw):'',tab=this.get(id);
     tab.controller.abort(new Error('navigation_changed'));tab.controller=new AbortController();tab.epoch++;
-    Object.assign(tab,{url,title:'',meta:null,phase:url?'resolving':'ready',message:url?'Resolving name and locating content…':'Enter an ArNS address.',resources:{pending:0,verified:0,failed:0}});
+    Object.assign(tab,{url,title:'',meta:null,phase:url?'resolving':'ready',message:url?'Resolving name and locating content…':'Enter an ArNS address.',resources:emptyResources(),issueKeys:new Set()});
     tab.progress.reset();return {tab,epoch:tab.epoch,signal:tab.controller.signal};
   }
   stop(id,reason='Loading stopped.') {

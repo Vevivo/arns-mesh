@@ -22,8 +22,12 @@ export async function checkConnections(profile,{signal,onResult=()=>{}}={}){
      const answer=await rpcIp('http://'+row.address,'getVersion',[],{signal:bounded,timeout:4000,maxBytes:16384});
      if(typeof answer?.['solana-core']!=='string')throw new Error('Unexpected Solana RPC reply.');
     }else if(row.kind==='Mesh peer'){
-     const answer=await requestIpJson({...peer,path:'/mesh/v1/query',method:'POST',body:{op:'location',dataId:'A'.repeat(43),cacheOnly:true},purpose:'mesh-peer',timeout:4000,maxBytes:32768,signal:bounded});
-     if(!(answer?.ok===true||answer?.ok===false&&answer.error==='location_not_found'))throw new Error('Unexpected Mesh reply.');
+     // An empty name is rejected before storage or network work in both old
+     // and new peers. Old peers ignore cacheOnly and would start an index
+     // lookup for a syntactically valid location probe. This is only a
+     // protocol/reachability check, never an identity or availability proof.
+     const answer=await requestIpJson({...peer,path:'/mesh/v1/query',method:'POST',body:{op:'snapshot',name:''},purpose:'mesh-peer',timeout:4000,maxBytes:32768,signal:bounded});
+     if(!(answer?.ok===false&&answer.error==='invalid_arns_name'))throw new Error('Unexpected Mesh reply.');
     }else{
      const answer=await requestIpJson({...peer,path:'/info',timeout:4000,maxBytes:32768,signal:bounded});
      if(typeof answer?.network!=='string')throw new Error('Unexpected raw node reply.');

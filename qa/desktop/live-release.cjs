@@ -1,4 +1,4 @@
-// Exercise the released executable. No fixtures, resolver replacements or app edits.
+// Exercise the built executable with live names. No content fixtures or resolver replacements.
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
 const {createRequire}=require('node:module');
 const {chromium}=createRequire(path.join(process.env.QA_TOOLS,'package.json'))('playwright');
@@ -9,7 +9,10 @@ const profile=JSON.parse(process.env.MESH_QA_PROFILE||'null');
 if(profile&&profile.schema!=='arns-mesh-network-profile/v1')throw new Error('Invalid operator profile for the live test.');
 const privateValues=profile?[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).sort((a,b)=>b.length-a.length):[];
 const sanitize=value=>{let s=typeof value==='string'?value:JSON.stringify(value);for(const v of privateValues)s=s.split(v).join('[operator-endpoint]');return s;};
-const report={scope:profile?'Unmodified published 0.5.0-preview.5 Windows ZIP, real desktop, live public ArNS names, fresh client with existing operator sources':'Unmodified published 0.5.0-preview.5 Windows ZIP, first launch without a connection profile; live retrieval not tested',sha256:'68adc236bb8e6a3a6ffc3152646f67a30d00b29caba343785e0a45435e6afa03',startedAt:new Date().toISOString(),fixture:false,osPacketCapture:false,steps:[],pages:[],rendererErrors:[],consoleErrors:[],failedRequests:[]};
+const build=process.env.QA_BUILD_INFO?JSON.parse(fs.readFileSync(process.env.QA_BUILD_INFO,'utf8')):null;
+const strict=process.env.QA_REGRESSION==='1';
+const assert=require('node:assert/strict');
+const report={scope:build?'Candidate Windows package, real desktop, live public ArNS names, fresh client with existing operator sources':'Published Windows ZIP live observation',build,startedAt:new Date().toISOString(),fixture:false,osPacketCapture:false,steps:[],pages:[],rendererErrors:[],consoleErrors:[],failedRequests:[]};
 const save=()=>fs.writeFileSync(path.join(out,'results.json'),sanitize(report));
 const note=(id,value)=>{report.steps.push({id,at:new Date().toISOString(),...value});save();console.log(id,sanitize(value));};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -43,12 +46,13 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
   await ui.locator('#settings-panel [data-close]').click();
   await ui.locator('#address').fill('internetfireplace');await ui.locator('#open-address').click();await waitTerminal(10000);
   note('without-profile',{status:await ui.locator('#message').innerText()});await screenshot('02-profile-required');
-  if(!profile){note('live-test-not-run',{reason:'No operator profile supplied. This is a first-launch test only.'});return;}
+  if(!profile){if(strict)throw new Error('Live regression requires an approved connection profile.');note('live-test-not-run',{reason:'No operator profile supplied. This is a first-launch test only.'});return;}
   const file=path.join(out,'operator-profile-private.json');fs.writeFileSync(file,JSON.stringify(profile));
   await ui.locator('#settings-button').click();await ui.locator('#import-profile').click();await native('open',file);await pause(1000);
   note('profile-import',{message:await ui.locator('#settings-result').innerText(),meshSources:profile.directPeers.length,rpcSources:profile.rpcSources.length,rawSources:profile.arweavePeers.length});
   await ui.locator('#check-connections').click();await ui.waitForFunction(()=>!document.getElementById('check-connections').disabled,null,{timeout:50000});
   note('connection-check',{message:await ui.locator('#settings-result').innerText(),rows:await ui.locator('#connection-list').innerText(),details:await ui.locator('.connection-status').evaluateAll(xs=>xs.map(x=>({text:x.textContent,detail:x.title})))});
+  if(strict)assert.match(await ui.locator('.connection-status').first().innerText(),/responded/i,'Mesh protocol check must respond');
   await ui.locator('#settings-panel [data-close]').click();
   // Leave the external-window navigation probe last: an Electron/UI stall
   // there must not prevent collecting the other real-site results.
@@ -67,17 +71,34 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
     try{if(opened&&name==='internetfireplace'){
       const play=page.getByRole('button',{name:/^play$/i});
       row.playControls=await play.count();
-      if(row.playControls){await play.click({noWaitAfter:true,timeout:5000});await pause(2000);row.playAttempt=await page.evaluate(()=>({text:document.body.innerText.slice(0,500),media:[...document.querySelectorAll('video,audio')].map(x=>({readyState:x.readyState,networkState:x.networkState,paused:x.paused,currentTime:x.currentTime,error:x.error?.code||null,errorMessage:x.error?.message||null}))}));}
+      if(row.playControls){await play.click({noWaitAfter:true,timeout:5000});await pause(2000);row.nativePlaybackAlert=await native('dismiss-alert','Playback was blocked');row.playAttempt=await page.evaluate(()=>({text:document.body.innerText.slice(0,500),media:[...document.querySelectorAll('video,audio')].map(x=>({readyState:x.readyState,networkState:x.networkState,paused:x.paused,currentTime:x.currentTime,error:x.error?.code||null,errorMessage:x.error?.message||null}))}));}
     }
     if(opened&&name==='kh-laboratory'){
       const link=page.getByRole('link',{name:'KH Laboratory File Directory',exact:false});
-      if(await link.count()){await link.click({noWaitAfter:true,timeout:5000});await pause(500);row.externalLink={status:await ui.locator('#message').innerText(),pageUrl:page.url()};}
+      if(await link.count()){await link.click({noWaitAfter:true,timeout:5000});await pause(500);row.externalLink={status:await ui.locator('#message').innerText(),pageUrl:page.url(),fatalDialogCheck:await native('check-errors','')};if(strict){assert.match(row.externalLink.status,/link blocked/);assert.match(row.externalLink.pageUrl,/^ar:\/\/kh-laboratory\//);await ui.locator('#settings-button').click();assert.equal(await ui.locator('#settings-panel').isVisible(),true);await ui.locator('#settings-panel [data-close]').click();}await screenshot('kh-link-blocked-without-crash',page);}
     }
     if(opened&&name==='permahistory'){
       const register=page.getByRole('button',{name:/register now/i});
       if(await register.count()){await register.click({noWaitAfter:true,timeout:5000});await pause(700);row.registrationView={title:await page.title(),text:(await page.locator('body').innerText()).slice(0,800)};}
     }}catch(e){row.interactionError=sanitize(e.message);row.afterInteraction={status:'UI interaction timed out; app responsiveness not confirmed',pageUrl:page.url()};}
     report.pages.push(row);save();console.log('LIVE_RESULT',sanitize(row));
+    if(strict){
+      assert.equal(terminal,true,name+': request must finish');assert.equal(row.interactionError,undefined,name+': interaction must not fail');
+      if(name!=='apple')assert.equal(opened,true,name+': main document must open');
+      if(['internetfireplace','permahistory'].includes(name)){assert.match(row.stageDetail,/[1-9][0-9]* policy blocks/);assert.match(row.status,/unavailable/);assert.ok(row.network.blocked>0,'CSP reports must reach diagnostics');}
+      if(name==='apple'&&!opened)assert.match(row.status,/lease is expired/);
+      await native('check-errors','');
+    }
+    if(strict&&name==='vevivo'&&opened){
+      const beforeSave=audit().length;await ui.locator('#saved-button').click();await ui.locator('#save-current').click();
+      await ui.waitForFunction(()=>/Main document only|Manifest files saved|Incomplete copy/.test(document.getElementById('saved-list').innerText),null,{timeout:90000});
+      const savedText=await ui.locator('#saved-list').innerText();assert.doesNotMatch(savedText,/Incomplete copy/);
+      const beforeOpen=audit().length;await ui.getByRole('button',{name:'Open saved version',exact:true}).click();await waitTerminal();await pause(1000);
+      const offline={savedText,status:await ui.locator('#message').innerText(),content:await ui.locator('#content-status').innerText(),mode:await ui.locator('#mode-badge').innerText(),network:auditSummary(audit().slice(beforeOpen)),saveNetwork:auditSummary(audit().slice(beforeSave,beforeOpen))};
+      assert.match(offline.mode,/Saved/);assert.match(offline.content,/verified/);assert.equal(offline.network.requests,0,'Saved cached document must reopen without Node network requests');
+      await screenshot('saved-vevivo',page);note('saved-document-reopen',offline);
+      await ui.locator('#menu-button').click();await ui.locator('#saved-toggle').uncheck();await ui.locator('#menu-button').click();await waitTerminal();
+    }
     if(row.interactionError){
       // The previous visible state was checked for operator addresses above.
       // Capture the actual OS view without waiting on the stalled renderer.
@@ -86,6 +107,7 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
     if(!terminal&&await ui.locator('#reload').getAttribute('aria-label')==='Stop loading')await ui.locator('#reload').click();
   }
   note('network-total',auditSummary(audit()));
+  report.regressionsPassed=strict;note('regression-result',{passed:strict,scope:'UI, connection probe, rejected external link, resource diagnostics and saved verified document; not full DNS-cut acceptance'});
  }catch(e){report.fatal=sanitize(e.stack);console.error(report.fatal);process.exitCode=1;}
  finally{
   if(browser)await browser.close().catch(()=>{});

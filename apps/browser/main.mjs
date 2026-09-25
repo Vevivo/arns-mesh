@@ -17,6 +17,7 @@ import {attachContextMenu} from './context-menu.mjs';
 import {BrowserState,normalizeAddress} from './browser-state.mjs';
 import {Tabs} from './tabs.mjs';
 import {contentResponse,isAllowedRendererUrl,plainError} from './response.mjs';
+import {recordPageIssue,consoleIssue,updatePageHealth} from './page-health.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/welcome.html';
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
@@ -57,13 +58,13 @@ function uiHandler(request){
   const type=name.endsWith('.woff2')?'font/woff2':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html';
   return new Response(fs.readFileSync(path.join(here,'ui',name)),{headers:{'content-type':type+(name.endsWith('.woff2')?'':'; charset=utf-8'),'content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
 }
-function filterSession(ses,{ui=false}={}){
+function filterSession(ses,{ui=false,tab=null}={}){
   ses.setPermissionRequestHandler((_wc,_permission,cb)=>cb(false));ses.setPermissionCheckHandler(()=>false);
   ses.setDevicePermissionHandler(()=>false);
   ses.on('will-download',event=>event.preventDefault());
   ses.webRequest.onBeforeRequest((details,cb)=>{
     const allowed=ui?details.url.startsWith('arnsui://app/'):isAllowedRendererUrl(details.url);
-    if(!allowed){recordNetwork({type:'blocked',reason:'browser_external_request',host:(()=>{try{return new URL(details.url).hostname;}catch{return '';}})(),resourceType:details.resourceType});}
+    if(!allowed){recordNetwork({type:'blocked',reason:'browser_external_request',host:(()=>{try{return new URL(details.url).hostname;}catch{return '';}})(),resourceType:details.resourceType});if(tab&&details.resourceType!=='mainFrame'){recordPageIssue(tab,{kind:'blocked',url:details.url,message:'External resource blocked.',source:'browser-request-filter'});updatePageHealth(tab);send();}}
     cb({cancel:!allowed});
   });
 }
@@ -99,7 +100,7 @@ async function arHandler(tab,request){
     }
     const message=plainError(error).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     return new Response(request.method==='HEAD'?null:`<!doctype html><html lang="en"><meta charset="utf-8"><title>Unable to open page</title><h1>This page could not be reached</h1><p>${message}</p><p>No gateway fallback. Open Page information for details.</p></html>`,{status:502,headers:{'content-type':'text/html; charset=utf-8','content-security-policy':"default-src 'none'",'cache-control':'no-store'}});
-  }finally{if(tabs.isCurrent(tab,epoch))tab.resources.pending=Math.max(0,tab.resources.pending-1);send();}
+  }finally{if(tabs.isCurrent(tab,epoch)){tab.resources.pending=Math.max(0,tab.resources.pending-1);updatePageHealth(tab);}send();}
 }
 function layout(){
   if(!win||!toolbar)return;const [width,height]=win.getContentSize(),bar=178;
@@ -115,7 +116,7 @@ function selectTab(id){tabs.activate(id);panelOpen=false;layout();win.setTitle((
 async function newTab(raw=''){
   const tab=tabs.create(raw),ses=session.fromPartition('mesh-tab-'+tab.id,{cache:false});
   try{
-    filterSession(ses);ses.protocol.handle('ar',request=>arHandler(tab,request));
+    filterSession(ses,{tab});ses.protocol.handle('ar',request=>arHandler(tab,request));
     ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
     tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
     tab.view.setBackgroundColor('#f6f4ef');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
@@ -156,18 +157,33 @@ function shortcuts(wc){wc.on('before-input-event',(event,input)=>{
 });}
 function guardTab(tab){
   const wc=tab.view.webContents;shortcuts(wc);attachContextMenu(wc,Menu,()=>win);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
-  wc.setWindowOpenHandler(({url})=>{if(url.startsWith('ar://'))void newTab(url).catch(error=>report(error,tab));else report(new Error('External link blocked. This browser opens ar:// addresses.'),tab);return {action:'deny'};});
-  wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){send({command:'settings'});return;}if(url===WELCOME)void navigate('',tab);else if(url.startsWith('ar://'))void navigate(url,tab);else report(new Error('External navigation blocked.'),tab);});
-  wc.on('will-redirect',(event,url)=>{if(!url.startsWith('ar://'))event.preventDefault();});
-  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){event.preventDefault();send({command:'settings'});return;}if(url&&!url.startsWith('ar://')&&url!==WELCOME)event.preventDefault();});
-  wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;const canonical=url===WELCOME?'':normalizeAddress(url);if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
-  wc.on('did-navigate-in-page',(_event,url,main)=>{if(main&&url.startsWith('ar://')){tab.url=normalizeAddress(url);send();}});
+  const target=url=>{if(url===WELCOME)return '';try{return /^ar:\/\//i.test(url)?normalizeAddress(url):null;}catch{return null;}};
+  const blocked=url=>{
+    report(new Error('External or invalid link blocked. This browser opens ar:// addresses; no gateway fallback.'),tab);
+    // did-start-navigation precedes the cancellable events. Never normalize a
+    // rejected scheme there or replace the current tab's address/history.
+    if(tab.lastBlockedNavigation!==url){tab.lastBlockedNavigation=url;recordNetwork({type:'blocked',reason:'browser_navigation',host:(()=>{try{return new URL(url).hostname;}catch{return '';}})()});}
+  };
+  wc.setWindowOpenHandler(({url})=>{const canonical=target(url);if(canonical!==null)void newTab(canonical).catch(error=>report(error,tab));else blocked(url);return {action:'deny'};});
+  wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){send({command:'settings'});return;}const canonical=target(url);if(canonical!==null)void navigate(canonical,tab).catch(error=>report(error,tab));else blocked(url);});
+  wc.on('will-redirect',(event,url)=>{if(target(url)===null){event.preventDefault();blocked(url);}});
+  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){event.preventDefault();send({command:'settings'});return;}if(url&&target(url)===null){event.preventDefault();blocked(url);}});
+  wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;const canonical=target(url);if(canonical===null){blocked(url);return;}tab.lastBlockedNavigation=null;if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
+  wc.on('did-navigate-in-page',(_event,url,main)=>{const canonical=target(url);if(main&&canonical){tab.url=canonical;send();}});
+  wc.on('console-message',(details,level,message)=>{
+    if(!tab.url||!tabs.rows.has(tab.id))return;
+    const issue=consoleIssue(details,level,message);
+    if(issue&&recordPageIssue(tab,issue)){
+      if(issue.kind==='blocked')recordNetwork({type:'blocked',reason:'renderer_csp_report',host:(()=>{try{return new URL(issue.url).hostname;}catch{return '';}})(),evidence:'renderer-policy-report'});
+      updatePageHealth(tab);send();
+    }
+  });
   wc.on('page-title-updated',(_event,title)=>{tab.title=String(title).slice(0,300);if(tab.id===tabs.activeId)win?.setTitle(tab.title+' — ArNS Mesh Browser');send();});
   wc.on('did-finish-load',()=>{
     tab.title=wc.getTitle();
     if(tab.url&&tab.phase==='rendering'){
       tab.phase='loaded';tab.progress.opened();
-      tab.message=tab.meta?.recovery?'Saved name observation · '+tab.meta.recovery.observedAt+' · Current mapping not checked.':'Page opened · Content signature verified · Name mapping relies on RPC observations.';
+      updatePageHealth(tab);
       library.visit(tab.url,tab.title);
     }
     send({libraryChanged:true});

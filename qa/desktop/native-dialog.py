@@ -41,6 +41,33 @@ if mode == 'clipboard':
 
 from pywinauto import Desktop, keyboard
 
+if mode in ('dismiss-alert', 'check-errors'):
+    deadline = time.monotonic() + (4 if mode == 'dismiss-alert' else .5)
+    handled = False
+    while time.monotonic() < deadline:
+        handles = []
+        win32gui.EnumWindows(lambda hwnd, _: handles.append(hwnd), None)
+        candidates = set(handles + [last_popup(h) for h in handles])
+        for handle in candidates:
+            if not win32gui.IsWindowVisible(handle):
+                continue
+            children = []
+            win32gui.EnumChildWindows(handle, lambda h, _: children.append(h), None)
+            text = ' '.join(win32gui.GetWindowText(h) for h in [handle] + children)
+            if 'JavaScript error occurred in the main process' in text or 'Uncaught Exception:' in text:
+                raise SystemExit('Unexpected native main-process error dialog.')
+            if mode == 'dismiss-alert' and value in text:
+                buttons = [h for h in children if win32gui.GetClassName(h) == 'Button' and win32gui.GetWindowText(h).replace('&', '').upper() == 'OK']
+                if buttons:
+                    Desktop(backend='win32').window(handle=buttons[0]).click_input()
+                    handled = True
+                    break
+        if handled:
+            break
+        time.sleep(.1)
+    print('Expected site alert dismissed.' if handled else 'No matching native dialog visible.')
+    raise SystemExit(0)
+
 if mode == 'paste':
     deadline = time.monotonic() + 15
     while time.monotonic() < deadline:

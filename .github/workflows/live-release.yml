@@ -1,11 +1,11 @@
-name: Test published desktop with live ArNS names
+name: Build and test desktop fixes with live ArNS names
 on:
   push:
     branches: [qa/live-release]
 permissions:
   contents: read
 jobs:
-  released-windows:
+  candidate-windows:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -16,15 +16,19 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Download the published ZIP and verify its hash
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - run: npm test
+      - name: Build the candidate with verified Electron
         shell: pwsh
         run: |
-          $zip = "$env:RUNNER_TEMP/mesh-release.zip"
-          Invoke-WebRequest 'https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.5/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.5.zip' -OutFile $zip
-          $hash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
-          if ($hash -ne '68adc236bb8e6a3a6ffc3152646f67a30d00b29caba343785e0a45435e6afa03') { throw 'Published package hash mismatch' }
-          Expand-Archive $zip -DestinationPath "$env:RUNNER_TEMP/mesh-release"
-          "QA_EXE=$env:RUNNER_TEMP/mesh-release/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          python scripts/download-electron.py --out "$env:RUNNER_TEMP/electron-runtime"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/package-windows.py --runtime "$env:RUNNER_TEMP/electron-runtime" --out dist
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          "QA_BUILD_INFO=$env:GITHUB_WORKSPACE/dist/build.json" >> $env:GITHUB_ENV
+          "QA_REGRESSION=1" >> $env:GITHUB_ENV
           "QA_OUTPUT=$env:RUNNER_TEMP/mesh-live-evidence" >> $env:GITHUB_ENV
           "QA_TOOLS=$env:RUNNER_TEMP/mesh-live-tools" >> $env:GITHUB_ENV
       - name: Install isolated desktop UI drivers
@@ -41,9 +45,18 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: published-desktop-live-evidence
+          name: candidate-desktop-live-evidence
           path: |
             ${{ runner.temp }}/mesh-live-evidence/results.json
             ${{ runner.temp }}/mesh-live-evidence/*.png
             ${{ runner.temp }}/mesh-live-evidence/electron-sanitized.log
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: candidate-windows-package
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build.json
           retention-days: 14
