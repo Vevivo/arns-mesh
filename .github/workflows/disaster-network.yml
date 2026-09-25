@@ -1,0 +1,119 @@
+name: Windows DNS blackout and independent replica failover
+on:
+  push:
+    branches: [qa/disaster-network]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replica:
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [a, b]
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    env:
+      QA_REPLICA_ID: ${{ matrix.replica }}
+      QA_REPLICA_DIR: ${{ runner.temp }}/disaster-replica
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Replicate and verify four real public sites before the outage
+        env:
+          MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+        run: node qa/disaster/replica.mjs seed
+      - name: Start a temporary cache-only peer on this separate VM
+        shell: bash
+        run: |
+          export QA_PUBLIC_IP="$(curl --fail --silent --max-time 15 https://api.ipify.org)"
+          node -e 'if(require("node:net").isIP(process.env.QA_PUBLIC_IP)!==4)process.exit(1)'
+          sudo iptables -I INPUT -p tcp --dport 49741 -j ACCEPT
+          node qa/disaster/replica.mjs serve > "$RUNNER_TEMP/replica-private.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/replica.pid"
+          for attempt in {1..40}; do
+            if test -f "$QA_REPLICA_DIR/ready.json"; then exit 0; fi
+            sleep 0.5
+          done
+          exit 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: disaster-replica-${{ matrix.replica }}
+          path: |
+            ${{ runner.temp }}/disaster-replica/ready.json
+            ${{ runner.temp }}/disaster-replica/seed-report.json
+          retention-days: 3
+      - name: Keep the independent peer available for the Windows experiment
+        shell: bash
+        run: |
+          for attempt in {1..105}; do
+            kill -0 "$(cat "$RUNNER_TEMP/replica.pid")" || exit 0
+            sleep 10
+          done
+      - name: Stop the temporary peer
+        if: always()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/replica.pid"; then kill "$(cat "$RUNNER_TEMP/replica.pid")" 2>/dev/null || true; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: disaster-replica-${{ matrix.replica }}-evidence
+          path: |
+            ${{ runner.temp }}/disaster-replica/serving-report.json
+            ${{ runner.temp }}/disaster-replica/seed-report.json
+          retention-days: 14
+  windows-blackout:
+    runs-on: windows-latest
+    timeout-minutes: 22
+    env:
+      QA_OUTPUT: ${{ runner.temp }}/disaster-evidence
+      QA_TOOLS: ${{ runner.temp }}/disaster-tools
+      QA_FIREWALL_GROUP: ArNS-Mesh-Disaster-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - name: Download and verify the exact published Windows release
+        shell: pwsh
+        run: |
+          $zip = "$env:RUNNER_TEMP/preview6.zip"
+          Invoke-WebRequest 'https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.6/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.6.zip' -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() -ne 'a2b1d30f314ca6a638e5c7d7ceab3bc4592f1de823cd0bd849a6d385df97652e') { throw 'Published ZIP digest mismatch.' }
+          Expand-Archive $zip "$env:RUNNER_TEMP/published"
+          $exe = Get-ChildItem "$env:RUNNER_TEMP/published" -Filter Mesh-Browser.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw 'Published executable missing.' }
+          "QA_EXE=$($exe.FullName)" >> $env:GITHUB_ENV
+          npm install --prefix "$env:QA_TOOLS" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pywinauto==0.6.9 Pillow==11.3.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Obtain peer addresses before the network outage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node qa/disaster/rendezvous.cjs
+      - name: Cut DNS, gateways and source peers at the Windows firewall
+        env:
+          MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+        run: node qa/disaster/windows.cjs
+      - name: Always restore the disposable runner's network rules
+        if: always()
+        shell: pwsh
+        run: ./qa/disaster/firewall.ps1 -Mode clear -Group "$env:QA_FIREWALL_GROUP"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: windows-disaster-evidence
+          path: |
+            ${{ runner.temp }}/disaster-evidence/results.json
+            ${{ runner.temp }}/disaster-evidence/*.png
+          retention-days: 14
