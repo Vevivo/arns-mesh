@@ -25,7 +25,9 @@ async function probe(checks,includeAddresses=false){
 }
 async function firewall(allowed){
  const endpoints=allowed.map(parse),hosts=[...new Set(['127.0.0.1',...endpoints.map(p=>p.host)])];
- const rules=[{protocol:'Any',addresses:complement(hosts.map(ipNum),2**32-1,ipText)},{protocol:'Any',addresses:['::/0']},{protocol:'UDP',addresses:['Any']}];
+ // Windows rejects the unspecified and all-host broadcast addresses as range
+ // endpoints. Neither can be an Internet content/RPC destination.
+ const rules=[{protocol:'Any',addresses:complement(hosts.map(ipNum),2**32-2,ipText,1)},{protocol:'Any',addresses:['::/0']},{protocol:'UDP',addresses:['Any']}];
  for(const host of hosts.filter(h=>h!=='127.0.0.1'))rules.push({protocol:'TCP',addresses:[host],ports:complement(endpoints.filter(p=>p.host===host).map(p=>p.port),65535,String,1)});
  const file=path.join(out,'firewall-policy-private.json');fs.writeFileSync(file,JSON.stringify({programs:[exe,...localPeerPrograms],rules}));
  const result=await exec('pwsh',['-NoProfile','-File',path.join(__dirname,'firewall.ps1'),'-Mode','apply','-PolicyFile',file,'-Group',group]);
@@ -102,10 +104,10 @@ async function localFallback(seedDir){
   const gatewayIp=baseline.checks[0].value[0],dohIp=baseline.checks[1].value[0];
   externalChecks=[{label:'DNS',kind:'dns',host:'arweave.net'},{label:'gateway-HTTPS',kind:'tcp',host:gatewayIp,port:443},{label:'DoH-HTTPS',kind:'tcp',host:dohIp,port:443}];
   const positive=await probe(externalChecks);for(const c of positive.checks)assert.equal(c.ok,true,c.label+' must pass before firewall');note('positive-controls',positive);
-  let replicas=['a','b'].map(id=>{const row=JSON.parse(fs.readFileSync(path.join(out,'rendezvous',id,'ready.json')));assert.equal(net.isIP(row.host),4);return {endpoint:row.host+':'+row.port,id};});
+  let replicas=['a','b'].flatMap(id=>{const file=path.join(out,'rendezvous',id,'ready.json');if(!fs.existsSync(file))return [];const row=JSON.parse(fs.readFileSync(file));assert.equal(net.isIP(row.host),4);return [{endpoint:row.host+':'+row.port,id}];});
   const remoteProbe=await probe(replicas.map(r=>({label:'independent-'+r.id,kind:'mesh',...parse(r.endpoint)})));note('independent-peer-reachability',remoteProbe);
   const seedDir=await runPhase('dns-cut',profile.directPeers,[...profile.directPeers,...profile.rpcSources],[],{scope:'Published app, DNS and gateway access blocked at Windows firewall'});
-  const independent=remoteProbe.checks.every(c=>c.ok);
+  const independent=replicas.length===2&&remoteProbe.checks.every(c=>c.ok);
   if(!independent){
    report.limitations.push('The separate Linux runner endpoints were unreachable inbound. Subsequent peer failover uses independent processes on the Windows VM, not independent physical machines.');
    replicas=await localFallback(seedDir);

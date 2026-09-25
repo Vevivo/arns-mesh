@@ -6,7 +6,7 @@ $stateFile = Join-Path $env:RUNNER_TEMP "$Group-profiles.json"
 Get-NetFirewallRule -Group $Group -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 if ($Mode -eq 'clear') {
  if (Test-Path -LiteralPath $stateFile) {
-  foreach ($row in (Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json)) { Set-NetFirewallProfile -Profile $row.name -Enabled ([bool]$row.enabled) }
+  foreach ($row in (Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json)) { Set-NetFirewallProfile -Profile $row.name -Enabled ([string]$row.enabled) }
   Remove-Item -LiteralPath $stateFile
  }
  Clear-DnsClientCache; Write-Output '{"cleared":true,"previousProfileSettingsRestored":true}'; exit 0
@@ -21,9 +21,9 @@ foreach ($program in $policy.programs) {
  if (-not (Test-Path -LiteralPath $program)) { throw 'Test executable missing.' }
  foreach ($rule in $policy.rules) {
   $number++
-  $args = @{ DisplayName="$Group-$number"; Group=$Group; Direction='Outbound'; Action='Block'; Enabled='True'; Profile='Any'; Program=$program; RemoteAddress=@($rule.addresses); Protocol=$rule.protocol }
-  if ($rule.ports) { $args.RemotePort = @($rule.ports) }
-  New-NetFirewallRule @args | Out-Null
+  $ruleParams = @{ DisplayName="$Group-$number"; Group=$Group; Direction='Outbound'; Action='Block'; Enabled='True'; Profile='Any'; Program=$program; RemoteAddress=[string[]]@($rule.addresses); Protocol=$rule.protocol }
+  if ($rule.ports) { $ruleParams.RemotePort = [string[]]@($rule.ports) }
+  try { New-NetFirewallRule @ruleParams | Out-Null } catch { throw "Firewall rule $number ($($rule.protocol), $(@($rule.addresses).Count) address entries) failed: $($_.Exception.Message)" }
  }
 }
 # Block OS resolver requests as well as direct DNS/DoH in the tested executable.

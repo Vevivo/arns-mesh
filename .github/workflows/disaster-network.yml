@@ -7,6 +7,10 @@ permissions:
   actions: read
 jobs:
   replica:
+    # Direct inbound access to standard Linux hosted runners failed in the
+    # first live attempt. Keep the experiment available for suitable runners;
+    # do not spend two more VMs on a known unreachable network each iteration.
+    if: ${{ vars.MESH_TEST_REMOTE_REPLICAS == '1' }}
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +104,7 @@ jobs:
           python -m pip install pywinauto==0.6.9 Pillow==11.3.0
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Obtain peer addresses before the network outage
+        if: ${{ vars.MESH_TEST_REMOTE_REPLICAS == '1' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: node qa/disaster/rendezvous.cjs
