@@ -10,6 +10,7 @@ import {parseArweaveResourceUrl} from '../../src/arweave-resource-url.mjs';
 import {fetchMeshContent} from '../../src/content-fetcher.mjs';
 import {networkAuditSnapshot} from '../../src/network-audit.mjs';
 import {probeAnchor} from './bundle-anchor-probe.mjs';
+import {probeNeighbors} from './neighbor-bundle-probe.mjs';
 const dir=path.resolve(process.env.QA_OUTPUT),name=process.argv[2];fs.mkdirSync(dir,{recursive:true});
 const profile=validateProfile(JSON.parse(process.env.MESH_QA_PROFILE));delete process.env.MESH_QA_PROFILE;
 const privateValues=[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).sort((a,b)=>b.length-a.length);
@@ -31,6 +32,8 @@ try{
   save();console.log(clean(row));
  }
  const anchor=report.rows.find(r=>r.dataId===page.meta.dataId)?.locations?.find(r=>Number.isSafeInteger(r.weaveOffset));
- if(anchor){try{report.anchor=await probeAnchor(anchor,urls.map(u=>parseArweaveResourceUrl(u).dataId),{signal:AbortSignal.timeout(180000)});}catch(e){report.anchorError=e.message;}save();console.log(clean({anchor:report.anchor,anchorError:report.anchorError}));}
+ if(anchor){let source;try{report.anchor=await probeAnchor(anchor,urls.map(u=>parseArweaveResourceUrl(u).dataId),{signal:AbortSignal.timeout(180000),onSource:s=>{source=s;}});}catch(e){report.anchorError=e.message;}save();console.log(clean({anchor:report.anchor,anchorError:report.anchorError}));
+  if(source&&report.anchor){try{report.neighbors=await probeNeighbors(report.anchor,urls.map(u=>parseArweaveResourceUrl(u).dataId),{...source,signal:AbortSignal.timeout(180000),onStep:result=>{report.neighbors=result;save();}});}catch(e){report.neighborError=e.message;}save();console.log(clean({neighbors:report.neighbors,neighborError:report.neighborError}));}
+ }
 }catch(e){report.error=e.message;process.exitCode=1;}
 finally{report.network=networkAuditSnapshot();save();await client.stop();}

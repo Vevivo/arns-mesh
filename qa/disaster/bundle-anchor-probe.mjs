@@ -6,7 +6,7 @@ import net from 'node:net';
 import {requestJson,rangeFromRoot,syncRecordCovers} from '../../src/arweave-direct.mjs';
 import {parseDataItem,idFromSignature} from '../../src/ans104.mjs';
 const integer=(bytes,reverse=false)=>{const b=Buffer.from(bytes);if(reverse)b.reverse();const n=BigInt('0x'+b.toString('hex'));if(n>BigInt(Number.MAX_SAFE_INTEGER))throw new Error('unsafe_bundle_integer');return Number(n);};
-export async function probeAnchor(anchor,targetIds,{signal}){
+export async function probeAnchor(anchor,targetIds,{signal,onSource=()=>{}}){
  const seeds=JSON.parse(fs.readFileSync(process.env.ARWEAVE_PEERS)),pool=new Map(seeds.map(p=>[p.host+':'+p.port,p]));
  const lists=await Promise.allSettled(seeds.slice(0,5).map(p=>requestJson({...p,path:'/peers',timeout:2000,signal})));
  for(const r of lists)if(r.status==='fulfilled'&&Array.isArray(r.value))for(const item of r.value){const m=String(item).match(/^([0-9.]+):(\d+)$/);if(m&&net.isIP(m[1])===4&&Number(m[2])>0&&Number(m[2])<65536)pool.set(item,{host:m[1],port:Number(m[2])});if(pool.size>=512)break;}
@@ -23,6 +23,7 @@ export async function probeAnchor(anchor,targetIds,{signal}){
   found??={peer,weaveBase,chunk:{end,size:body.length,relativeEnd,proofBytes:proof.length}};
  }catch{}}}));
  if(!found)throw new Error('anchor_chunk_not_found');
+ onSource({peer:found.peer,seeds:peers});
  const result={anchor,chunk:found.chunk,carrierWeaveBase:found.weaveBase,levels:[],matches:[],positionVerified:false};
  const meta={start:found.weaveBase+1,size:Number.MAX_SAFE_INTEGER-found.weaveBase-1},options={signal,peerSeeds:seeds,chunkCache:new Map(),timeout:4000};
  let base=0,expectedSize=null,totalHeaders=0;
