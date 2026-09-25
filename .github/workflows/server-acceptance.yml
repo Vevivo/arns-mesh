@@ -1,0 +1,42 @@
+name: Published Windows app against upgraded Mesh server
+on:
+  push:
+    branches: [qa/server-preview8]
+permissions:
+  contents: read
+jobs:
+  external-windows-server:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Download and verify the published desktop
+        shell: pwsh
+        run: |
+          $zip = "$env:RUNNER_TEMP/mesh-preview8.zip"
+          Invoke-WebRequest 'https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip' -OutFile $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne '9342fd898d5ecf9f62d8bfab7cf4706a0979c18cf0845461a4b0081d8c58a3ff') { throw 'Published ZIP hash mismatch' }
+          Expand-Archive $zip "$env:RUNNER_TEMP/published-mesh"
+          $exe = Get-ChildItem "$env:RUNNER_TEMP/published-mesh" -Recurse -Filter Mesh-Browser.exe | Select-Object -First 1
+          if (!$exe) { throw 'Published executable missing' }
+          "QA_EXE=$($exe.FullName)" >> $env:GITHUB_ENV
+          "QA_OUTPUT=$env:RUNNER_TEMP/mesh-server-evidence" >> $env:GITHUB_ENV
+          "QA_TOOLS=$env:RUNNER_TEMP/mesh-server-tools" >> $env:GITHUB_ENV
+      - name: Install isolated UI driver
+        run: npm install --prefix "$env:QA_TOOLS" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
+      - name: Join real operator network and open verified ArNS content
+        env:
+          MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+          EXPECTED_NETWORK_KEY: lenWP4k3LM1kEA5YgBgs7AQKaP0rMMbs-CY0vbtheHg
+        run: node qa/network/server-acceptance.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: upgraded-server-windows-evidence
+          path: ${{ runner.temp }}/mesh-server-evidence/server-results.json
+          retention-days: 14
