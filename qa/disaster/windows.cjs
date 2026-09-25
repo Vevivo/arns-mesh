@@ -7,6 +7,8 @@ const addresses=[...profile.directPeers,...profile.rpcSources,...profile.arweave
 const privateValues=addresses.flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).filter(Boolean).sort((a,b)=>b.length-a.length);
 const clean=value=>privateValues.reduce((s,v)=>s.split(v).join('[operator-endpoint]'),typeof value==='string'?value:JSON.stringify(value));
 const report={schema:'arns-mesh-disaster-test/v1',startedAt:new Date().toISOString(),publishedVersion:'0.5.0-preview.6',zipSha256:'a2b1d30f314ca6a638e5c7d7ceab3bc4592f1de823cd0bd849a6d385df97652e',realPublicContent:true,osFirewall:true,osPacketCapture:false,controlPlane:'GitHub orchestration downloads precede outage; browser has no GitHub connection',rpcRetained:true,phases:[],checks:[],limitations:[]};
+const resourceTest=process.env.QA_RESOURCE_TEST==='1';
+if(process.env.QA_BUILD_INFO){report.build=JSON.parse(fs.readFileSync(process.env.QA_BUILD_INFO));report.candidateVersion=report.build.version;report.zipSha256=report.build.sha256;delete report.publishedVersion;}
 fs.mkdirSync(out,{recursive:true});
 const save=()=>fs.writeFileSync(path.join(out,'results.json'),clean(report));
 const note=(id,data)=>{report.checks.push({id,at:new Date().toISOString(),...data});save();console.log(id,clean(data));};
@@ -56,7 +58,7 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
   const context=browser.contexts()[0];let ui;
   for(let i=0;i<40;i++){ui=context.pages().find(p=>p.url()==='arnsui://app/index.html');if(ui)break;await delay(250);}
   assert.ok(ui,'Real desktop toolbar must appear');await ui.locator('#address').waitFor();await delay(600);
-  const f=path.join(out,id+'-profile-private.json');fs.writeFileSync(f,JSON.stringify({...profile,directPeers:connections,arweavePeers:extra.rawOnly?profile.arweavePeers:[]}));
+  const f=path.join(out,id+'-profile-private.json');fs.writeFileSync(f,JSON.stringify({...profile,directPeers:connections,arweavePeers:extra.rawOnly||extra.resourceTest?profile.arweavePeers:[]}));
   if(!await ui.locator('#settings-panel').isVisible())await ui.locator('#settings-button').click();
   await ui.locator('#import-mode').selectOption('replace');await ui.locator('#import-profile').click();await native('open',f);await delay(500);
   assert.match(await ui.locator('#settings-result').innerText(),/Connections replaced/);
@@ -64,18 +66,32 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
   for(const name of ['vevivo','internetfireplace','permahistory','kh-laboratory']){
    const before=audit(dataDir).length,existing=new Set(context.pages());await ui.locator('#new-tab').click();let page;
    for(let i=0;i<40;i++){page=context.pages().find(p=>!existing.has(p));if(page)break;await delay(100);}
-   assert.ok(page);const start=Date.now();await ui.locator('#address').fill('ar://'+name);await ui.locator('#open-address').click();
+   assert.ok(page);const resourceResponses=[],resourceFailures=[],resourceConsole=[];
+   if(extra.resourceTest){
+    page.on('response',response=>{if(response.url().startsWith('https://arweave.net/'))resourceResponses.push({url:response.url(),status:response.status(),headers:response.headers()});});
+    page.on('requestfailed',request=>resourceFailures.push({url:request.url().slice(0,300),error:request.failure()?.errorText}));
+    page.on('console',message=>{if(message.type()==='error')resourceConsole.push(message.text().slice(0,500));});
+    page.on('dialog',dialog=>dialog.dismiss());
+   }
+   const start=Date.now();await ui.locator('#address').fill('ar://'+name);await ui.locator('#open-address').click();
    let terminal=true;try{await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done')||document.querySelector('#access-stages .error'),null,{timeout:95000});}catch{terminal=false;}
    const elapsedMs=Date.now()-start;await delay(1500);
+   let resources;
+   if(extra.resourceTest){
+    const play=page.getByRole('button',{name:/^play$/i});if(await play.count())await play.first().click({timeout:5000}).catch(()=>{});
+    await delay(name==='internetfireplace'?15000:2000);
+    resources={responses:resourceResponses,failures:resourceFailures,consoleErrors:resourceConsole,dom:await page.evaluate(()=>({media:[...document.querySelectorAll('video,audio')].map(e=>({tag:e.tagName,src:e.currentSrc||e.getAttribute('src'),readyState:e.readyState,currentTime:e.currentTime,paused:e.paused,error:e.error?{code:e.error.code,message:e.error.message}:null})),sources:[...document.querySelectorAll('source,script[src],link[href]')].map(e=>({tag:e.tagName,url:e.src||e.href||e.getAttribute('src')})).filter(e=>e.url?.startsWith('https://arweave.net/'))}))};
+   }
    const events=audit(dataDir).slice(before),responses=events.filter(x=>x.type==='response');
    const row={name,terminal,opened:await ui.locator('#access-stages [data-stage="open"].done').count()>0,elapsedMs,status:await ui.locator('#message').innerText(),content:await ui.locator('#content-status').innerText(),mode:await ui.locator('#mode-badge').innerText(),url:page.url(),document:await page.evaluate(()=>({title:document.title,text:document.body?.innerText.slice(0,1200),images:[...document.images].map(x=>({source:x.getAttribute('src')?.slice(0,100),loaded:x.complete&&x.naturalWidth>0}))})),network:{requests:events.filter(x=>x.type==='request').length,responses:responses.length,bytes:responses.reduce((s,x)=>s+(x.bytes||0),0),purposes:[...new Set(responses.map(x=>x.purpose))],meshResponses:responses.filter(x=>x.purpose==='mesh-peer').length,cutSourceResponses:responses.filter(x=>blockedEndpoints.includes(x.host+':'+x.port)).length},proof:await ui.locator('#proof').innerText()};
-   phase.pages.push(row);save();console.log('DISASTER_PAGE',clean({phase:id,name,opened:row.opened,elapsedMs,network:row.network,status:row.status}));
+   if(resources)row.arweaveResources=resources;
+   phase.pages.push(row);save();console.log('DISASTER_PAGE',clean({phase:id,name,opened:row.opened,elapsedMs,network:row.network,status:row.status,...(resources?{arweaveResources:resources}:{})}));
    const visible=row.status+' '+row.document.text;
    if(!privateValues.some(v=>visible.includes(v)))await native('capture',path.join(out,id+'-'+name+'.png'));
    try{
    assert.equal(row.opened,true,id+': '+name+' must open');assert.match(row.content,/verified/i);assert.match(row.mode,/Live/);assert.equal(row.network.cutSourceResponses,0);
    if(extra.rawOnly){if(!extra.indexOnly)assert.equal(row.network.meshResponses,0);assert.ok(row.network.purposes.includes('raw-arweave'),'Fresh client must obtain bytes from the independent raw storage nodes');}
-   else {assert.ok(row.network.meshResponses>0,'A fresh client must receive data from Mesh');assert.equal(row.network.purposes.includes('raw-arweave'),false,'No raw server is configured in this replica-only experiment');}
+   else {assert.ok(row.network.meshResponses>0,'A fresh client must receive data from Mesh');if(!extra.resourceTest)assert.equal(row.network.purposes.includes('raw-arweave'),false,'No raw server is configured in this replica-only experiment');}
    await native('check-errors');
    }catch(e){row.validationError=clean(e.message);if(!extra.collectFailures)throw e;}
   }
@@ -114,6 +130,13 @@ async function localFallback(seedDir){
   const gatewayIp=baseline.checks[0].value[0],dohIp=baseline.checks[1].value[0];
   externalChecks=[{label:'DNS',kind:'dns',host:'arweave.net'},{label:'gateway-HTTPS',kind:'tcp',host:gatewayIp,port:443},{label:'DoH-HTTPS',kind:'tcp',host:dohIp,port:443}];
   const positive=await probe(externalChecks);for(const c of positive.checks)assert.equal(c.ok,true,c.label+' must pass before firewall');note('positive-controls',positive);
+  if(resourceTest){
+   await runPhase('resource-dns-cut',profile.directPeers,[...profile.directPeers,...profile.arweavePeers,...profile.rpcSources],[],{scope:'Candidate browser intercepts immutable Arweave resource URLs; DNS/gateway blocked by Windows Firewall',resourceTest:true,collectFailures:true});
+   const responses=report.phases[0].pages.flatMap(p=>p.arweaveResources?.responses||[]);
+   report.verifiedResourceResponses=responses.filter(r=>[200,206].includes(r.status)&&r.headers['x-arns-mesh-transport']==='verified-content');
+   assert.ok(report.verifiedResourceResponses.length>0,'At least one real gateway-spelled resource must arrive as verified peer content under OS network blocking');
+   report.testPassed=true;return;
+  }
   let replicas=['a','b'].flatMap(id=>{const file=path.join(out,'rendezvous',id,'ready.json');if(!fs.existsSync(file))return [];const row=JSON.parse(fs.readFileSync(file));assert.equal(net.isIP(row.host),4);return [{endpoint:row.host+':'+row.port,id}];});
   const remoteProbe=await probe(replicas.map(r=>({label:'independent-'+r.id,kind:'mesh',...parse(r.endpoint)})));note('independent-peer-reachability',remoteProbe);
   const seedDir=await runPhase('dns-cut',profile.directPeers,[...profile.directPeers,...profile.rpcSources],[],{scope:'Published app, DNS and gateway access blocked at Windows firewall'});

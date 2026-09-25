@@ -4,6 +4,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {app,BaseWindow,WebContentsView,protocol,session,ipcMain,dialog,Menu} from 'electron';
 import {resolveArUrl,coreRoot} from '../helper/core-adapter.mjs';
+import {resolveArweaveResource} from '../helper/resource-adapter.mjs';
+import {parseArweaveResourceUrl} from '../../src/arweave-resource-url.mjs';
 import {configureRuntime,saveRpcSources,saveDirectPeers,parseTrustedPeers} from '../helper/runtime.mjs';
 import {VerifiedContentStore} from '../../src/content-store.mjs';
 import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from '../helper/network-profile.mjs';
@@ -63,13 +65,40 @@ function filterSession(ses,{ui=false,tab=null}={}){
   ses.setDevicePermissionHandler(()=>false);
   ses.on('will-download',event=>event.preventDefault());
   ses.webRequest.onBeforeRequest((details,cb)=>{
-    const allowed=ui?details.url.startsWith('arnsui://app/'):isAllowedRendererUrl(details.url);
+    const allowed=ui?details.url.startsWith('arnsui://app/'):isAllowedRendererUrl(details.url,{resourceType:details.resourceType});
     if(!allowed){recordNetwork({type:'blocked',reason:'browser_external_request',host:(()=>{try{return new URL(details.url).hostname;}catch{return '';}})(),resourceType:details.resourceType});if(tab&&details.resourceType!=='mainFrame'){recordPageIssue(tab,{kind:'blocked',url:details.url,message:'External resource blocked.',source:'browser-request-filter'});updatePageHealth(tab);send();}}
     cb({cancel:!allowed});
   });
 }
 async function resolveForTab(tab,raw,{signal,onProgress=()=>{}}={}){
   return requests.run(()=>resolveArUrl(raw,{quorum:witnessQuorum,contentStore:store,snapshotStore:accessPolicy==='saved'?pinner.snapshotStore({trustedPeers}):runtime.snapshots,accessPolicy,trustedPeers,signal,onProgress}),{signal});
+}
+async function resourceHandler(tab,request){
+  // Catch every HTTPS request in this session. Never forward a URL, redirect,
+  // POST, gateway API or unsupported host to the built-in network transport.
+  const parsed=parseArweaveResourceUrl(request.url);
+  if(!parsed)return new Response('External request blocked.',{status:403});
+  if(!['GET','HEAD'].includes(request.method))return new Response('Arweave content is read-only.',{status:405,headers:{allow:'GET, HEAD'}});
+  const epoch=tab.epoch,signal=AbortSignal.any([tab.controller.signal,request.signal,AbortSignal.timeout(90000)]),key=accessPolicy+'|resource|'+parsed.key;
+  tab.resources.pending++;send();
+  try{
+    signal.throwIfAborted();let result=cache.get(key);
+    if(!result){
+      result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>requests.run(()=>resolveArweaveResource(request.url,{contentStore:store,localOnly:accessPolicy==='saved',signal:shared}),{signal:shared}),{signal});
+      signal.throwIfAborted();if(tabs.isCurrent(tab,epoch))cache.set(key,result);
+    }
+    const response=contentResponse(result,request);
+    // Only immutable public bytes are exposed; credentials and cookies are not
+    // forwarded. Fonts/module scripts/fetch need CORS across ar: and https:.
+    response.headers.set('access-control-allow-origin','*');
+    response.headers.set('x-arns-mesh-data-id',result.meta.dataId);
+    response.headers.set('x-arns-mesh-transport','verified-content');
+    if(tabs.isCurrent(tab,epoch))tab.resources.verified++;
+    return response;
+  }catch(error){
+    if(tabs.isCurrent(tab,epoch)&&!tab.controller.signal.aborted){tab.resources.failed++;tab.resources.lastError={url:request.url,error:String(error.message||error).slice(0,300)};}
+    return new Response(request.method==='HEAD'?null:plainError(error),{status:502,headers:{'content-type':'text/plain','cache-control':'no-store','access-control-allow-origin':'*'}});
+  }finally{if(tabs.isCurrent(tab,epoch)){tab.resources.pending=Math.max(0,tab.resources.pending-1);updatePageHealth(tab);}send();}
 }
 async function arHandler(tab,request){
   if(!['GET','HEAD'].includes(request.method))return new Response('ArNS content is read-only.',{status:405,headers:{allow:'GET, HEAD'}});
@@ -116,6 +145,9 @@ function selectTab(id){tabs.activate(id);panelOpen=false;layout();win.setTitle((
 async function newTab(raw=''){
   const tab=tabs.create(raw),ses=session.fromPartition('mesh-tab-'+tab.id,{cache:false});
   try{
+    // Install the HTTPS interceptor before admitting resource URLs. A failure
+    // to register it aborts tab creation; there is no gateway fallback.
+    ses.protocol.handle('https',request=>resourceHandler(tab,request));
     filterSession(ses,{tab});ses.protocol.handle('ar',request=>arHandler(tab,request));
     ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
     tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
@@ -125,7 +157,7 @@ async function newTab(raw=''){
 }
 async function closeTab(id){
   const tab=tabs.close(id),ses=tab.view.webContents.session;win.contentView.removeChildView(tab.view);tab.view.webContents.close();
-  ses.protocol.unhandle('ar');ses.protocol.unhandle('arnsui');void ses.clearStorageData().catch(()=>{});
+  ses.protocol.unhandle('ar');ses.protocol.unhandle('arnsui');ses.protocol.unhandle('https');void ses.clearStorageData().catch(()=>{});
   if(!tabs.rows.size)await newTab();else{layout();send();}
 }
 function stop(tab=tabs.active){tabs.stop(tab.id);tab.view.webContents.stop();send();}

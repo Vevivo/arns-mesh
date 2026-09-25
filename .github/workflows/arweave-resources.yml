@@ -1,0 +1,68 @@
+name: Verify direct Arweave resources under Windows DNS outage
+on:
+  push:
+    branches: [feat/arweave-resources]
+permissions:
+  contents: read
+jobs:
+  candidate-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      QA_FIREWALL_GROUP: ArNS-Mesh-Disaster-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run check:public
+      - run: npm test
+      - name: Build the candidate with verified Electron
+        shell: pwsh
+        run: |
+          python scripts/download-electron.py --out "$env:RUNNER_TEMP/electron-runtime"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/package-windows.py --runtime "$env:RUNNER_TEMP/electron-runtime" --out dist
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          "QA_BUILD_INFO=$env:GITHUB_WORKSPACE/dist/build.json" >> $env:GITHUB_ENV
+          "QA_RESOURCE_TEST=1" >> $env:GITHUB_ENV
+          "QA_OUTPUT=$env:RUNNER_TEMP/mesh-live-evidence" >> $env:GITHUB_ENV
+          "QA_TOOLS=$env:RUNNER_TEMP/mesh-live-tools" >> $env:GITHUB_ENV
+      - name: Install isolated desktop UI drivers
+        shell: pwsh
+        run: |
+          npm install --prefix "$env:QA_TOOLS" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pywinauto==0.6.9 Pillow==11.3.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Open real ArNS pages with gateway-spelled assets while DNS and gateways are blocked
+        env:
+          MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+        run: node qa/disaster/windows.cjs
+      - name: Always restore network rules
+        if: always()
+        shell: pwsh
+        run: ./qa/disaster/firewall.ps1 -Mode clear -Group "$env:QA_FIREWALL_GROUP"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: arweave-resource-evidence
+          path: |
+            ${{ runner.temp }}/mesh-live-evidence/results.json
+            ${{ runner.temp }}/mesh-live-evidence/*.png
+            ${{ runner.temp }}/mesh-live-evidence/electron-sanitized.log
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: candidate-windows-package
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build.json
+          retention-days: 14
