@@ -21,6 +21,8 @@ export function isAllowedRendererUrl(raw){
 }
 export function plainError(error){
   const value=String(error.message||error);
+  if(/saved_binding_unavailable/.test(value))return 'This older saved entry has no matching saved name observation. Its files were kept. Save the site again in live mode to bind a new copy.';
+  if(/saved_peer_trust_required/.test(value))return 'The peer whose name observation was saved is no longer trusted. Review your trusted peers before opening this saved version.';
   if(/saved_name_unavailable/.test(value))return 'No saved name record is available. Live resolution requires a reachable Solana RPC source.';
   if(/arns_lease_expired/.test(value))return 'The name lease is expired according to the RPC observation and this computer’s clock. No current mapping was accepted. Open Page information for details.';
   if(/current_name_state_unavailable|no_state_evidence|rpc_sources_conflict/.test(value))return 'A current name record could not be obtained, or the sources disagree. Saved records are available only by your explicit selection.';

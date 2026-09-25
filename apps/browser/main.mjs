@@ -69,7 +69,7 @@ function filterSession(ses,{ui=false,tab=null}={}){
   });
 }
 async function resolveForTab(tab,raw,{signal,onProgress=()=>{}}={}){
-  return requests.run(()=>resolveArUrl(raw,{quorum:witnessQuorum,contentStore:store,snapshotStore:runtime.snapshots,accessPolicy,trustedPeers,signal,onProgress}),{signal});
+  return requests.run(()=>resolveArUrl(raw,{quorum:witnessQuorum,contentStore:store,snapshotStore:accessPolicy==='saved'?pinner.snapshotStore({trustedPeers}):runtime.snapshots,accessPolicy,trustedPeers,signal,onProgress}),{signal});
 }
 async function arHandler(tab,request){
   if(!['GET','HEAD'].includes(request.method))return new Response('ArNS content is read-only.',{status:405,headers:{allow:'GET, HEAD'}});
@@ -242,7 +242,7 @@ async function setAccessPolicy(value){
 }
 handle('set-access-policy',setAccessPolicy);
 handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';savePrefs();cache.clear();return navigate(raw);});
-handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name).then(()=>send()).catch(error=>report(error));send();return true;});
+handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name,{accessPolicy,trustedPeers}).then(()=>send()).catch(error=>report(error));send();return true;});
 handle('unpin-site',name=>{pinner.remove(name);send();});
 async function saveDocument(){
   const tab=tabs.active;if(!tab.url)throw new Error('Open an ArNS page first.');const url=tab.url;

@@ -151,8 +151,19 @@ test('saved-name L1 manifest pins and opens through the local HTTP bridge with n
  snapshots.put({schema:'arns-mesh-name-snapshot/v1',name:'fixture',txId:root.id,antId:'B'.repeat(43),slot:1,ttlSeconds:60,observedAt},{kind:'local-rpc'});
  const pinner=new SitePinner({file:path.join(dir,'pins-index.json'),snapshots,contentStore:store});
  const pin=await pinner.start('fixture');assert.equal(pin.status,'manifest-saved');assert.equal(pin.saved,3);assert.equal(pin.failed,0);
+ // A later live observation changes the target. Explicit saved access must
+ // still select the pinned manifest and its original observation date.
+ snapshots.put({schema:'arns-mesh-name-snapshot/v1',name:'fixture',txId:css.id,antId:'B'.repeat(43),slot:2,ttlSeconds:60,observedAt:new Date().toISOString()},{kind:'local-rpc'});
+ const reopened=new SitePinner({file:pinner.file,snapshots,contentStore:store});
+ assert.equal(reopened.snapshotStore().get('fixture').txId,root.id);
+ // Saving again while viewing the saved copy must not replace it with the
+ // newer live target. Exercise the public start path as the desktop does.
+ const savedAgain=await reopened.start('fixture',{accessPolicy:'saved'});
+ assert.equal(savedAgain.rootDataId,root.id);assert.equal(savedAgain.observedAt,observedAt);
+ assert.equal(savedAgain.status,'manifest-saved');assert.equal(savedAgain.saved,3);
+ assert.equal(snapshots.get('fixture').txId,css.id,'saved access leaves the live observation intact');
  store.maxBytes=0;store.prune();assert.equal(store.pinStats().files,3);
- const resolve=url=>resolveArUrl(url,{contentStore:store,snapshotStore:snapshots,accessPolicy:'saved'});
+ const resolve=url=>resolveArUrl(url,{contentStore:store,snapshotStore:reopened.snapshotStore(),accessPolicy:'saved'});
  const result=await resolve('ar://fixture/');assert.deepEqual(result.body,html.payload);assert.equal(result.meta.storageKind,'l1');assert.equal(result.meta.l1SignatureVerified,true);assert.equal(result.meta.dataItemSignatureVerified,false);
  assert.equal(result.meta.verification.currentStateVerified,false);assert.equal(result.meta.verification.rpcUsed,false);assert.equal(result.meta.recovery.observedAt,observedAt);
  const bridge=await startLocalBridge({dataDir:path.join(dir,'bridge'),resolve,share:async()=>{}});

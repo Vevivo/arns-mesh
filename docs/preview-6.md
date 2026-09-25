@@ -6,6 +6,7 @@ Changes:
 - Reject external or malformed navigation before normalizing its address. Keep the current tab and show a controlled message, including when Electron sends `did-start-navigation` before the cancellable navigation event.
 - Report CSP blocks and page script errors in Page information. A verified main document with reported missing resources is shown as a partial page. Renderer reports are diagnostic observations, not proof of network traffic or content authenticity. Counts are deduplicated and bounded to 64 diagnostics per navigation.
 - Check Mesh protocol reachability with an empty-name snapshot validation request. Both the old and new peer reject it before reading a snapshot or starting discovery. A response does not prove peer identity, content coverage or current name state.
+- Retain the pinned name observation separately from later live observations. Opening a saved entry keeps the pinned target even after the live name changes. Old entries without a matching observation retain their bytes and ask to be saved again instead of silently selecting another target.
 - Explain an expired name lease separately from a missing RPC response, while stating reliance on RPC observations and the local clock.
 
 ## Saved pages
