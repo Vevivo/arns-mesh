@@ -4,7 +4,7 @@
 
 The aim is continued access when ordinary domains, DNS or gateways are unavailable **but IP connectivity and reachable data sources still exist**. Enter `ar://name`; the app finds the target, retrieves the content and checks its identity and signature before displaying it. It cannot recover data that no reachable source holds.
 
-**Source version: 0.5.0-preview.8** · [Published Windows downloads](https://github.com/Vevivo/arns-mesh/releases) · [Türkçe](README.tr.md)
+**Current public preview: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Download Windows x64](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Türkçe](README.tr.md)
 
 This is an experimental, independent community project, not an official AR.IO, Arweave or Solana release. Live name resolution still depends on numeric-IP Solana RPC observations. Universal first discovery and independent-host failover remain unfinished.
 
@@ -16,7 +16,7 @@ This is an experimental, independent community project, not an official AR.IO, A
 | Help readers access data | Reachable Linux VPS or Raspberry Pi + storage + upstream sources | [Supporter setup](#run-a-supporter-on-a-vps-or-raspberry-pi) |
 | Develop or build Mesh | Source + Node.js/npm/Git; Electron for desktop development | [Developer guide](docs/en/developer.md) |
 
-Readers do **not** need their own server, indexer, Node.js installation, Chrome extension or wallet. Installing the desktop does **not** automatically make it a public serving peer. The Linux supporter is a separate program.
+Readers do **not** need their own server, indexer, Node.js installation, Chrome extension or wallet. Installing the desktop does **not** automatically make it a public serving peer. The Linux supporter is a separate program. One person can run both: the server supplies data and the desktop browses it. The operator gives readers a connection code; readers do not pass website files to each other. No payment or activation license is required.
 
 ## What makes this approach useful?
 
@@ -107,10 +107,10 @@ Both use the **headless Node.js peer**, not the Windows ZIP. No domain, nginx or
 
 **Real Pi hardware acceptance is pending.** Behind a home router, port forwarding/public addressing may be needed. CGNAT can prevent inbound access; direct mode has no automatic NAT traversal/relay. A LAN address is not necessarily reachable by Internet users.
 
-The [step-by-step VPS/Pi guide](docs/en/supporter.md) covers OS/runtime preparation, networking, background service, quotas, backup and updates. For the current source, use the commands below after preparing the host and placing a working **upstream** profile beside the new checkout. A released tag can be selected instead for a fixed version:
+The [step-by-step VPS/Pi guide](docs/en/supporter.md) covers OS/runtime preparation, networking, background service, quotas, backup and updates. Use the published preview.8 source after preparing the host and placing a working **upstream** profile beside the new checkout:
 
 ```sh
-git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch v0.5.0-preview.8 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 node scripts/profile.mjs check ../mesh-upstream.json
 bash scripts/install-peer.sh ../mesh-upstream.json

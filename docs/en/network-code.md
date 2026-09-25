@@ -78,8 +78,8 @@ python scripts/package-windows.py --runtime ELECTRON_DIRECTORY --out dist --netw
 
 The output filename ends in `-Connected.zip`. Only that output package receives the invitation; public source defaults remain empty. It exposes the advertised addresses to recipients and creates no server by itself.
 
-## Authority backup and paid services
+## Authority backup
 
 Keep `network-authority.private.json` in a private backup. Never include it in a reader package, mirror or public repository. Losing the key prevents updates under that identity; restoring an old revision counter can create rejected/conflicting revisions. A compromised key requires a new invitation through a separately trusted channel; automatic key rotation is not implemented.
 
-You can operate a managed service and provide capacity/support. This release implements no billing, one-time redemption, device license or server-side subscription enforcement. Selling a reusable code does not make it uncopyable. Paid access requires a separate authorization design and an outage policy; a mandatory central license check on every launch would undermine disaster access.
+Connection codes are reusable and require no payment or activation license. They are not access-control credentials.

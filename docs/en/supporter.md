@@ -84,11 +84,11 @@ Keep the matching line in your user shell configuration if needed for future log
 ## 2. Get the source and an upstream profile
 
 ```sh
-git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch v0.5.0-preview.8 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-This checks out current main in a fresh directory. Select a published tag instead if you need a fixed release. GitHub/npm domains are used for installation; they are not part of the running Mesh access path. Download dependencies before a disruption.
+This checks out the published preview.8 source in a fresh directory. GitHub/npm domains are used for installation; they are not part of the running Mesh access path. Download dependencies before a disruption.
 
 Obtain a working profile from an existing supporter and save it beside the checkout as `mesh-upstream.json`. This is **your server’s source list**. If you know usable service addresses instead, generate it with the command below. Its `--peer` is an existing source, not your own new empty server:
 

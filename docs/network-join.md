@@ -1,6 +1,8 @@
 # Preview.8 connection-code acceptance — 25 September 2026
 
-Source under Windows acceptance: `8eb51685e4aef02b2eba1e42bedbdba8dbc370ce`.
+**Published:** [preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8). The release ZIP was built at `e4e2ce0d0f97c1ad8aec43f15471752bdb6044bb` by [run 36109081055](https://github.com/Vevivo/arns-mesh/actions/runs/36109081055). Final-head UI acceptance also passed in [run 36108819166](https://github.com/Vevivo/arns-mesh/actions/runs/36108819166). The merge changed no application files. ZIP SHA-256: `9342fd898d5ecf9f62d8bfab7cf4706a0979c18cf0845461a4b0081d8c58a3ff`.
+
+Source under the earlier Windows acceptance: `8eb51685e4aef02b2eba1e42bedbdba8dbc370ce`.
 
 - [Windows executable and UI run](https://github.com/Vevivo/arns-mesh/actions/runs/36108198567)
 - [Linux and Windows source checks](https://github.com/Vevivo/arns-mesh/actions/runs/36108202015)

@@ -6,7 +6,7 @@ Connection-code protocol, operator tools and included-network packaging: [networ
 
 ## Reproduce
 
-Use Node.js 24 LTS (CI pins 24.19.0), npm and Git. Clone the repository into a new development directory and enter it, or extract the [preview.7 source ZIP](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.7.zip). The source ZIP is not the runnable desktop ZIP. Use `main` for contributions and the `v0.5.0-preview.7` tag for the released source baseline. Do not update dependencies implicitly: use the committed lockfile.
+Use Node.js 24 LTS (CI pins 24.19.0), npm and Git. Clone the repository into a new development directory and enter it, or extract the [preview.8 source ZIP](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.8.zip). The source ZIP is not the runnable desktop ZIP. Use `main` for contributions and the `v0.5.0-preview.8` tag for the released source baseline. Do not update dependencies implicitly: use the committed lockfile.
 
 ```sh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund

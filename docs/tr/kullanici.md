@@ -6,7 +6,7 @@ Gereken yalnızca **Windows x64 masaüstü ZIP’i ve sağlayıcının bağlant�
 
 ## Kurulum
 
-1. [Sürümlerden](https://github.com/Vevivo/arns-mesh/releases) Windows x64 ZIP’ini indir. Bağlantı kodları için preview.8 veya yenisini seç. GitHub’ın **Source code** ZIP’i geliştiriciler içindir.
+1. [Preview.8 sürümünden](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) Windows x64 ZIP’ini indir. Bağlantı kodları için preview.8 veya yenisini seç. GitHub’ın **Source code** ZIP’i geliştiriciler içindir.
 2. İstersen ZIP'in SHA-256 değerini `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosya.zip'` ile ölçüp aynı sürümün `SHA256SUMS.txt` dosyasıyla karşılaştır. Bu indirme bütünlüğünü kontrol eder; yayıncı imzası değildir.
 3. ZIP'in **tamamını** yeni bir klasöre çıkar. `Mesh-Browser.exe` dosyasını normal kullanıcı olarak aç. Yönetici yetkisi gerekmez. Önizleme kod imzalı değildir; Windows engellerse uyarının ayrıntısını geliştiriciye ilet, antivirüsü kapatma.
 4. Sağlayıcının `mesh1.` kodunu **Settings → Mesh connection code** alanına yapıştır. **Check code** ile ağı incele, **Join this network** seç. Bu işlem kaynak listesini değiştirir. Terminal gerekmez. Eski JSON aktarımı **Already have a connection file?** altında durur.

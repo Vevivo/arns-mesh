@@ -6,7 +6,7 @@ You need the Windows x64 desktop ZIP and an operator connection code or legacy p
 
 ## First start
 
-1. Open [Releases](https://github.com/Vevivo/arns-mesh/releases) and download the Windows x64 ZIP and `SHA256SUMS.txt`. Choose preview.8 or newer for connection codes. GitHub's **Source code** ZIP is for developers.
+1. Open [preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) and download the Windows x64 ZIP and `SHA256SUMS.txt`. Choose preview.8 or newer for connection codes. GitHub's **Source code** ZIP is for developers.
 2. Optionally check the downloaded ZIP in PowerShell with `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the entire value with the checksum. A matching checksum checks the download; it is not a publisher signature.
 3. Extract **all files** into a new folder. Open `Mesh-Browser.exe` as your ordinary user. Do not run as administrator or disable antivirus protections. If Windows blocks the unsigned build, retain the warning details for the maintainer.
 4. Ask your operator for a `mesh1.` code. In **Settings → Mesh connection code**, paste it, choose **Check code**, review and **Join this network**. This replaces the source list. No terminal commands are needed. Legacy JSON import remains under **Already have a connection file?**.

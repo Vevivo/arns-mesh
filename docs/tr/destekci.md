@@ -85,11 +85,11 @@ Gerekirse sana uygun satırı sonraki oturumlar için kullanıcı kabuk ayarına
 ## 3. Ortak kurulum: kaynak ve bağlantı profili
 
 ```sh
-git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch v0.5.0-preview.8 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-Bu komut güncel main dalını yeni bir dizine alır. Sabit sürüm gerekiyorsa yayımlanmış bir etiket seç. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh’in içerik erişim yolu değildir. Bağımlılıkları kesintiden önce indir.
+Bu komut yayımlanmış preview.8 kaynağını yeni bir dizine alır. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh’in içerik erişim yolu değildir. Bağımlılıkları kesintiden önce indir.
 
 Başka destekçiden çalışan profil al ve repo klasörünün yanına `mesh-upstream.json` olarak koy. Bu dosya **senin sunucunun veri alacağı kaynakları** gösterir. Kullanılabilir adresleri biliyorsan aşağıdaki komutla üretebilirsin. Buradaki `--peer` mevcut bir kaynaktır; kendi yeni boş sunucunu yazmak ona veri sağlamaz:
 

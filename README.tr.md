@@ -4,7 +4,7 @@
 
 Amaç, domainler, DNS veya gateway hizmetleri kullanılamadığında **IP bağlantısı ve erişilebilir veri kaynakları hâlâ varsa** içeriğe ulaşabilmek. Uygulamaya `ar://isim` yazılır; ismin hedefi bulunur, veri alınır, kimliği ve imzası doğrulanarak gösterilir. Hiçbir erişilebilir kaynakta bulunmayan veri üretilemez.
 
-**Kaynak sürümü: 0.5.0-preview.8** · [Yayımlanmış Windows paketleri](https://github.com/Vevivo/arns-mesh/releases) · [English](README.md)
+**Güncel yayımlanmış önizleme: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Windows x64 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [English](README.md)
 
 Deneysel, bağımsız bir topluluk projesidir; resmî AR.IO, Arweave veya Solana dağıtımı değildir. Canlı isim çözümü IP üzerinden Solana RPC gözlemlerine dayanır. Bütün içerikleri ilk kez bulma ve bağımsız sunucu kaybına dayanıklılık çalışmaları tamamlanmış değildir.
 
@@ -16,7 +16,7 @@ Deneysel, bağımsız bir topluluk projesidir; resmî AR.IO, Arweave veya Solana
 | Başkalarının içeriğe ulaşmasına destek olmak | Erişilebilir Linux VPS veya Raspberry Pi + disk + veri kaynakları | [Destekçi kurulumu](#vps-veya-raspberry-pi-üzerinde-destekçi-kurulumu) |
 | Kodu geliştirmek veya paketlemek | Kaynak kod + Node.js/npm/Git; masaüstü için Electron | [Geliştirici rehberi](docs/tr/gelistirici.md) |
 
-Normal kullanıcı kendi sunucusunu, indeksleyicisini, Node.js’i veya Chrome uzantısını kurmaz; cüzdan gerekmez. Masaüstünü indirmek bilgisayarı otomatik olarak başkalarına veri sunan bir peer yapmaz. Linux destekçi uygulaması ayrı çalışır.
+Normal kullanıcı kendi sunucusunu, indeksleyicisini, Node.js’i veya Chrome uzantısını kurmaz; cüzdan gerekmez. Masaüstünü indirmek bilgisayarı otomatik olarak başkalarına veri sunan bir peer yapmaz. Linux destekçi uygulaması ayrı çalışır. Aynı kişi ikisini de kullanabilir: sunucu veri sağlar, masaüstü siteleri açar. İşletmeci kullanıcıya bağlantı kodu verir; kullanıcıların birbirine site dosyası vermesi gerekmez. Ödeme veya aktivasyon lisansı gerekmez.
 
 ## Bu yaklaşımın özelliği ne?
 
@@ -110,7 +110,7 @@ Boş bir peer’in çalışıyor olması tam yedek değildir. Faydalı kayıt/do
 [Adım adım VPS/Pi rehberi](docs/tr/destekci.md); işletim sistemi/Node hazırlığı, ağ, başlatma, arka plan servisi, kota, yedek ve güncellemeyi açıklar. Ortam hazırlandıktan ve çalışan **kaynak profilini** yeni repo klasörünün yanına koyduktan sonra:
 
 ```sh
-git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch v0.5.0-preview.8 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 node scripts/profile.mjs check ../mesh-upstream.json
 bash scripts/install-peer.sh ../mesh-upstream.json

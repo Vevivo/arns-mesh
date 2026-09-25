@@ -1,18 +1,20 @@
-name: Request a connection profile
+name: Request a Mesh connection code
 description: Ask the maintainer or a volunteer supporter about access to a live peer and RPC.
-title: "Connection profile request"
+title: "Mesh connection request"
 body:
   - type: markdown
     attributes:
       value: |
         This issue is public. Do not post private IPs, browsing history, keys or diagnostic files.
-        A volunteer must offer access before there is a working connection profile. This request does not guarantee service.
-        The desktop does not yet include a public supporter directory or an approval protocol.
+        Ask an operator for a reusable mesh1 connection code (preview.8+) or a legacy JSON profile.
+        The standard public ZIP contains no provider invitation. This request does not guarantee service.
+        Codes carry network identity and starting addresses; no payment or activation license is required.
+        There is no automatic global supporter directory.
   - type: input
     id: version
     attributes:
       label: Desktop version
-      placeholder: 0.5.0-preview.3
+      placeholder: 0.5.0-preview.8
     validations:
       required: true
   - type: dropdown

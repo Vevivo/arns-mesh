@@ -1,6 +1,6 @@
 # Önizleme durumu ve doğrulama sınırları
 
-**Kaynak preview.8**, imzalı bağlantı kodu, saklanan/güncellenen kaynak listesi ve kodu paket içinde verme yolunu ekler. [Kullanım ve sınırlar](ag-kodu.md). [Windows kabul akışı](../../.github/workflows/network-join.yml) aynı makinedeki kontrollü liste peer’lerini kullanır; bağımsız cihaz kaybı veya ücretli lisans kanıtı değildir. Aşağıdaki eski kesinti ölçümleri preview.7’ye aittir.
+**Yayımlanmış preview.8**, imzalı bağlantı kodu, saklanan/güncellenen kaynak listesi ve kodu paket içinde verme yolunu ekler. [Kullanım ve sınırlar](ag-kodu.md). [Windows kabul akışı](../../.github/workflows/network-join.yml) aynı makinedeki kontrollü liste peer’lerini kullanır; bağımsız cihaz kaybı veya ücretli lisans kanıtı değildir. Aşağıdaki eski kesinti ölçümleri preview.7’ye aittir.
 
 **0.5.0-preview.7** kaynak sürümü, Arweave dosya adreslerini gateway’e bağlanmadan doğrulanmış veri yoluna alır; sabit bağlantıları kopyalama ve saklamaya ekler. Sayfanın bilinen konumundan başlayan sınırlı ham blok taraması, daha önce bulunamayan video/ses/font dosyalarını keşfetti. [131 test ve gerçek Windows ölçümü](../arweave-resources.md) geçti: DNS/gateway engeli altında video ve ses oynadı. Bu deneyde mevcut Mesh sunucusu ve IP üzerinden RPC açıktı.
 

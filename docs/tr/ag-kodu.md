@@ -87,8 +87,8 @@ python scripts/package-windows.py --runtime ELECTRON_DIZINI --out dist --network
 
 Çıktı adı `-Connected.zip` ile biter. Ağ daveti yalnız bu çıktı paketine eklenir; kaynak reponun genel varsayılanı boş kalır. Bu dosyada adresler herkesçe görülebilir. Paketleme otomatik olarak yeni sunucu açmaz veya bir ağı hazır hâle getirmez.
 
-## Özel anahtar ve ticari model
+## Özel anahtarın yedeği
 
 `network-authority.private.json` dosyasını **özel yedekte** tut; kullanıcıya, mirror'a, GitHub'a veya masaüstü ZIP'ine verme. Anahtar kaybolursa aynı ağ adına imzalı güncelleme yapılamaz. Eski bir yedeğe dönüp sürüm sayacını geriye alma. Anahtar çalınırsa yeni anahtar/kodun güvenilir ayrı yoldan dağıtılması gerekir; otomatik anahtar değişimi bu sürümde yoktur.
 
-Tek sağlayıcı olarak kurulum, kapasite ve destek sunabilirsin. Fakat bu sürümde ücret tahsilatı, tek kullanımlık kod tüketimi, cihaz lisansı veya sunucuda abonelik denetimi **yoktur**. Mevcut kodu satmak onu teknik olarak kopyalanamaz yapmaz. Böyle bir hizmet ayrı kimlik/erişim denetimi ve kesinti sırasında geçerli çalışma politikası gerektirir. Her açılışta merkezi lisans sunucusuna mecbur olmak felaket erişimi hedefiyle çatışır.
+Bağlantı kodları tekrar kullanılabilir; ödeme veya aktivasyon lisansı gerektirmez. Özel erişim yetkisi veren kimlik bilgileri değildir.

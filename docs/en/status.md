@@ -1,6 +1,6 @@
 # Preview status and evidence boundaries
 
-**Source preview.8** adds signed connection invitations, cached/managed source lists and optional included-network packages. [Usage and boundaries](network-code.md). [Windows acceptance workflow](../../.github/workflows/network-join.yml) uses controlled directory peers on one machine; this is not independent-host failover or paid licensing. Earlier outage measurements below belong to preview.7.
+**Published preview.8** adds signed connection invitations, cached/managed source lists and optional included-network packages. [Usage and boundaries](network-code.md). [Windows acceptance workflow](../../.github/workflows/network-join.yml) uses controlled directory peers on one machine; this is not independent-host failover or paid licensing. Earlier outage measurements below belong to preview.7.
 
 Desktop source **0.5.0-preview.7** adds direct immutable Arweave resources, bounded nearby-block discovery and static-reference replication/pinning. The real Windows DNS/gateway outage test played the previously missing video/audio and loaded the font. See [measured resource behavior and its limits](../arweave-resources.md).
 
