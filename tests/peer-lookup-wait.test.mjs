@@ -12,6 +12,7 @@ import {startDirectPeerServer,queryDirectPeer} from '../src/direct-peer.mjs';
 import {verifyRawItem} from '../src/content-store.mjs';
 import {verifyRecord,peerIdFromPublicKey} from '../src/common.mjs';
 import {createSwarmMeshClient} from '../src/swarm-client.mjs';
+import {checkConnections} from '../apps/helper/connection-check.mjs';
 
 function testPeer(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-content-wait-'));
@@ -25,6 +26,17 @@ function post(address,body){return new Promise((resolve,reject)=>{
  const req=http.request({host:address.host,port:address.port,path:'/mesh/v1/query',method:'POST'},res=>{const parts=[];res.on('data',x=>parts.push(x));res.on('end',()=>resolve({status:res.statusCode,body:JSON.parse(Buffer.concat(parts))}));});
  req.on('error',reject);req.end(JSON.stringify(body));
 });}
+
+test('connection probe reaches a real peer endpoint without touching snapshots or starting discovery',async t=>{
+ const peer=testPeer(t);
+ peer._warmLocation=()=>{throw new Error('Probe must not warm a location');};
+ peer.snapshotStore={exportLocal(){throw new Error('Probe must reject before reading snapshots');}};
+ const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0});
+ try{
+  const rows=await checkConnections({directPeers:['127.0.0.1:'+server.address.port],rpcSources:[],arweavePeers:[]});
+  assert.equal(rows[0].status,'responded');assert.equal(peer.historyLookups.size,0);
+ }finally{await server.close();}
+});
 
 test('cold content request waits for signed bytes and returns them over the real peer endpoint',async t=>{
  const peer=testPeer(t),key=crypto.generateKeyPairSync('rsa',{modulusLength:4096}).privateKey.export({format:'jwk'});

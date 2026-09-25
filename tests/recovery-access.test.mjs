@@ -43,6 +43,23 @@ test('fast successful content cancels losing work and external cancellation term
  await assert.rejects(pending,/stop-now/);
 });
 
+test('pinned observations recheck peer trust and reject legacy target mismatches',t=>{
+ const dir=temp(t),names=new NameSnapshotStore(path.join(dir,'names.json')),record=snapshot('alpha'),peer='d'.repeat(64);
+ names.put(record,{kind:'trusted-peer',witnessPeerId:peer});
+ const file=path.join(dir,'sites.json'),row={name:'alpha',rootDataId:record.txId,observedAt:record.observedAt,snapshot:{...record,provenance:{kind:'trusted-peer',witnessPeerId:peer}},status:'document-saved',saved:1,total:1};
+ fs.writeFileSync(file,JSON.stringify({alpha:row}));
+ const pinner=new SitePinner({file,snapshots:names,contentStore:{}});
+ assert.equal(pinner.snapshotStore({trustedPeers:[peer]}).get('alpha').txId,record.txId);
+ assert.throws(()=>pinner.snapshotStore().get('alpha'),/saved_peer_trust_required/);
+ assert.throws(()=>pinner.start('alpha',{accessPolicy:'saved'}),/saved_peer_trust_required/);
+ delete pinner.rows.alpha.snapshot;
+ assert.equal(pinner.snapshotStore({trustedPeers:[peer]}).get('alpha').txId,record.txId,'matching legacy observations remain usable');
+ names.put(snapshot('alpha',{txId:'C'.repeat(43),slot:124,observedAt:new Date().toISOString()}),{kind:'local-rpc'});
+ assert.throws(()=>pinner.snapshotStore({trustedPeers:[peer]}).get('alpha'),/saved_binding_unavailable/);
+ assert.throws(()=>pinner.start('alpha',{accessPolicy:'saved',trustedPeers:[peer]}),/saved_binding_unavailable/);
+ assert.equal(pinner.rows.alpha.rootDataId,record.txId);
+});
+
 test('pinned signed files survive pruning and restart, and budget failure preserves existing pins',async t=>{
  const dir=temp(t),signer=new EthereumSigner(crypto.randomBytes(32).toString('hex'));
  const make=async text=>{const item=createData(text,signer,{tags:[]});await item.sign(signer);return item;};

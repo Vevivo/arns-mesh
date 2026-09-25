@@ -35,6 +35,20 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,200);
    await call('reload');await content.webContents.pendingReload;
    assert.equal(fake.messages.at(-1).data.phase,'loaded');assert.equal(fake.messages.at(-1).data.progress.stages.find(x=>x.id==='open').status,'done');
+   // Electron emits did-start-navigation before will-navigate. A rejected
+   // link must never throw in main or replace the current address.
+   for(const url of ['https://files_example.ar.io/','ar://bad:80/','file:///tmp/test']){
+     assert.doesNotThrow(()=>content.webContents.emit('did-start-navigation',{},url,false,true));
+     let canceled=false;content.webContents.emit('will-navigate',{preventDefault(){canceled=true;}},url);
+     assert.equal(canceled,true);assert.equal(fake.messages.at(-1).data.url,'ar://unit-one/path?q=1');
+     assert.match(fake.messages.at(-1).data.message,/link blocked/);
+   }
+   const csp={level:'error',message:'Loading the script \'https://cdn.example/script.js\' violates the following Content Security Policy directive: "script-src self". The action has been blocked.'};
+   content.webContents.emit('console-message',csp);content.webContents.emit('console-message',csp);
+   assert.equal(fake.messages.at(-1).data.phase,'partial');assert.equal(fake.messages.at(-1).data.resources.blocked,1);
+   assert.equal(fake.messages.at(-1).data.meta.contentSignatureVerified,true);
+   await call('reload');await content.webContents.pendingReload;
+   assert.equal(fake.messages.at(-1).data.phase,'loaded');assert.equal(fake.messages.at(-1).data.resources.blocked,0);
    await call('toggle-bookmark');assert.equal(call('get-browser-data').bookmarks.length,1);
    const id=await call('new-tab','unit-two');assert.equal(fake.views.length,3);assert.notEqual(fake.views[1].webContents.session,fake.views[2].webContents.session);
    let blocked;fake.views[2].webContents.session.webRequest.filter({url:'https://example.com/',resourceType:'script'},r=>blocked=r.cancel);assert.equal(blocked,true);

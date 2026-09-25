@@ -1,11 +1,11 @@
-# ArNS Mesh compact footer preview
+# ArNS Mesh 0.5.0-preview.6
 
-0.5.0-preview.5 changes only the home-page footer: the long live-access note is removed, Built by Vevivo is on the left, and Powered by with the official ar.io logo is on the right. Footer padding is reduced. Network behavior and connection profiles are unchanged.
+Fixes the main-process exception when a page tries an external link. The link remains blocked; the current ArNS page and browser controls remain available. CSP-blocked assets and script errors are now reported as a partial page rather than hidden behind a main-document success label. A connection check no longer starts discovery on older peers or mislabels their pending reply as an unavailable peer. Expired name leases receive a specific RPC/clock-qualified explanation.
 
-One top address field, one Settings button, a native right-click edit menu, and a live access-stage row. The home page uses the ar.io brand palette and locally bundled Besley/Plus Jakarta Sans fonts. A small official ar.io wordmark and Vevivo community credit appear in its footer. This remains an independent community project.
+Saved versions now retain their original dated name binding separately from later live observations. Old entries whose binding cannot be recovered keep their bytes and ask the user to save again, instead of silently selecting a new target. Existing gateway, CDN, DNS and external-network restrictions remain in place. No production peer upgrade is required.
 
-Ordinary users extract the Windows ZIP and open Mesh-Browser.exe. A working supporter connection profile is required; no private endpoints are bundled. Existing users should close the old app, retain their data backup and extract the preview into a separate folder. The desktop keeps the same user-data directory. No VPS update is needed for these UI changes.
+The live Windows regression workflow uses a fresh client and existing operator sources, real public ArNS names, native profile import, a blocked external link and a verified saved-document reopen. It does not establish generic cold discovery, independent node failover or complete OS-level DNS/DoH/IPv6 acceptance. Some pages still depend on blocked external files and remain incomplete.
 
-Use the release's acceptance record for the exact tested artifact. The Windows GUI workflow uses real renderers, native mouse menus and file dialogs; its signed saved-page fixture is not live public ArNS access. Unknown-location coverage, full blocked-network acceptance, independent-host outage, retail Windows installation and Raspberry Pi hardware remain separate incomplete gates.
+Download the Windows ZIP, extract it into a separate folder and run `Mesh-Browser.exe`. Close the previous version first and retain its folder and your user-data backup. The public package contains no private connection profile; existing profiles remain in the user-data directory. See [preview-6.md](../preview-6.md) for changes and saved-page limits, and the release attachments for measured validation of the exact ZIP.
 
-This portable preview is unsigned. Check SHA256SUMS.txt after downloading. No automatic gateway fallback is introduced. See the English and Turkish user/supporter guides in the repository.
+Unsigned community preview; not an official AR.IO distribution or a final universal-access release.

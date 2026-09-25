@@ -52,7 +52,7 @@ api.onState(s=>{
  $('zoom-reset').textContent=(s.zoom||100)+'%';$('build-version').textContent=s.version||'';
  $('saved-toggle').checked=s.accessPolicy==='saved';
  const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
- $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='loaded'?' loaded':'');
+ $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='partial'?' partial':s.phase==='loaded'?' loaded':'');
  $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':'P2P · Live';
  renderSaved(s);renderDetails(s);renderElapsed();
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
@@ -76,7 +76,7 @@ function renderJourney(s){
 }
 function renderDetails(s){const m=s.meta||{},v=m.verification||{},p=s.peer||{},nr=m.nameResolution||{};
  $('transport').textContent='IP · Mesh + raw Arweave';
- $('content-status').textContent=m.contentSignatureVerified?'Signature verified':s.phase==='error'?'Unavailable':'Waiting';
+ $('content-status').textContent=m.contentSignatureVerified?'Main document signature verified':s.phase==='error'?'Unavailable':'Waiting';
  $('name-status').textContent=m.recovery?'Saved record · '+new Date(m.recovery.observedAt).toLocaleString('en-US'):v.nameStateChecked?`${v.rpcSources} RPC · observed ${m.nameObservedAt?new Date(m.nameObservedAt).toLocaleString('en-US'):'at unknown time'} · no inclusion proof`:nr.nameResolved?'Name resolved · waiting for content':'Not received';
  $('peer').textContent='Reader · no serving or indexing';
  const network=s.network||{},discovery=s.discovery||{};
@@ -86,7 +86,9 @@ function renderDetails(s){const m=s.meta||{},v=m.verification||{},p=s.peer||{},n
  const progress=s.progress||{},detail=progress.detail||{},resources=s.resources||{};$('stages').replaceChildren();for(const stage of progress.stages||[]){const el=document.createElement('li');el.className=stage.status;el.textContent=(stage.status==='done'?'✓ ':stage.status==='error'?'! ':'')+stage.label;$('stages').append(el);}
  let description=progress.message||s.message||'Enter an ArNS name.';
  if(detail.total)description=`${detail.source||'Source'} · ${Math.round((detail.received||0)/1024)} / ${Math.round(detail.total/1024)} KiB`;
- if(s.phase==='loaded')description=`Main document verified · Files: ${resources.verified||0} verified, ${resources.pending||0} pending, ${resources.failed||0} unavailable`;
+ if(['loaded','partial'].includes(s.phase))description=`Main document verified · Files: ${resources.verified||0} verified, ${resources.pending||0} pending, ${resources.failed||0} unavailable · ${resources.blocked||0} policy blocks · ${resources.scriptErrors||0} script errors`;
+ $('resource-issues').textContent=(resources.diagnostics||[]).map(d=>[d.kind==='blocked'?'Blocked resource':'Page script error',d.url||'',d.message].filter(Boolean).join(' · ')).join('\n\n')+(resources.diagnosticsTruncated?'\nFurther diagnostics omitted (limit: 64).':'');
+ $('resource-issues-panel').classList.toggle('hidden',!(resources.diagnostics||[]).length);
  $('stage-detail').textContent=description;const bar=$('byte-progress');bar.classList.toggle('hidden',!(busy(s)&&detail.total&&progress.active==='download'));if(detail.total){bar.max=detail.total;bar.value=Math.min(detail.total,detail.received||0);}
 }
 function renderElapsed(){const p=lastState.progress||{};$('elapsed').textContent=busy(lastState)&&p.startedAt?`${Math.max(0,Math.floor((Date.now()-p.startedAt)/1000))}s`:'';}

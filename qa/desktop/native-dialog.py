@@ -41,6 +41,42 @@ if mode == 'clipboard':
 
 from pywinauto import Desktop, keyboard
 
+if mode in ('dismiss-alert', 'check-errors'):
+    handled = False
+    handles = []
+    win32gui.EnumWindows(lambda hwnd, _: handles.append(hwnd), None)
+    # Owned native dialogs need not be returned by UIA's top-level windows().
+    candidates = set(handles + [last_popup(h) for h in handles])
+    for handle in candidates:
+        if not win32gui.IsWindowVisible(handle):
+            continue
+        title = win32gui.GetWindowText(handle)
+        if title not in ('ArNS Mesh Browser', 'Error'):
+            continue
+        children = []
+        win32gui.EnumChildWindows(handle, lambda hwnd, _: children.append(hwnd), None)
+        text = ' '.join(win32gui.GetWindowText(h) for h in children)
+        window = Desktop(backend='uia').window(handle=handle)
+        text += ' ' + ' '.join(x.window_text() for x in window.descendants())
+        if 'JavaScript error occurred in the main process' in text or 'Uncaught Exception:' in text:
+            raise SystemExit('Unexpected native main-process error dialog.')
+        if mode == 'dismiss-alert' and value in text:
+            buttons = [h for h in children if win32gui.GetClassName(h) == 'Button' and win32gui.GetWindowText(h).replace('&', '') == 'OK']
+            if buttons:
+                Desktop(backend='win32').window(handle=buttons[0]).click_input()
+            else:
+                window.child_window(title='OK', control_type='Button').click_input()
+            deadline = time.monotonic() + 3
+            while win32gui.IsWindow(handle) and win32gui.IsWindowVisible(handle) and time.monotonic() < deadline:
+                time.sleep(.1)
+            if win32gui.IsWindow(handle) and win32gui.IsWindowVisible(handle):
+                raise SystemExit('Expected site alert remained visible after clicking OK.')
+            handled = True
+        elif title == 'Error' or ('Playback was blocked' in text):
+            raise SystemExit('Unresolved native dialog remains visible: ' + title)
+    print('Expected site alert dismissed.' if handled else 'No matching native dialog visible.')
+    raise SystemExit(0)
+
 if mode == 'paste':
     deadline = time.monotonic() + 15
     while time.monotonic() < deadline:
