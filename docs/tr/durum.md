@@ -1,6 +1,8 @@
 # Önizleme durumu ve doğrulama sınırları
 
-**0.5.0-preview.6** yayımlanmış masaüstü sürümüdür. 25 Eylül 2026 DNS/gateway kesinti ölçümleri ve destekçi konum çoğaltma değişikliği [deney kaydında](../disaster-network.md) açıklanır. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
+**0.5.0-preview.7** kaynak sürümü, Arweave dosya adreslerini gateway’e bağlanmadan doğrulanmış veri yoluna alır; sabit bağlantıları kopyalama ve saklamaya ekler. Sayfanın bilinen konumundan başlayan sınırlı ham blok taraması, daha önce bulunamayan video/ses/font dosyalarını keşfetti. [131 test ve gerçek Windows ölçümü](../arweave-resources.md) geçti: DNS/gateway engeli altında video ve ses oynadı. Bu deneyde mevcut Mesh sunucusu ve IP üzerinden RPC açıktı.
+
+Yayımlanan paketler ve taslak durumu [sürümler sayfasındadır](https://github.com/Vevivo/arns-mesh/releases). Önceki **0.5.0-preview.6** ayrı bir ölçülmüş pakettir. 25 Eylül 2026 DNS/gateway kesinti ölçümleri ve destekçi konum çoğaltma değişikliği [deney kaydında](../disaster-network.md) açıklanır. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
 
 | Konu | Kanıtın kapsamı |
 |---|---|

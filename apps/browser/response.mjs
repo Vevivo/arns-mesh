@@ -1,6 +1,10 @@
 // Byte ranges are sliced only after the complete bounded item is verified.
 // This is not streaming verification of large files; the core's 32 MiB limit remains.
-export const contentCsp="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; worker-src 'none'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
+import {arweaveResourceOrigins,parseArweaveResourceUrl} from '../../src/arweave-resource-url.mjs';
+// These HTTPS origins are intercepted in each isolated content session. They
+// never delegate to Chromium's network loader; unsupported URLs are rejected.
+const resources=arweaveResourceOrigins.join(' ');
+export const contentCsp=`default-src 'self' data: blob: ${resources}; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${resources}; style-src 'self' 'unsafe-inline' ${resources}; connect-src 'self' ${resources}; worker-src 'none'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`;
 export function contentResponse(result,request){
   if(result.meta?.contentSignatureVerified!==true)throw new Error('unverified_content_rejected');
   const body=result.body,headers={'content-type':result.contentType,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':contentCsp,'accept-ranges':'bytes'};
@@ -16,8 +20,8 @@ export function contentResponse(result,request){
   headers['content-length']=String(Math.max(0,end-start+1));
   return new Response(request.method==='HEAD'?null:body.subarray(start,end+1),{status,headers});
 }
-export function isAllowedRendererUrl(raw){
-  try{const u=new URL(raw);return (u.protocol==='ar:'&&!u.username&&!u.password&&!u.port&&/^[a-z0-9_-]{1,255}$/i.test(u.hostname))||/^arnsui:\/\/app\/(?:welcome\.(?:html|css)|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(raw)||['data:','blob:'].includes(u.protocol);}catch{return false;}
+export function isAllowedRendererUrl(raw,{resourceType}={}){
+  try{const u=new URL(raw);return (u.protocol==='ar:'&&!u.username&&!u.password&&!u.port&&/^[a-z0-9_-]{1,255}$/i.test(u.hostname))||/^arnsui:\/\/app\/(?:welcome\.(?:html|css)|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(raw)||['data:','blob:'].includes(u.protocol)||(Boolean(resourceType)&&resourceType!=='mainFrame'&&resourceType!=='subFrame'&&Boolean(parseArweaveResourceUrl(raw)));}catch{return false;}
 }
 export function plainError(error){
   const value=String(error.message||error);

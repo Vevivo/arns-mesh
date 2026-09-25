@@ -40,31 +40,33 @@ async function registry(worker,target){
 }
 const direct=(server,options={})=>createSwarmMeshClient({directPeers:[{host:'127.0.0.1',port:server.address.port}],dhtEnabled:false,...options});
 
-test('catalog automatically replicates a verified manifest graph and survives source loss',async t=>{
+test('catalog replicates signed manifest and static CSS references and survives source loss',async t=>{
  const {dir,peer}=fixture(t),a=peer('a'),b=peer('b');
  const signer=new EthereumSigner(crypto.randomBytes(32).toString('hex'));
  const item=async(data,type)=>{const d=createData(data,signer,{tags:[{name:'Content-Type',value:type}]});await d.sign(signer);await a.contentStore.put(d.id,d.getRaw());return d;};
- const html=await item('<h1>Catalog replica</h1>','text/html'),css=await item('h1{color:teal}','text/css');
+ const font=await item('controlled font bytes','font/woff2');
+ const css=await item('@font-face{src:url(https://arweave.net/raw/'+font.id+')}h1{color:teal}','text/css');
+ const html=await item('<link rel="stylesheet" href="https://arweave.net/'+css.id+'"><h1>Catalog replica</h1>','text/html');
  const root=await item(JSON.stringify({manifest:'arweave/paths',version:'0.2.0',index:{id:html.id},paths:{'style.css':{id:css.id}}}),'application/x.arweave-manifest+json');
- for(const original of [root,html,css])saveDiscoveredLocations(a.locationIndex.file,[[original.id,{dataId:original.id,weaveOffset:0,itemSize:original.getRaw().length}]]);
+ for(const original of [root,html,css,font])saveDiscoveredLocations(a.locationIndex.file,[[original.id,{dataId:original.id,weaveOffset:0,itemSize:original.getRaw().length}]]);
  let serverA=await startDirectPeerServer(a,{host:'127.0.0.1',port:0}),serverB;
  try{
   const worker=new CatalogWorker({dataDir:path.join(dir,'b'),peer:b,endpoint:'http://127.0.0.1:1',client:direct(serverA,{excludeWitnesses:[b.witnessPeerId]})});
   const name=await registry(worker,root.id);
   assert.equal(b.contentStore.stats().files.length,0);assert.equal(worker.state.jobs.length,0);
-  for(let i=0;i<3;i++)await worker.pass();
+  for(let i=0;i<4;i++)await worker.pass();
   assert.equal(worker.catalog.state.targets[name].dataId,root.id);
-  assert.equal(worker.status().meshReplicated,3);assert.equal(worker.status().completed,3);
+  assert.equal(worker.status().meshReplicated,4);assert.equal(worker.status().completed,4);
   assert.equal(worker.status().lastSuccess.source,'p2p-content');assert.ok(worker.status().dayResponseBytes>0);
-  assert.equal(worker.status().queued,0);assert.equal(b.contentStore.stats().files.length,3);
-  assert.equal(worker.state.locationsReplicated,3);
+  assert.equal(worker.status().queued,0);assert.equal(b.contentStore.stats().files.length,4);
+  assert.equal(worker.state.locationsReplicated,4);
   await serverA.close();serverA=null;
   serverB=await startDirectPeerServer(b,{host:'127.0.0.1',port:0});
   const fresh=direct(serverB);
-  for(const original of [root,html,css])assert.deepEqual((await fresh.content(original.id)).rawItem,original.getRaw());
-  for(const original of [root,html,css])assert.equal((await fresh.locateCandidates(original.id))[0].record.itemSize,original.getRaw().length);
+  for(const original of [root,html,css,font])assert.deepEqual((await fresh.content(original.id)).rawItem,original.getRaw());
+  for(const original of [root,html,css,font])assert.equal((await fresh.locateCandidates(original.id))[0].record.itemSize,original.getRaw().length);
   const resumed=new CatalogWorker({dataDir:path.join(dir,'b'),peer:b,endpoint:'http://127.0.0.1:1',client:fresh});
-  assert.equal(resumed.status().meshReplicated,3);assert.equal(resumed.status().dayResponseBytes,worker.status().dayResponseBytes);
+  assert.equal(resumed.status().meshReplicated,4);assert.equal(resumed.status().dayResponseBytes,worker.status().dayResponseBytes);
   // Exclusion is enforced by signed identity, even if an endpoint is aliased.
   await assert.rejects(direct(serverB,{excludeWitnesses:[b.witnessPeerId]}).content(root.id),/direct_peer_unavailable/);
  }finally{if(serverA)await serverA.close();if(serverB)await serverB.close();}

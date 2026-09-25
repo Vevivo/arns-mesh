@@ -52,6 +52,9 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    await call('toggle-bookmark');assert.equal(call('get-browser-data').bookmarks.length,1);
    const id=await call('new-tab','unit-two');assert.equal(fake.views.length,3);assert.notEqual(fake.views[1].webContents.session,fake.views[2].webContents.session);
    let blocked;fake.views[2].webContents.session.webRequest.filter({url:'https://example.com/',resourceType:'script'},r=>blocked=r.cancel);assert.equal(blocked,true);
+   const https=fake.views[2].webContents.session.protocol.rows.get('https');assert.equal(typeof https,'function');
+   assert.equal((await https(new Request('https://arweave.net/graphql'))).status,403);
+   assert.equal((await https(new Request('https://arweave.net/'+'A'.repeat(43),{method:'POST',body:'not forwarded'}))).status,405);
    await call('close-tab',id);assert.equal(fake.views[2].webContents.isDestroyed(),true);
    await call('ready');const state=fake.messages.at(-1).data;assert.equal(state.tabs.length,1);assert.equal(state.url,'ar://unit-one/path?q=1');assert.equal(state.bookmarked,true);
    assert.equal(content.options.webPreferences.sandbox,true);assert.equal(content.options.webPreferences.nodeIntegration,false);assert.equal(content.options.webPreferences.preload,undefined);

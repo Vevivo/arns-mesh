@@ -18,7 +18,7 @@ export class Tabs {
   begin(id,raw='') {
     const url=raw?normalizeAddress(raw):'',tab=this.get(id);
     tab.controller.abort(new Error('navigation_changed'));tab.controller=new AbortController();tab.epoch++;
-    Object.assign(tab,{url,title:'',meta:null,phase:url?'resolving':'ready',message:url?'Resolving name and locating content…':'Enter an ArNS address.',resources:emptyResources(),issueKeys:new Set()});
+    Object.assign(tab,{url,title:'',meta:null,relatedPage:null,phase:url?'resolving':'ready',message:url?'Resolving name and locating content…':'Enter an ArNS address.',resources:emptyResources(),issueKeys:new Set()});
     tab.progress.reset();return {tab,epoch:tab.epoch,signal:tab.controller.signal};
   }
   stop(id,reason='Loading stopped.') {

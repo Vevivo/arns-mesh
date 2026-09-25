@@ -1,6 +1,8 @@
 # Preview status and evidence boundaries
 
-Published desktop version: **0.5.0-preview.6**. See the [25 September outage experiment and supporter routing update](../disaster-network.md). This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
+Desktop source **0.5.0-preview.7** adds direct immutable Arweave resources, bounded nearby-block discovery and static-reference replication/pinning. The real Windows DNS/gateway outage test played the previously missing video/audio and loaded the font. See [measured resource behavior and its limits](../arweave-resources.md).
+
+Published packages and draft status are listed on the [releases page](https://github.com/Vevivo/arns-mesh/releases). The earlier **0.5.0-preview.6** remains a separate measured artifact. See the [25 September outage experiment and supporter routing update](../disaster-network.md). This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
 
 | Area | Evidence / status |
 |---|---|
