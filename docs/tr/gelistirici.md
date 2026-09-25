@@ -1,5 +1,7 @@
 # Kaynağı geliştirenler
 
+Bağlantı kodu protokolü, işletmeci araçları ve kodu içinde bulunan paket: [ağ rehberi](ag-kodu.md). İmzalı liste testleri değiştirilmiş imza, eski sürüm, iptal ve ayrı süreçlerde başlangıç noktası kaybını kapsar; Windows akışı gerçek paket arayüzünü kullanır. Masaüstünden içerik sunma ve ücretli erişim eklenmedi.
+
 Sunucu kurmak isteyenler için [VPS/Pi destekçi rehberi](destekci.md) yeterlidir. Bu sayfa kod ve paketleme içindir.
 
 Node.js 24 LTS (CI: 24.19.0), npm ve Git kullan. Repoyu yeni geliştirme dizinine klonla veya [preview.7 kaynak ZIP’ini](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.7.zip) çıkar ve bu dizine gir. Kaynak ZIP’i hazır masaüstü uygulaması değildir. Katkı için `main`, yayımlanan kaynağı yeniden üretmek için `v0.5.0-preview.7` etiketini kullan. Lockfile’ı değiştirmeden kur:

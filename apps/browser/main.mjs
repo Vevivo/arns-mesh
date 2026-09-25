@@ -12,6 +12,10 @@ import {configureRuntime,saveRpcSources,saveDirectPeers,parseTrustedPeers} from 
 import {VerifiedContentStore} from '../../src/content-store.mjs';
 import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from '../helper/network-profile.mjs';
 import {checkConnections} from '../helper/connection-check.mjs';
+import {NetworkConnection} from '../helper/network-connection.mjs';
+import {bundledNetworks} from '../helper/network-publication.mjs';
+import {networkId,networkRecordHash} from '../../src/network-invitation.mjs';
+import crypto from 'node:crypto';
 import {ResponseCache} from '../helper/response-cache.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
 import {WorkBudget,transferBudgetStatus} from '../../src/resource-budget.mjs';
@@ -27,7 +31,7 @@ const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/we
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
 let win,toolbar,runtime,store,pinner,library,related,settingsFile,timer,panelOpen=false,shuttingDown=false;
 let accessPolicy='live',trustedPeers=[],witnessQuorum=2;
-let connectionCheck=null;
+let connectionCheck=null,network=null,networkPreview=null,networkInspection=null,networkJoining=false;
 process.chdir(coreRoot);
 process.env.ARNS_MESH_DIRECT_ONLY='1';
 process.env.ARNS_MESH_HEAD_START_MS='2500';
@@ -50,7 +54,7 @@ function send(extra={}){
     loading:wc?.isLoading()||false,canGoBack:wc?.navigationHistory.canGoBack()||false,canGoForward:wc?.navigationHistory.canGoForward()||false,
     canBookmark:Boolean(tab?.url),bookmarked:library?.has(tab?.url)||false,zoom:Math.round((wc?.getZoomFactor()||1)*100),
     phase:tab?.phase||'ready',message:tab?.message||'Enter an ArNS address.',meta:tab?.meta||null,progress:tab?.progress.snapshot(),resources:tab?.resources,
-    mode:'p2p',accessPolicy,connectionConfigured:runtime?connectionConfigured():false,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
+    mode:'p2p',accessPolicy,networkConnection:network?.status(),networkJoining,connectionConfigured:runtime?connectionConfigured():false,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
     discovery:runtime?.discovery.status(),network:{...audit,events:audit.events.slice(-8)},
     resourceBudget:{role:'client',pageCacheBytes:cache.bytes,pageCacheLimit:cache.maxBytes,pageRequests:requests.status(),transfers:transferBudgetStatus()},...extra,
   });
@@ -118,7 +122,7 @@ async function arHandler(tab,request){
   tab.resources.pending++;send();
   try{
     signal.throwIfAborted();
-    if(accessPolicy==='live'&&!JSON.parse(fs.readFileSync(runtime.rpcFile)).length)throw new Error('Connection setup needed. Open Settings and import a connection profile from a supporter.');
+    if(accessPolicy==='live'&&!JSON.parse(fs.readFileSync(runtime.rpcFile)).length)throw new Error('Connection setup needed. Open Settings and connect with a Mesh connection code or profile.');
     let result=cache.get(key);
     if(!result||Date.now()-result.at>3000){
       result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>resolveForTab(tab,raw,{signal:shared,onProgress:event=>{
@@ -245,16 +249,42 @@ handle('navigate',raw=>navigate(raw));handle('new-tab',raw=>newTab(raw||''));han
 handle('back',()=>historyMove(-1));handle('forward',()=>historyMove(1));handle('reload',reload);handle('stop',()=>stop());handle('home',()=>navigate(''));
 handle('toggle-bookmark',toggleBookmark);handle('get-browser-data',()=>library.snapshot());handle('remove-bookmark',url=>{library.remove(url);send({libraryChanged:true});});handle('clear-history',()=>library.clearHistory());handle('zoom',zoom);
 handle('panel',open=>{panelOpen=Boolean(open);layout();});handle('ready',()=>send());
-handle('get-settings',()=>({version:app.getVersion(),executable:app.getPath('exe'),connectionProfile:readProfile(runtime.dataDir),rpcSources:readProfile(runtime.dataDir).rpcSources.join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:JSON.parse(fs.readFileSync(process.env.ARNS_IP_PEERS)).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'}));
+handle('get-settings',()=>({version:app.getVersion(),executable:app.getPath('exe'),connectionProfile:readProfile(runtime.dataDir),networkConnection:network?.status(),availableNetworks:bundledNetworks(coreRoot),rpcSources:readProfile(runtime.dataDir).rpcSources.join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:JSON.parse(fs.readFileSync(process.env.ARNS_IP_PEERS)).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'}));
+handle('inspect-network',async code=>{
+  if(accessPolicy==='saved')throw new Error('Switch to Live access before connecting to a network.');
+  if(networkJoining)throw new Error('A network connection is already in progress.');
+  networkInspection?.abort();networkPreview=null;
+  const controller=networkInspection=new AbortController();
+  try{
+    const preview=await network.inspect(code,{signal:controller.signal});controller.signal.throwIfAborted();
+    networkPreview={ticket:crypto.randomBytes(18).toString('base64url'),code,expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope)};
+    return {ticket:networkPreview.ticket,name:preview.payload.name,id:networkPreview.expectedId,revision:preview.payload.revision,expiresAt:preview.payload.expiresAt,profile:preview.payload.profile,local:preview.invitation.local};
+  }finally{if(networkInspection===controller)networkInspection=null;}
+});
+handle('join-network',async ticket=>{
+  if(accessPolicy==='saved')throw new Error('Switch to Live access before connecting to a network.');
+  if(networkJoining||!networkPreview||typeof ticket!=='string'||ticket!==networkPreview.ticket)throw new Error('Review the network connection first.');
+  const preview=networkPreview;networkPreview=null;networkJoining=true;
+  connectionCheck?.abort();for(const tab of tabs.rows.values())stop(tab);send();
+  try{await network.join(preview.code,preview);network.start();return network.status();}
+  finally{networkJoining=false;send();}
+});
+handle('refresh-network',async()=>{
+  if(accessPolicy==='saved')throw new Error('Switch to Live access before checking the network.');
+  if(networkJoining)throw new Error('A network connection is already in progress.');
+  try{await network.refresh();return network.status();}finally{send();}
+});
+handle('stop-network-updates',()=>{networkInspection?.abort();networkPreview=null;network.detach();send();return network.status();});
 handle('import-profile',async(mode='merge')=>{
   if(!['merge','replace'].includes(mode))throw new Error('Unknown import mode.');
+  if(networkJoining)throw new Error('Wait for the network connection to finish.');
   const choice=await dialog.showOpenDialog(win,{title:'Import connection profile',properties:['openFile'],filters:[{name:'Connection profile',extensions:['json']}]});
   if(choice.canceled||choice.filePaths.length!==1)return {canceled:true};
   const incoming=loadProfile(choice.filePaths[0]);
   const profile=mode==='merge'?mergeProfiles(readProfile(runtime.dataDir),incoming):incoming;
   connectionCheck?.abort();
   for(const tab of tabs.rows.values())stop(tab);
-  applyProfile(runtime.dataDir,profile);cache.clear();send();
+  networkInspection?.abort();networkPreview=null;network.detach();applyProfile(runtime.dataDir,profile);cache.clear();send();
   return {imported:true,meshPeers:profile.directPeers.length,rpcSources:profile.rpcSources.length};
 });
 handle('export-profile',async()=>{
@@ -271,20 +301,23 @@ handle('check-connections',async()=>{
 });
 handle('save-settings',data=>{
   if(!data||typeof data!=='object')throw new Error('invalid_settings');
+  if(networkJoining)throw new Error('Wait for the network connection to finish.');
   const nextTrusted=parseTrustedPeers(data.trustedPeers||''),rpcTemp=runtime.rpcFile+'.candidate',peerTemp=process.env.ARNS_IP_PEERS+'.candidate';
   try{
     const n=saveRpcSources(rpcTemp,data.rpcSources);saveDirectPeers(peerTemp,data.directPeers||'');
     connectionCheck?.abort();for(const tab of tabs.rows.values())stop(tab);
-    fs.renameSync(rpcTemp,runtime.rpcFile);fs.renameSync(peerTemp,process.env.ARNS_IP_PEERS);trustedPeers=nextTrusted;witnessQuorum=data.witnessQuorum===1?1:2;savePrefs();cache.clear();return {rpcSources:n};
+    networkInspection?.abort();networkPreview=null;network.detach();fs.renameSync(rpcTemp,runtime.rpcFile);fs.renameSync(peerTemp,process.env.ARNS_IP_PEERS);trustedPeers=nextTrusted;witnessQuorum=data.witnessQuorum===1?1:2;savePrefs();cache.clear();return {rpcSources:n};
   }finally{fs.rmSync(rpcTemp,{force:true});fs.rmSync(peerTemp,{force:true});}
 });
 async function setAccessPolicy(value){
   if(!['live','saved'].includes(value))throw new Error('invalid_access_policy');
-  for(const tab of tabs.rows.values())stop(tab);accessPolicy=value;savePrefs();cache.clear();send();
+  for(const tab of tabs.rows.values())stop(tab);accessPolicy=value;
+  if(value==='saved'){networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
+  savePrefs();cache.clear();send();
   if(tabs.active.url)await navigate(tabs.active.url);
 }
 handle('set-access-policy',setAccessPolicy);
-handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';savePrefs();cache.clear();return navigate(raw);});
+handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';networkInspection?.abort();networkPreview=null;network.stop();savePrefs();cache.clear();return navigate(raw);});
 handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name,{accessPolicy,trustedPeers}).then(()=>send()).catch(error=>report(error));send();return true;});
 handle('unpin-site',name=>{pinner.remove(name);send();});
 async function saveDocument(){
@@ -308,6 +341,7 @@ async function start(){
   library=new BrowserState(path.join(runtime.dataDir,'browser-state.json'));settingsFile=path.join(runtime.dataDir,'preferences.json');
   try{const saved=JSON.parse(fs.readFileSync(settingsFile));accessPolicy=saved.accessPolicy==='saved'?'saved':'live';trustedPeers=parseTrustedPeers((saved.trustedPeers||[]).join('\n'));witnessQuorum=saved.witnessQuorum===1?1:2;}catch{}
   pinner=new SitePinner({file:path.join(runtime.dataDir,'saved-sites.json'),snapshots:runtime.snapshots,contentStore:store});
+  network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{cache.clear();send();}});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
   win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef'});
   toolbar=new WebContentsView({webPreferences:{session:uiSession,preload:path.join(here,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});
@@ -315,11 +349,30 @@ async function start(){
   win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);attachContextMenu(toolbar.webContents,Menu,()=>win);win.on('resize',layout);
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
-  timer=setInterval(()=>send(),1000);send();if(accessPolicy==='live'&&!connectionConfigured())send({command:'settings'});
+  timer=setInterval(()=>send(),1000);send();
+  if(accessPolicy==='live'){
+    network.start();
+    if(network.status().joined)void network.refresh().catch(()=>{});
+    if(!connectionConfigured()){
+      const offered=bundledNetworks(coreRoot);
+      if(offered.length===1){
+        networkJoining=true;const controller=networkInspection=new AbortController();send();
+        void (async()=>{
+          const preview=await network.inspect(offered[0].code,{signal:controller.signal});
+          controller.signal.throwIfAborted();
+          await network.join(offered[0].code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope),signal:controller.signal});
+          if(accessPolicy==='live')network.start();
+        })().catch(error=>{network.error=String(error.message).slice(0,240);}).finally(()=>{
+          if(networkInspection===controller)networkInspection=null;networkJoining=false;send();
+          if(!shuttingDown&&accessPolicy==='live'&&!connectionConfigured())send({command:'settings'});
+        });
+      }else send({command:'settings'});
+    }
+  }
 }
 if(!app.requestSingleInstanceLock())app.quit();else{
   app.on('second-instance',(_event,argv)=>{win?.show();win?.focus();const url=argv.find(x=>x.startsWith('ar://'));if(url&&win)void newTab(url).catch(error=>report(error));});
   app.whenReady().then(start).catch(error=>{console.error(error);dialog.showErrorBox('ArNS Mesh Browser could not start',String(error.message||error));app.quit();});
 }
 app.on('window-all-closed',()=>app.quit());
-app.on('will-quit',()=>{clearInterval(timer);connectionCheck?.abort();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});
+app.on('will-quit',()=>{clearInterval(timer);connectionCheck?.abort();networkInspection?.abort();network?.stop();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});

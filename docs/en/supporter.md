@@ -2,9 +2,11 @@
 
 [Türkçe](../tr/destekci.md) · [Desktop users](user.md) · [Home](../../README.md)
 
+**Preview.8 easier setup:** [join with a code, publish your network, mirror its list and prepare a Connected desktop](network-code.md). The JSON route below remains supported for upstream preparation and legacy clients.
+
 A supporter runs the **headless Node.js peer**, not the desktop browser, on a Linux machine. It can serve cached verified bytes, share location hints, observe ArNS/ANT targets and discover locations from raw bundle headers. A reader connects to these peers using a profile. You can also use the desktop on a separate Windows computer.
 
-An extra machine helps only when readers/other peers can reach it and it has useful content or records. An empty peer with no working upstream sources is not a replica. This preview uses explicitly configured numeric-IP peers: new nodes are **not automatically enrolled in a public global directory**. Operators exchange connection profiles. Direct mode has no built-in NAT traversal or relay; do not assume DHT code in the repository makes direct-mode discovery automatic.
+An extra machine helps only when readers/other peers can reach it and it has useful content or records. An empty peer with no working upstream sources is not a replica. This preview uses explicitly configured numeric-IP peers: new nodes are **not automatically enrolled in a public global directory**. Operators publish signed network invitations or exchange legacy connection profiles. Direct mode has no built-in NAT traversal or relay; do not assume DHT code in the repository makes direct-mode discovery automatic.
 
 ## 1. Prepare the host
 
@@ -82,11 +84,11 @@ Keep the matching line in your user shell configuration if needed for future log
 ## 2. Get the source and an upstream profile
 
 ```sh
-git clone --branch v0.5.0-preview.7 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-This is a fresh checkout of the published preview.7 tag. GitHub/npm domains are used for installation; they are not part of the running Mesh access path. Download dependencies before a disruption.
+This checks out current main in a fresh directory. Select a published tag instead if you need a fixed release. GitHub/npm domains are used for installation; they are not part of the running Mesh access path. Download dependencies before a disruption.
 
 Obtain a working profile from an existing supporter and save it beside the checkout as `mesh-upstream.json`. This is **your server’s source list**. If you know usable service addresses instead, generate it with the command below. Its `--peer` is an existing source, not your own new empty server:
 
@@ -170,8 +172,8 @@ Repeat `--peer` for other independent supporters, and the other source flags as 
 
 Give readers:
 
-1. The [Windows preview.7 download page](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7).
-2. Your `mesh-connect.json` file and **Settings → Import connection profile → Check connections** instructions.
+1. The [Windows downloads](https://github.com/Vevivo/arns-mesh/releases).
+2. Your `mesh-connect.json` file and **Settings → Already have a connection file? → Import connection profile → Check connections** instructions.
 3. A way to report connection problems and obtain an updated profile when your IP, port or upstream access changes. Profiles do not update themselves.
 
 Test this exact shared file in a separate desktop test profile. A reader who imports it can now request data from your peer; the file does not copy saved sites or guarantee every name will work. Forwarding your original upstream file unchanged does not add your new server. Other supporters can also import/apply your reader profile as part of their source list, avoiding source loops with no useful data.

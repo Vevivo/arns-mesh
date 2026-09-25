@@ -1,5 +1,7 @@
 # Bağlantılar ve destekçi keşfi
 
+Preview.8 için [bağlantı kodu ve otomatik güncellenen ağ listesi](ag-kodu.md) daha kolay kurulum sağlar. Bu sayfa işletmecilerin ve eski kullanıcıların kullanabildiği JSON biçimini açıklar.
+
 ## Şu anki masaüstü
 
 Bağlantı yoksa ilk açılışta **Connect to Mesh** ekranı açılır. Profil içe aktarılır. Varsayılan **Add to my existing connections**, eski kaynakları koruyarak yenilerini ekler. **Replace my connections** özellikle seçilirse liste değiştirilir. Sınırlar: 16 Mesh peer, 8 RPC kaynağı, 16 ham Arweave düğümü.

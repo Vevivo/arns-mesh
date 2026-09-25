@@ -20,5 +20,6 @@ for(const name of files){
 }
 for(const name of ['solana-rpc-seeds.json','arweave-peers.json','arweave-peer-seeds.json','hyper-bootstrap.json'])if(JSON.parse(fs.readFileSync(path.join(root,name))).length)issues.push([name,'public default endpoints must be empty']);
 if(JSON.parse(fs.readFileSync(path.join(root,'resources/mesh-defaults.json'))).directPeers.length)issues.push(['resources/mesh-defaults.json','public default endpoints must be empty']);
+if(JSON.parse(fs.readFileSync(path.join(root,'resources/networks.json'))).length)issues.push(['resources/networks.json','public default network invitations must be empty']);
 if(issues.length){console.error(JSON.stringify({ok:false,issues:[...new Map(issues.map(x=>[JSON.stringify(x),x])).values()]},null,2));process.exitCode=1;}
 else console.log(JSON.stringify({ok:true,files:files.length,scope:'working tree plus tracked paths; targeted patterns, not a guarantee against all secrets'}));
