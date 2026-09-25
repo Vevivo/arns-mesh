@@ -6,11 +6,11 @@ Gereken yalnızca **Windows x64 masaüstü ZIP'i ve bir destekçinin bağlantı 
 
 ## Kurulum
 
-1. [Releases](https://github.com/Vevivo/arns-mesh/releases) içindeki **Preview** sürümden `ArNS-Mesh-Browser-Windows-x64-<sürüm>.zip` dosyasını indir. Masaüstü dosyası yoksa henüz yayımlanmamıştır. GitHub'ın **Source code** ZIP'i çalıştırılabilir masaüstü değildir.
+1. [Preview.7 sürüm sayfasından](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7) `ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip` dosyasını indir. GitHub'ın **Source code** ZIP'i çalıştırılabilir masaüstü değildir.
 2. İstersen ZIP'in SHA-256 değerini `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosya.zip'` ile ölçüp aynı sürümün `SHA256SUMS.txt` dosyasıyla karşılaştır. Bu indirme bütünlüğünü kontrol eder; yayıncı imzası değildir.
 3. ZIP'in **tamamını** yeni bir klasöre çıkar. `Mesh-Browser.exe` dosyasını normal kullanıcı olarak aç. Yönetici yetkisi gerekmez. Önizleme kod imzalı değildir; Windows engellerse uyarının ayrıntısını geliştiriciye ilet, antivirüsü kapatma.
-4. Destekçinin verdiği JSON dosyasını **Settings → Import connection profile** ile seç. Normal kullanım için terminal komutu gerekmez.
-5. Uygulamanın kendi adres çubuğuna `ar://isim` veya yalnız ismi yaz. `+` sekme açar, yıldız yer imi ekler. Kayıtlı undername, yol, sorgu ve sayfa içi bağlantılar aynı adrese eklenebilir.
+4. Destekçinin verdiği, örneğin `mesh-connect.json` adlı JSON dosyasını **Settings → Import connection profile** ile seç. Normal kullanım için terminal komutu gerekmez.
+5. Uygulamanın kendi adres çubuğuna `ar://isim` veya yalnız ismi yazıp Enter’a ya da ok düğmesine bas. `+` sekme açar, yıldız yer imi ekler. Kayıtlı undername, yol, sorgu ve sayfa içi bağlantılar aynı adrese eklenebilir.
 
 **Profil ne?** İlk bağlanılacak Mesh peer, IP üzerinden Solana RPC ve isteğe bağlı ham Arweave düğümlerinin servis adresleri. Parola, cüzdan veya gizli anahtar içermez. Genel pakete işletmecinin özel sunucu adresleri gömülmez. Bu yüzden çalışan profil gerekir; repodaki örnek dosya çalışır sunucu listesi değildir. Güvendiğin destekçiden al: isim eşleşmesinde RPC yanıtına güven devam ediyor.
 
@@ -25,7 +25,7 @@ Yeni kurulumda bağlantı ekranı otomatik açılır. Profil varsayılan olarak 
 
 **Page information** dosya doğrulamasını, isim gözlemini ve erişim hatasını ayrı gösterir. Uygulama içi ağ kaydı, işletim sistemi seviyesinde bütün ağın kaydı değildir.
 
-**Save current page** ana belgeyi veya manifestte listelenen dosyaları saklar. Sonucun tamamlanmasını bekle. Yıldızlamak dosyaları indirmez; yarım saklama çevrimdışı tam site değildir. **Saved** modundaki isim eski gözleme dayanır, son sürüm garantisi vermez. **Live** için erişilebilir RPC ve içerik kaynağı gerekir.
+**Save current page** ana belgeyi, manifest girdilerini ve HTML/CSS/JS/JSON içindeki desteklenen sabit Arweave bağlantılarını tarama/depolama sınırları içinde saklar. Sonucun tamamlanmasını bekle. Yıldızlamak dosyaları indirmez; yarım saklama çevrimdışı tam site değildir. **Saved** seçilen kopyanın tarihli isim gözlemini ve doğrulanmış yerel dosyalarını kullanır; eksik dosyayı ağdan tamamlamaz ve son sürüm garantisi vermez. **Live** için erişilebilir RPC ve içerik kaynağı gerekir.
 
 | Durum | Anlamı |
 |---|---|
@@ -35,7 +35,7 @@ Yeni kurulumda bağlantı ekranı otomatik açılır. Profil varsayılan olarak 
 | İmza/veri hatası | Gelen veri reddedildi; doğrulamayı kapatma. |
 | Büyük dosya açılmıyor | Önizlemede imzalı öğe için 32 MiB sınır var; büyük dosya akışı tamamlanmadı. |
 
-Harici video, API, font veya CDN isteyen bir sitenin bu bölümleri çalışmayabilir. Uygulama bunları taklit etmez veya gizlice gateway'e geçmez. Ham tanı dosyalarını herkese açık paylaşma; gezinti isimleri ve IP'ler içerebilir.
+Arweave üzerinde bulunan desteklenen font, video ve ses dosyaları Mesh/ham kaynaklardan yüklenebilir. Preview.7, bağlı dosyanın konumu bilinmiyorsa sayfanın bilinen konumuna yakın sınırlı arama yapabilir; ilk erişim daha uzun sürebilir. Kaynak, konum, boyut veya kota sorunu dosyayı yine eksik bırakabilir. Arweave dışındaki CDN ve domain tabanlı canlı API’ler taklit edilmez; gizlice gateway’e geçilmez. Ham tanı dosyalarını herkese açık paylaşma; gezinti isimleri ve IP'ler içerebilir.
 
 ## Güncelleme, geri dönüş, kaldırma
 
