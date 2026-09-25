@@ -7,7 +7,7 @@ const fs=require('node:fs'),path=require('node:path');
  const report={scope:'Public gateway comparison outside the outage; not a Mesh result or routing input',at:new Date().toISOString(),resources:[]};
  for(const url of urls){try{
   const r=await fetch(url,{method:'HEAD',redirect:'manual',signal:AbortSignal.timeout(30000)});
-  report.resources.push({url,status:r.status,contentType:r.headers.get('content-type'),contentLength:r.headers.get('content-length'),redirect:r.headers.get('location')});
+  report.resources.push({url,status:r.status,contentType:r.headers.get('content-type'),contentLength:r.headers.get('content-length'),redirect:r.headers.get('location'),routingHeaders:Object.fromEntries([...r.headers].filter(([k])=>/offset|bundle|height|data-root|data-size/.test(k)))});
  }catch(e){report.resources.push({url,error:e.message});}}
  // Publication metadata is a diagnostic comparison only. In particular,
  // a public cache hit does not establish inclusion in the raw Arweave weave.
