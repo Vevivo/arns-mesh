@@ -31,7 +31,7 @@ export async function queryDirectPeer(peer,request,{signal}={}){
 
 // This endpoint exchanges signed Mesh envelopes and raw signed items. It never
 // proxies URLs, resolves domain names, or serves a web page on a site's behalf.
-export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740}={}){
+export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740,networkAnnouncement=()=>null}={}){
  if(!net.isIP(host)||!Number.isInteger(port)||port<0||port>65535)throw new Error('invalid_peer_listener');
  if(!peer.identity)throw new Error('peer_identity_unavailable');
  let active=0;
@@ -43,8 +43,9 @@ export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740}={})
   req.on('data',chunk=>{bytes+=chunk.length;if(bytes>8192){req.destroy();return;}body+=chunk;});
   req.on('end',async()=>{try{
    const request=JSON.parse(body);
-   if(!['snapshot','content','location'].includes(request.op))throw new Error('mesh_operation_not_allowed');
-   const reply=await peer._handleAsync(request);
+   if(!['snapshot','content','location','network'].includes(request.op))throw new Error('mesh_operation_not_allowed');
+   const network=request.op==='network'?networkAnnouncement():null;
+   const reply=request.op==='network'?(network?{ok:true,network}:{ok:false,error:'network_not_published'}):await peer._handleAsync(request);
    peer.requestsServed++;
    if(request.op==='content'&&reply.ok){const item=JSON.parse(reply.recordJson);peer.contentChunksServed++;peer.contentBytesServed+=Buffer.from(item.data,'base64').length;}
    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(reply));

@@ -26,12 +26,12 @@ for(const [id,delta] of [['zoom-out',-1],['zoom-reset',0],['zoom-in',1]])$(id).o
 function settingsResult(text,error=false){$('settings-result').textContent=text;$('settings-result').classList.toggle('error',error);}
 function renderConnections(profile,results=[]){
  const rows=[...(profile.directPeers||[]).map(address=>({kind:'Mesh peer',address})),...(profile.rpcSources||[]).map(address=>({kind:'Solana RPC',address})),...(profile.arweavePeers||[]).map(address=>({kind:'Raw Arweave',address}))];
- $('connection-list').replaceChildren();$('connection-summary').textContent=rows.length?`${rows.length} configured sources · Check them before opening a page.`:'No connections yet. Import a profile to get started.';
+ $('connection-list').replaceChildren();$('connection-summary').textContent=rows.length?`${rows.length} configured sources · Check them before opening a page.`:'No connections yet. Enter a Mesh connection code to get started.';
  for(const row of rows){const found=results.find(r=>r.kind===row.kind&&r.address===row.address);const item=document.createElement('div');item.className='connection-row';const source=document.createElement('div'),label=document.createElement('strong'),address=document.createElement('small'),status=document.createElement('span');label.textContent=row.kind;address.textContent=row.address;source.append(label,address);status.className='connection-status '+(found?.status||'');status.textContent=found?found.status==='responded'?`Responded · ${found.elapsedMs} ms`:'Unavailable':'Not checked';if(found)status.title=found.checkedAt+(found.error?' · '+found.error:'');item.append(source,status);$('connection-list').append(item);}
  $('export-profile').disabled=!(profile.rpcSources?.length&&(profile.directPeers?.length||profile.arweavePeers?.length));$('check-connections').disabled=!rows.length;
 }
-let settingsProfile={directPeers:[],rpcSources:[],arweavePeers:[]};
-async function showSettings(){try{uiError='';const s=await api.getSettings();$('build-info').textContent='Version '+s.version+' · '+s.executable;$('rpc').value=s.rpcSources;$('quorum').value=String(s.witnessQuorum);$('trusted-peers').value=s.trustedPeers||'';$('direct-peers').value=s.directPeers||'';$('own-peer-id').textContent=s.peerId||'Reader';settingsProfile=s.connectionProfile;renderConnections(settingsProfile);settingsResult('');openPanel('settings-panel');}catch(e){report(e);}}
+let settingsProfile={directPeers:[],rpcSources:[],arweavePeers:[]},networkTicket=null;
+async function showSettings(){try{uiError='';const s=await api.getSettings();$('build-info').textContent='Version '+s.version+' · '+s.executable;$('rpc').value=s.rpcSources;$('quorum').value=String(s.witnessQuorum);$('trusted-peers').value=s.trustedPeers||'';$('direct-peers').value=s.directPeers||'';$('own-peer-id').textContent=s.peerId||'Reader';settingsProfile=s.connectionProfile;renderConnections(settingsProfile);renderNetwork(s.networkConnection);renderAvailableNetworks(s.availableNetworks||[]);networkTicket=null;$('network-preview').classList.add('hidden');settingsResult('');openPanel('settings-panel');}catch(e){report(e);}}
 $('settings-button').onclick=showSettings;
 $('save-settings').onclick=async()=>{try{const result=await api.saveSettings({rpcSources:$('rpc').value,witnessQuorum:Number($('quorum').value),trustedPeers:$('trusted-peers').value,directPeers:$('direct-peers').value});await showSettings();settingsResult(`Saved ${result.rpcSources} RPC sources. Reload the page to retry. Other tabs stay stopped until reloaded.`);}catch(e){settingsResult(errorText(e),true);}};
 $('export').onclick=async()=>{try{$('export-result').textContent=await api.diagnostics()?'Saved.':'';}catch(e){report(e);}};
@@ -52,9 +52,9 @@ api.onState(s=>{
  $('zoom-reset').textContent=(s.zoom||100)+'%';$('build-version').textContent=s.version||'';
  $('saved-toggle').checked=s.accessPolicy==='saved';
  const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
- $('message').textContent=uiError||(setupNeeded&&s.phase!=='error'?'Connection setup needed. Import a supporter’s profile.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='partial'?' partial':s.phase==='loaded'?' loaded':'');
+ $('message').textContent=uiError||(s.networkJoining?'Connecting to the included Mesh network…':setupNeeded&&s.phase!=='error'?'Connect to Mesh in Settings with a connection code.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='partial'?' partial':s.phase==='loaded'?' loaded':'');
  $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':'P2P · Live';
- renderSaved(s);renderDetails(s);renderElapsed();
+ renderSaved(s);renderDetails(s);renderElapsed();if(activePanel==='settings-panel')renderNetwork(s.networkConnection);
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
 });
 let journeyKey='';
@@ -120,3 +120,35 @@ $('download-document').onclick=()=>{closePanel();run(()=>api.saveDocument());};
 $('import-profile').onclick=async()=>{settingsResult('');try{const mode=$('import-mode').value;const result=await api.importProfile(mode);if(!result.canceled){await showSettings();settingsResult((mode==='merge'?'Connections added.':'Connections replaced.')+' Check connections, then reload an ArNS page.');}}catch(e){settingsResult(errorText(e),true);}};
 $('export-profile').onclick=async()=>{settingsResult('');try{const result=await api.exportProfile();if(result.exported)settingsResult('Profile exported. It contains service addresses only. Share it with people allowed to use those sources.');}catch(e){settingsResult(errorText(e),true);}};
 $('check-connections').onclick=async()=>{const expected=settingsProfile;$('check-connections').disabled=true;settingsResult('Checking configured sources…');try{const results=await api.checkConnections();if(settingsProfile!==expected)return;renderConnections(settingsProfile,results);settingsResult(`${results.filter(r=>r.status==='responded').length} of ${results.length} sources responded. This checks reachability, not site availability.`,!results.some(r=>r.status==='responded'));}catch(e){settingsResult(errorText(e),true);}finally{$('check-connections').disabled=false;}};
+
+function renderNetwork(state={}){
+ $('joined-network').classList.toggle('hidden',!state.joined);
+ if(!state.joined)return;
+ $('joined-network-name').textContent=state.name;
+ $('joined-network-status').textContent=(state.refreshing?'Checking signed connection updates…':state.error?'Update unavailable. Last accepted addresses are retained. '+state.error:state.expired?'The connection list needs renewal. Last accepted addresses are retained.':`Connected to this network · List revision ${state.revision}`);
+ $('refresh-network').disabled=state.refreshing||lastState.accessPolicy==='saved';
+}
+function renderAvailableNetworks(rows){
+ $('available-networks').replaceChildren();
+ for(const row of rows){const button=document.createElement('button');button.className='secondary';button.textContent='Connect to '+row.name;button.onclick=()=>{$('network-code').value=row.code;void inspectNetwork();};$('available-networks').append(button);}
+}
+$('network-code').oninput=()=>{networkTicket=null;$('network-preview').classList.add('hidden');};
+async function inspectNetwork(){
+ networkTicket=null;$('network-preview').classList.add('hidden');$('inspect-network').disabled=true;settingsResult('Contacting the network and checking its signature…');
+ const code=$('network-code').value.trim();
+ try{
+  const result=await api.inspectNetwork(code);if($('network-code').value.trim()!==code)return;
+  networkTicket=result.ticket;$('network-preview-name').textContent=result.name;
+  const p=result.profile;
+  $('network-preview-summary').textContent=`${p.directPeers.length} Mesh peers · ${p.rpcSources.length} name sources · ${p.arweavePeers.length} raw sources.`+(result.local?' This code allows local network addresses.':'');
+  $('network-preview-details').textContent=`Network identity: ${result.id}\nRevision: ${result.revision}\nList valid until: ${new Date(result.expiresAt).toLocaleString()}\n\n`+JSON.stringify(p,null,2);
+  $('network-preview').classList.remove('hidden');settingsResult('Signature matches the code. Review the network, then join.');
+ }catch(error){settingsResult(errorText(error),true);}finally{$('inspect-network').disabled=false;}
+}
+$('inspect-network').onclick=inspectNetwork;
+$('join-network').onclick=async()=>{
+ if(!networkTicket)return;$('join-network').disabled=true;$('inspect-network').disabled=true;settingsResult('Joining the network…');
+ try{const result=await api.joinNetwork(networkTicket);$('network-code').value='';await showSettings();settingsResult(`Joined ${result.name}. You can now enter an ArNS name. Site availability depends on the connected sources.`);}catch(error){networkTicket=null;$('network-preview').classList.add('hidden');settingsResult(errorText(error),true);}finally{$('join-network').disabled=false;$('inspect-network').disabled=false;}
+};
+$('refresh-network').onclick=async()=>{settingsResult('Checking for connection updates…');try{await api.refreshNetwork();await showSettings();settingsResult('Network connections checked.');}catch(error){settingsResult(errorText(error),true);}};
+$('stop-network-updates').onclick=async()=>{try{await api.stopNetworkUpdates();await showSettings();settingsResult('Automatic network updates stopped. Current addresses are kept.');}catch(error){settingsResult(errorText(error),true);}};

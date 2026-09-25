@@ -15,8 +15,9 @@ const native = (mode,value) => new Promise((resolve,reject)=>cp.execFile('python
 let app,browser,ui,context,recorder;
 async function screenshot(name){await pause(300);await native('capture',path.join(root,name+'.png'));}
 async function settings(){
-  if(await ui.locator('#settings-panel').isVisible())return;
-  await ui.locator('#settings-button').click();
+  if(!await ui.locator('#settings-panel').isVisible())await ui.locator('#settings-button').click();
+  const legacy=ui.getByText('Already have a connection file?',{exact:true});
+  if(await legacy.count() && !await ui.locator('#import-profile').isVisible())await legacy.click();
   await ui.locator('#import-profile').waitFor();
 }
 async function importFile(file){

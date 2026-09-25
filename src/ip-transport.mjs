@@ -9,7 +9,7 @@ export function requestIpJson({host,port,path='/',method='GET',body=null,timeout
  validateIpRequest({host,port,pathname:path,method});
  if(summarizeBlock&&(method!=='GET'||!/^\/block\/height\/\d+$/.test(path)))throw new Error('invalid_block_summary_request');
  if(method==='POST'){
-  const mesh=purpose==='mesh-peer'&&path==='/mesh/v1/query'&&['snapshot','location','content'].includes(body?.op);
+  const mesh=purpose==='mesh-peer'&&path==='/mesh/v1/query'&&['snapshot','location','content','network'].includes(body?.op);
   if(!mesh&&(purpose!=='solana-rpc'||!rpcMethods.has(body?.method)))throw new Error('rpc_method_not_allowed');
  }
  if(signal?.aborted)return Promise.reject(signal.reason||new Error('cancelled'));

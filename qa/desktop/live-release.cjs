@@ -48,7 +48,7 @@ function auditSummary(rows){const counts={requests:0,responses:0,bytes:0,blocked
   note('without-profile',{status:await ui.locator('#message').innerText()});await screenshot('02-profile-required');
   if(!profile){if(strict)throw new Error('Live regression requires an approved connection profile.');note('live-test-not-run',{reason:'No operator profile supplied. This is a first-launch test only.'});return;}
   const file=path.join(out,'operator-profile-private.json');fs.writeFileSync(file,JSON.stringify(profile));
-  await ui.locator('#settings-button').click();await ui.locator('#import-profile').click();await native('open',file);await pause(1000);
+  await ui.locator('#settings-button').click();const legacy=ui.getByText('Already have a connection file?',{exact:true});if(await legacy.count())await legacy.click();await ui.locator('#import-profile').click();await native('open',file);await pause(1000);
   note('profile-import',{message:await ui.locator('#settings-result').innerText(),meshSources:profile.directPeers.length,rpcSources:profile.rpcSources.length,rawSources:profile.arweavePeers.length});
   await ui.locator('#check-connections').click();await ui.waitForFunction(()=>!document.getElementById('check-connections').disabled,null,{timeout:50000});
   note('connection-check',{message:await ui.locator('#settings-result').innerText(),rows:await ui.locator('#connection-list').innerText(),details:await ui.locator('.connection-status').evaluateAll(xs=>xs.map(x=>({text:x.textContent,detail:x.title})))});

@@ -37,11 +37,12 @@ export function loadProfile(file){
  if(fs.statSync(file).size>8192)throw new Error('Connection profile exceeds 8 KiB.');
  return validateProfile(JSON.parse(fs.readFileSync(file,'utf8')));
 }
-export function applyProfile(directory,value){
+export function applyProfile(directory,value,{networkState}={}){
  const p=validateProfile(value);fs.mkdirSync(directory,{recursive:true,mode:0o700});
  const lock=path.join(directory,'connections.lock');
  try{fs.mkdirSync(lock);}catch(e){if(e.code==='EEXIST')throw new Error('Another connection update is in progress.');throw e;}
  const entries=[['mesh-ip-peers.json',p.directPeers],['solana-rpc-seeds.json',objects(p.rpcSources)],['arweave-peers.json',objects(p.arweavePeers)],['arweave-peer-seeds.json',objects(p.arweavePeers)],['hyper-bootstrap.json',[]]];
+ if(networkState!==undefined)entries.push(['network-membership.json',networkState]);
  let previous=[],written=0;const staged=[];
  try{
   previous=entries.map(([name])=>{try{return fs.readFileSync(path.join(directory,name));}catch(e){if(e.code==='ENOENT')return null;throw e;}});
