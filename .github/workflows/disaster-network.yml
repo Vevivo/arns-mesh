@@ -15,9 +15,9 @@ jobs:
     timeout-minutes: 23
     env:
       QA_REPLICA_ID: ${{ matrix.replica }}
-      QA_REPLICA_DIR: ${{ runner.temp }}/disaster-replica
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: echo "QA_REPLICA_DIR=$RUNNER_TEMP/disaster-replica" >> "$GITHUB_ENV"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24.19.0'
@@ -70,11 +70,13 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 22
     env:
-      QA_OUTPUT: ${{ runner.temp }}/disaster-evidence
-      QA_TOOLS: ${{ runner.temp }}/disaster-tools
       QA_FIREWALL_GROUP: ArNS-Mesh-Disaster-${{ github.run_id }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - shell: pwsh
+        run: |
+          "QA_OUTPUT=$env:RUNNER_TEMP/disaster-evidence" >> $env:GITHUB_ENV
+          "QA_TOOLS=$env:RUNNER_TEMP/disaster-tools" >> $env:GITHUB_ENV
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24.19.0'
