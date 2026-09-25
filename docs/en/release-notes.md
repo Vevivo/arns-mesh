@@ -1,10 +1,14 @@
-# ArNS Mesh 0.5.0-preview.7 — candidate
+# ArNS Mesh 0.5.0-preview.7
 
 Immutable Arweave resource URLs in pages are now served inside the browser through verified Mesh/raw content, with no gateway or DNS request. GET, HEAD and byte ranges retain full ID/signature verification and the 32 MiB object limit. Unsupported hosts/APIs and external navigation stay blocked.
 
+When ordinary resource lookup fails, a bounded fallback starts from the verified parent page's known weave position and searches nearby native Arweave blocks. It shares work between page resources, keeps cancellation and reserves at most 96 MiB per scan within a persistent 256 MiB daily reader allowance. It uses no new gateway metadata; existing anchor preparation provenance remains explicit.
+
 Save page and supporter catalog replication now follow bounded literal Arweave references in signed HTML/CSS/JavaScript/JSON as well as manifest files. Saved resources retain their pins across restart and open locally in saved mode. Dynamic URLs and third-party services are not included; missing files remain visible as an incomplete copy.
 
-129 source tests passed on Linux and Windows. The real Windows candidate passed DNS/gateway OS blocking, four main-document opens and a separate real-document resource transport control. This does **not** establish complete embedded assets: internetfireplace video/audio locations are still missing from available indexes, and permahistory still depends on external CDNs. See [direct-resource evidence and limits](../arweave-resources.md). A bounded fallback now searches nearby native Arweave blocks from a verified parent page when ordinary resource lookup fails. The separate Linux experiment found and signature-verified all three missing media items without new gateway metadata. The new Windows video/audio playback gate is pending. This candidate is not yet the published release.
+131 source tests passed on Linux and Windows. In the real Windows outage test, four main documents opened while OS rules blocked DNS, gateway HTTPS and DoH. Internet Fireplace's font, video and audio were found and signature-verified through the raw Arweave path; video reached 36.1 seconds and audio 15.8 seconds with no media errors. The existing Mesh source and IP-based RPC remained available. See [exact build, evidence and limits](../arweave-resources.md).
+
+General first-discovery coverage and independent-host Mesh failover remain unfinished. Non-Arweave CDN dependencies stay blocked; a page using them can remain incomplete. This release does not automatically update the production supporter.
 
 # Supporter routing replication — source update
 

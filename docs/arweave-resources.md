@@ -1,4 +1,4 @@
-# Direct Arweave resources — preview.7 candidate
+# Direct Arweave resources — preview.7
 
 Pages often spell immutable Arweave resources as `https://arweave.net/<id>`
 or `/raw/<id>`. The browser now interprets supported URLs inside its isolated
@@ -23,30 +23,56 @@ labels the result as detected Arweave files, not a complete functional site.
 
 ## Measured Windows behavior
 
-The real candidate executable at source
-`c738fafea3789c2f3a87b7aa2c6518cbb5b2d8b0` passed
-[run 36087692717](https://github.com/Vevivo/arns-mesh/actions/runs/36087692717).
-All 129 source tests passed on Linux and Windows. The test used a fresh browser,
-actual public ArNS names, native profile import and the OS firewall policy
-documented in [disaster-network.md](disaster-network.md). Solana RPC over IP
-remained available; the existing Mesh source was available in this experiment.
+The real Windows executable at source
+`fb5b94fefaf8ce36c7ce0058c843d2c0abb327ae` passed
+[run 36088804178](https://github.com/Vevivo/arns-mesh/actions/runs/36088804178).
+All 131 source tests passed on Linux and Windows. The browser started with an
+empty content store, imported its profile through the native dialog and used
+the OS firewall policy in [disaster-network.md](disaster-network.md).
+DNS, gateway HTTPS and DoH probes succeeded before the outage and failed after
+it. IPv6 and UDP were blocked. The existing Mesh source and IP-based Solana RPC
+remained available; this run is not a Mesh-server outage test.
 
-All four main documents opened. A separate positive control fetched the real
-verified `vevivo` document through the HTTPS resource interceptor: 200 for its
-28,390-byte body, the expected SHA-256, 206 for the matching first 32 bytes, and
-200 with an empty HEAD body. The gateway/DNS/DoH negative probes passed. This
-control used the locally retained signed document and is explicitly separate
-from embedded-asset availability.
+All four real main documents opened: `vevivo`, `internetfireplace`,
+`permahistory` and `kh-laboratory`. The new fallback found the three
+`internetfireplace` resources through raw Arweave nodes, without new gateway
+metadata or a manually supplied asset location. Their full IDs and signatures
+were verified before the browser served these responses:
 
-`internetfireplace`'s font, video and audio still returned local 502 responses
-because their locations were absent from the available Mesh/published indexes.
-Video/audio did not play. `permahistory` still had blocked third-party CDN
-dependencies. These are recorded failures, not successful resource rendering.
-The report retains `embeddedArweaveResourcesPassed=false` and
-`disasterGoalFullyVerified=false` independently of the passing transport test.
+| Resource | Payload bytes | Local response | Playback observation |
+|---|---:|---|---|
+| Font | 149,688 | 200 | Font loaded; no resource error |
+| Video | 4,742,387 | 206 | readyState 4, 36.146619 seconds, playing, no media error |
+| Audio | 5,885,954 | 206 | readyState 4, 15.817651 seconds, playing, no media error |
 
-Evidence artifact: `arweave-resource-evidence`, ID `10844187474`, SHA-256
-`6d1c5f6755015fc6333c2a40ec384413c31243a8cfbe9d6a7370dbcdabf5685e`.
+The report records `embeddedArweaveResourcesPassed=true` and
+`mediaPlaybackPassed=true`. A video request was cancelled during media range
+loading; the subsequent verified ranges and actual playback passed. The page's
+application-level response counter recorded 76,023,177 bytes including lookup
+and content work. This is not a packet-capture measurement. The initial search
+is materially slower and more expensive than reading a known stored location.
+
+A separately labelled control served the already verified `vevivo` document
+through the same interceptor: GET 200, the expected 28,390-byte SHA-256, a
+matching 32-byte range with 206 and an empty HEAD response. It is separate from
+the live embedded-media result above.
+
+`permahistory` still has blocked third-party CDN dependencies and remains a
+partial page. `disasterGoalFullyVerified=false` remains intentional: universal
+first discovery, complete site assets and independent-host failover are not
+established. Firewall settings were restored after the experiment.
+
+Tested candidate ZIP: 199,709,784 bytes; SHA-256
+`0742550fc0c5585aeafae99d7a7a4f801a8136e320c7c0a3848972a562c9a363`.
+Evidence artifact: `arweave-resource-evidence`, ID `10844134071`, SHA-256
+`db2c950947851ed5ae55420bd9bc2a959c151d9542c1ba0766b71fac501ed5eb`.
+A later package built after documentation changes has a different ZIP hash;
+use its release checksum to identify that artifact.
+
+The earlier [transport-only run 36087692717](https://github.com/Vevivo/arns-mesh/actions/runs/36087692717)
+at `c738fafea3789c2f3a87b7aa2c6518cbb5b2d8b0` correctly recorded missing media
+locations and `embeddedArweaveResourcesPassed=false`. It predates the bounded
+native discovery and is retained as the failure baseline, not rewritten.
 
 ## Location investigation
 
@@ -58,7 +84,7 @@ Using those externally reported heights as diagnostic inputs, raw native block
 headers exposed the assets' bundle entries. That comparison is not autonomous
 discovery. A later diagnostic, [run 36087953098](https://github.com/Vevivo/arns-mesh/actions/runs/36087953098), derived block 1,995,047 directly from the existing page weave position using 21 native block probes, then found all three media items within 63 nearby blocks. It used no public publication metadata for that search. Approximately 53 MB of response bodies located the objects; subsequent raw downloads verified all three full IDs/signatures. This remains anchored on the page's existing Mesh location, whose earlier external preparation provenance is retained.
 
-The candidate now invokes this bounded nearby-block discovery only after ordinary resource lookup fails. It shares one scan per parent document, verifies the stored parent, keeps navigation cancellation and scans only the anchor block plus at most 64 predecessors/256 transactions per block. Outer bundle headers are considered; nested/general history coverage is not established. Scans reserve up to 96 MiB before starting, with a persistent 256 MiB/day reader allowance, one active scan/four queued and a three-minute deadline. Ordinary page fetch slots remain available during the scan. The resulting hints cannot authorize content: the retry must still verify complete signed bytes. Saved mode does not invoke discovery. The new live Windows playback gate is pending; the successful earlier transport-only result above does not establish playback.
+The candidate now invokes this bounded nearby-block discovery only after ordinary resource lookup fails. It shares one scan per parent document, verifies the stored parent, keeps navigation cancellation and scans only the anchor block plus at most 64 predecessors/256 transactions per block. Outer bundle headers are considered; nested/general history coverage is not established. Scans reserve up to 96 MiB before starting, with a persistent 256 MiB/day reader allowance, one active scan/four queued and a three-minute deadline. Ordinary page fetch slots remain available during the scan. The resulting hints cannot authorize content: the retry must still verify complete signed bytes. Saved mode does not invoke discovery. The live Windows playback gate above passed with this fallback enabled; it does not expand the bounded search into universal coverage.
 
 Existing prepared-index recovery from PR #4 remains valid. Universal cold
 location coverage, complete site assets and independent-host Mesh failover
