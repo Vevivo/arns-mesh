@@ -27,7 +27,7 @@ async function firewall(allowed){
  const endpoints=allowed.map(parse),hosts=[...new Set(['127.0.0.1',...endpoints.map(p=>p.host)])];
  // Windows rejects the unspecified and all-host broadcast addresses as range
  // endpoints. Neither can be an Internet content/RPC destination.
- const rules=[{protocol:'Any',addresses:complement(hosts.map(ipNum),2**32-2,ipText,1)},{protocol:'Any',addresses:['::/0']},{protocol:'UDP',addresses:['Any']}];
+ const rules=[{protocol:'Any',addresses:complement(hosts.map(ipNum),2**32-2,ipText,1)},{protocol:'Any',addresses:['::/1','8000::/1']},{protocol:'UDP',addresses:['Any']}];
  for(const host of hosts.filter(h=>h!=='127.0.0.1'))rules.push({protocol:'TCP',addresses:[host],ports:complement(endpoints.filter(p=>p.host===host).map(p=>p.port),65535,String,1)});
  const file=path.join(out,'firewall-policy-private.json');fs.writeFileSync(file,JSON.stringify({programs:[exe,...localPeerPrograms],rules}));
  const result=await exec('pwsh',['-NoProfile','-File',path.join(__dirname,'firewall.ps1'),'-Mode','apply','-PolicyFile',file,'-Group',group]);
@@ -56,7 +56,7 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
   const context=browser.contexts()[0];let ui;
   for(let i=0;i<40;i++){ui=context.pages().find(p=>p.url()==='arnsui://app/index.html');if(ui)break;await delay(250);}
   assert.ok(ui,'Real desktop toolbar must appear');await ui.locator('#address').waitFor();await delay(600);
-  const f=path.join(out,id+'-profile-private.json');fs.writeFileSync(f,JSON.stringify({...profile,directPeers:connections,arweavePeers:[]}));
+  const f=path.join(out,id+'-profile-private.json');fs.writeFileSync(f,JSON.stringify({...profile,directPeers:connections,arweavePeers:extra.rawOnly?profile.arweavePeers:[]}));
   if(!await ui.locator('#settings-panel').isVisible())await ui.locator('#settings-button').click();
   await ui.locator('#import-mode').selectOption('replace');await ui.locator('#import-profile').click();await native('open',f);await delay(500);
   assert.match(await ui.locator('#settings-result').innerText(),/Connections replaced/);
@@ -72,8 +72,9 @@ async function runPhase(id,connections,allowed,blockedEndpoints,extra={}){
    phase.pages.push(row);save();console.log('DISASTER_PAGE',clean({phase:id,name,opened:row.opened,elapsedMs,network:row.network,status:row.status}));
    const visible=row.status+' '+row.document.text;
    if(!privateValues.some(v=>visible.includes(v)))await native('capture',path.join(out,id+'-'+name+'.png'));
-   assert.equal(row.opened,true,id+': '+name+' must open');assert.match(row.content,/verified/i);assert.match(row.mode,/Live/);assert.ok(row.network.meshResponses>0,'A fresh client must receive data from Mesh');assert.equal(row.network.cutSourceResponses,0);
-   assert.equal(row.network.purposes.includes('raw-arweave'),false,'No raw server is configured in this replica-only experiment');
+   assert.equal(row.opened,true,id+': '+name+' must open');assert.match(row.content,/verified/i);assert.match(row.mode,/Live/);assert.equal(row.network.cutSourceResponses,0);
+   if(extra.rawOnly){assert.equal(row.network.meshResponses,0);assert.ok(row.network.purposes.includes('raw-arweave'),'Fresh client must obtain bytes from the independent raw storage nodes');}
+   else {assert.ok(row.network.meshResponses>0,'A fresh client must receive data from Mesh');assert.equal(row.network.purposes.includes('raw-arweave'),false,'No raw server is configured in this replica-only experiment');}
    await native('check-errors');
   }
   phase.passed=true;
@@ -118,6 +119,11 @@ async function localFallback(seedDir){
   if(!independent){cp.spawnSync('taskkill',['/pid',String(localPeers[0].pid),'/T','/F'],{stdio:'ignore'});}
   await runPhase('replica-a-cut',[...profile.directPeers,a,b],[b,...profile.rpcSources],[...profile.directPeers,a],{scope:'Original Mesh source and replica A unavailable; replica B supplies bytes',independentPhysicalHost:independent});
   report.testPassed=true;
+  // Also measure cold access through the operator's existing raw Arweave
+  // storage peers. No saved bytes, location hints or Mesh replica are supplied.
+  if(profile.arweavePeers.length){try{
+   await runPhase('raw-peers-only',profile.directPeers,[...profile.arweavePeers,...profile.rpcSources],profile.directPeers,{scope:'Cold client, original Mesh source blocked, only configured raw Arweave storage peers and RPC reachable',rawOnly:true});report.rawPeerFallbackPassed=true;
+  }catch(e){report.rawPeerFallbackPassed=false;note('raw-peer-fallback-gap',{error:clean(e.message)});}}
  }catch(e){report.fatal=clean(e.stack);report.testPassed=false;console.error(report.fatal);process.exitCode=1;}
  finally{
   await stopBrowser();for(const proc of localPeers)if(proc.exitCode===null)cp.spawnSync('taskkill',['/pid',String(proc.pid),'/T','/F'],{stdio:'ignore'});
