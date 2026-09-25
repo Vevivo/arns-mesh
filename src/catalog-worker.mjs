@@ -5,6 +5,7 @@ import {fetchMeshContent} from './content-fetcher.mjs';
 import {withByteBudget} from './byte-budget.mjs';
 import {manifestTargetIds} from './manifest-path.mjs';
 import {createSwarmMeshClient} from './swarm-client.mjs';
+import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export function catalogDailyBudget(env=process.env){
  const mib=env.ARNS_CATALOG_DAILY_MIB===undefined?64:Number(env.ARNS_CATALOG_DAILY_MIB);
@@ -12,7 +13,7 @@ export function catalogDailyBudget(env=process.env){
  return mib*1024*1024;
 }
 
-// Demand is observed from ArNS/ANT records and signed manifests, never from a
+// Demand is observed from ArNS/ANT records and signed manifests/text, never from a
 // curated list. Discovery failures must not starve work already in the queue.
 export class CatalogWorker {
  constructor({dataDir,peer,endpoint,client,dailyBytes=catalogDailyBudget(),intervalMs=60000,mintsPerPass=16,bulkScan=false,
@@ -91,23 +92,25 @@ export class CatalogWorker {
     this.state.lastSuccess={dataId:job.id,source,stored,locationReplication:result.locationReplication?.status||null,storageKind:result.storageKind||result.direct.storageKind||'ans104',at:new Date().toISOString()};
     if(!job.fetchedAt){job.fetchedAt=Date.now();this.state.completed++;}
     this.state.lastError=null;let graphPending=false;
-    if(result.direct.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.includes('application/x.arweave-manifest'))){
+    const references=discoverArweaveReferences(result.direct);
+    const isManifest=result.direct.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.toLowerCase().includes('application/x.arweave-manifest'));
+    if(isManifest||references.scanned){
      try{
-      const manifest=JSON.parse(result.direct.payload.toString());
-      if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');
-      const ids=manifestTargetIds(manifest);let cursor=job.graphCursor||0;
+      let ids=references.ids;
+      if(isManifest){const manifest=JSON.parse(result.direct.payload.toString());if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');ids=manifestTargetIds(manifest);}
+      let cursor=job.graphCursor||0;
       while(cursor<ids.length){
        const id=ids[cursor];
        if(!this.queuedIds.has(id)&&(this.state.seen[id]||0)<=Date.now()&&!this.enqueue(id))break;
        cursor++;
       }
-      job.graphCursor=cursor;graphPending=cursor<ids.length;this.state.lastGraphError=null;
+      job.graphCursor=cursor;graphPending=cursor<ids.length;this.state.lastGraphError=references.truncated?'static_arweave_reference_scan_limit':null;
      }catch(error){this.state.lastGraphError=String(error.message).slice(0,240);}
     }
     job.graphPending=graphPending;
     this.state.jobs.splice(this.state.jobs.indexOf(job),1);
     if(graphPending){
-     // The immutable verified manifest supplies the remaining IDs next time.
+     // The immutable verified content supplies the remaining IDs next time.
      // Persist its cursor, rotate it behind existing work, and refetch if the
      // bounded content cache has evicted it. Never drop the tail of a graph.
      job.after=0;this.state.jobs.push(job);

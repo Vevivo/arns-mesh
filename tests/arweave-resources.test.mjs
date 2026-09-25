@@ -13,6 +13,42 @@ import {peerIdFromPublicKey} from '../src/common.mjs';
 import {startDirectPeerServer} from '../src/direct-peer.mjs';
 import {createSwarmMeshClient} from '../src/swarm-client.mjs';
 import {contentResponse,isAllowedRendererUrl} from '../apps/browser/response.mjs';
+import {discoverArweaveReferences} from '../src/arweave-references.mjs';
+import {SitePinner} from '../src/site-pinner.mjs';
+import {NameSnapshotStore} from '../src/name-snapshots.mjs';
+
+test('static reference discovery is bounded, ignores binary/CDN data and never evaluates scripts',()=>{
+ const a='A'.repeat(43),b='B'.repeat(43),make=(text,type='text/html')=>({payload:Buffer.from(text),tags:[{name:'Content-Type',value:type}]});
+ const text=`<link href="https://arweave.net/${a}"><script>const x="https:\\/\\/arweave.net\\/raw\\/${b}";throw new Error('must not execute');</script><a href="https://arweave.net/${a}">again</a><script src="https://cdn.example/${b}"></script>`;
+ assert.deepEqual(discoverArweaveReferences(make(text)).ids,[a,b]);
+ assert.equal(discoverArweaveReferences(make(text,'video/mp4')).scanned,false);
+ assert.equal(discoverArweaveReferences(make(text),{maxIds:1}).truncated,true);
+ assert.equal(discoverArweaveReferences(make(text),{maxBytes:16}).truncated,true);
+ assert.deepEqual(discoverArweaveReferences(make('https://arweave.net/tx/'+a)).ids,[]);
+});
+
+test('saving follows signed HTML/CSS references, keeps them pinned across restart and opens them without network',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-linked-save-')),empty=path.join(dir,'empty.json');fs.writeFileSync(empty,'[]');
+ const env={ARWEAVE_PEERS:empty,ARWEAVE_PEER_SEEDS:empty,HYPER_BOOTSTRAP:empty,HYPER_PEER_CACHE:path.join(dir,'learned.json'),ARNS_IP_PEERS:path.join(dir,'direct.json'),ARNS_LOCATIONS:path.join(dir,'locations.json'),ARNS_MESH_HEAD_START_MS:'2500'};
+ const old=Object.fromEntries(Object.keys(env).map(k=>[k,process.env[k]]));Object.assign(process.env,env);
+ t.after(()=>{for(const [k,v] of Object.entries(old))if(v===undefined)delete process.env[k];else process.env[k]=v;fs.rmSync(dir,{recursive:true,force:true});});
+ const source=new MeshPeer({dataDir:path.join(dir,'source'),allowRemoteFetch:false,locationsFile:path.join(dir,'source-locations.json')});
+ const keys=crypto.generateKeyPairSync('ed25519');source.identity={publicKeyPem:keys.publicKey.export({format:'pem',type:'spki'}),privateKeyPem:keys.privateKey.export({format:'pem',type:'pkcs8'})};source.witnessPeerId=peerIdFromPublicKey(source.identity.publicKeyPem);
+ const signer=new EthereumSigner(crypto.randomBytes(32).toString('hex'));
+ const make=async(data,type)=>{const item=createData(data,signer,{tags:[{name:'Content-Type',value:type}]});await item.sign(signer);await source.contentStore.put(item.id,item.getRaw());return item;};
+ const font=await make('controlled font','font/woff2'),css=await make('@font-face{src:url(https://arweave.net/raw/'+font.id+')}','text/css');
+ const html=await make('<link href="https://arweave.net/'+css.id+'"><h1>Saved references</h1>','text/html');
+ let server=await startDirectPeerServer(source,{host:'127.0.0.1',port:0});
+ fs.writeFileSync(env.ARNS_IP_PEERS,JSON.stringify(['127.0.0.1:'+server.address.port]));
+ const names=new NameSnapshotStore(path.join(dir,'names.json'));names.put({schema:'arns-mesh-name-snapshot/v1',name:'saved-links',txId:html.id,antId:'B'.repeat(43),observedAt:new Date().toISOString(),slot:123,ttlSeconds:60},{kind:'local-rpc'});
+ const store=new VerifiedContentStore(path.join(dir,'reader')),pinner=new SitePinner({file:path.join(dir,'sites.json'),snapshots:names,contentStore:store});
+ try{
+  const row=await pinner.start('saved-links');assert.equal(row.status,'linked-resources-saved');assert.equal(row.saved,3);assert.equal(row.total,3);assert.equal(row.failed,0);
+  await server.close();server=null;
+  const restarted=new VerifiedContentStore(store.directory,{maxBytes:0});restarted.prune();assert.equal(restarted.pinStats().files,3);
+  for(const item of [css,font]){const result=await resolveArweaveResource('https://arweave.net/raw/'+item.id,{contentStore:restarted,localOnly:true,client:{content(){throw new Error('offline read attempted network');}}});assert.equal(result.body.toString(),item.rawData.toString());}
+ }finally{if(server)await server.close();}
+});
 
 test('gateway spelling only supplies a case-sensitive immutable ID; APIs and unrelated URLs stay blocked',()=>{
  const id='aB'.repeat(21)+'C';

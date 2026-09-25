@@ -4,6 +4,7 @@ import {fetchMeshContent} from './content-fetcher.mjs';
 import {validArName,validDataId} from './swarm-common.mjs';
 import {manifestTargetIds} from './manifest-path.mjs';
 import {validateSnapshot} from './name-snapshots.mjs';
+import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export class SitePinner{
  constructor({file,snapshots,contentStore}){this.file=file;this.snapshots=snapshots;this.store=contentStore;this.jobs=new Map();this.rows=Object.create(null);try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}for(const row of Object.values(this.rows))if(row.status==='saving')row.status='interrupted';}
@@ -33,19 +34,30 @@ export class SitePinner{
   const row=this.rows[name]={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},status:'saving',scope:'document',total:1,saved:0,failed:0,errors:[]};this.save();
   const client=createSwarmMeshClient();client.setName(name);
   const fetchOne=async id=>{const item=await fetchMeshContent(id,{client,contentStore:this.store});if(item.cacheError)throw new Error('content_cache_failed: '+item.cacheError);if(!this.store.has(id))throw new Error('content_not_cached');await this.store.pin(id,name);return item;};
-  try{
-   const root=await fetchOne(snapshot.txId);row.saved=1;
-   const type=root.direct.tags?.find(t=>t.name.toLowerCase()==='content-type')?.value||'';
+  const ids=[],seen=new Set([snapshot.txId]);let next=0,limitReported=false;
+  const expand=item=>{
+   const type=item.direct.tags?.find(t=>t.name.toLowerCase()==='content-type')?.value||'';
+   let children=[];
    if(type.toLowerCase().includes('application/x.arweave-manifest')){
-    const manifest=JSON.parse(root.direct.payload.toString());
+    const manifest=JSON.parse(item.direct.payload.toString());
     if(manifest.manifest!=='arweave/paths'||!manifest.paths||typeof manifest.paths!=='object')throw new Error('invalid_manifest');
-    const ids=manifestTargetIds(manifest).filter(id=>id!==snapshot.txId);
-    if(ids.length>1024||ids.some(id=>!validDataId(id)))throw new Error('manifest_pin_limit_or_invalid_id');
-    row.scope='manifest';row.total=ids.length+1;this.save();let next=0;
-    const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await fetchOne(id);row.saved++;}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
-    await Promise.all([worker(),worker()]);
+    children=manifestTargetIds(manifest);if(row.scope==='document')row.scope='manifest';
    }
-   row.status=row.failed?'partial':row.scope==='manifest'?'manifest-saved':'document-saved';
+   const references=discoverArweaveReferences(item.direct);
+   if(references.ids.length){row.scope='linked-arweave';children.push(...references.ids);}
+   if(references.truncated){row.failed++;row.errors.push({error:'static_arweave_reference_scan_limit'});}
+   for(const id of children){
+    if(!validDataId(id))throw new Error('invalid_reference_id');
+    if(seen.has(id))continue;
+    if(seen.size>=1025){if(!limitReported){row.failed++;row.errors.push({error:'site_file_limit'});limitReported=true;}continue;}
+    seen.add(id);ids.push(id);row.total++;
+   }
+  };
+  try{
+   const root=await fetchOne(snapshot.txId);row.saved=1;expand(root);this.save();
+   const worker=async()=>{while(next<ids.length){const id=ids[next++];try{const item=await fetchOne(id);row.saved++;expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
+   await Promise.all([worker(),worker()]);
+   row.status=row.failed?'partial':row.scope==='linked-arweave'?'linked-resources-saved':row.scope==='manifest'?'manifest-saved':'document-saved';
   }catch(e){row.status='partial';row.failed++;row.errors.push({error:String(e.message).slice(0,240)});}
   finally{row.updatedAt=new Date().toISOString();this.save();await client.stop();}
   return {...row};
