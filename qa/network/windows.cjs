@@ -18,7 +18,7 @@ async function startPeer(dir){
  child.stderr.on('data',chunk=>fs.appendFileSync(path.join(out,'peer-private.log'),chunk));
  child.on('message',m=>{const p=pending.get(m.id);if(p){pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(new Error(m.error)):p.resolve(m.result);}});
  const ready=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(new Error('Peer startup timeout'));},20000);child.on('message',m=>{if(m.ready){clearTimeout(timer);resolve(m);}});child.on('exit',code=>{clearTimeout(timer);if(code)reject(new Error('Peer exited: '+code));});});
- const result={...ready,dir,child,call(action,extra={}){return new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>reject(new Error('Peer command timeout')),20000);pending.set(id,{resolve,reject,timer});child.send({id,action,...extra});});},async close(){if(child.exitCode!==null)return;await new Promise(r=>{child.once('exit',r);child.kill();});}};peers.push(result);return result;
+ const result={...ready,dir,child,call(action,extra={}){return new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>reject(new Error('Peer command timeout')),20000);pending.set(id,{resolve,reject,timer});child.send({id,action,...extra});});},async close(){if(child.exitCode!==null||child.signalCode!==null)return;await new Promise(r=>{child.once('exit',r);child.kill();});}};peers.push(result);return result;
 }
 async function launch(directory){
  dataDir=directory;const env={...process.env,ARNS_MESH_USER_DATA:dataDir};delete env.MESH_QA_PROFILE;

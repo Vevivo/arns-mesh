@@ -48,6 +48,7 @@ network.onChange=()=>{void (async()=>{
  const endpoint=seed?'http://'+(seed.host.includes(':')?'['+seed.host+']':seed.host)+':'+seed.port:null;
  if(catalog&&endpoint&&endpoint!==catalogEndpoint){catalog.stop();await catalog.running;catalogEndpoint=endpoint;catalog=new CatalogWorker({dataDir,peer,endpoint});if(!stopping)catalog.start();}
  })().catch(error=>console.error(JSON.stringify({event:'network-catalog-error',error:error.message})));};
+network.onChange(); // Publish an accepted startup refresh on existing mirrors too.
 network.start();
 const networkRenewalTimer=setInterval(renewNetwork,6*3600000);networkRenewalTimer.unref?.();
 runtime.discovery.start();

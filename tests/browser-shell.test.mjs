@@ -20,6 +20,11 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    const event={sender:toolbar.webContents,senderFrame:toolbar.webContents.mainFrame};
    const call=(name,...args)=>fake.handlers.get(name)(event,...args);
    assert.throws(()=>fake.handlers.get('navigate')({sender:content.webContents,senderFrame:content.webContents.mainFrame},'unit-one'),/untrusted/);
+   for(const name of ['inspect-network','join-network','refresh-network','stop-network-updates'])assert.throws(()=>fake.handlers.get(name)({sender:content.webContents,senderFrame:content.webContents.mainFrame},'forged'),/untrusted/);
+   await assert.rejects(()=>call('join-network','forged'),/Review/);
+   await call('set-access-policy','saved');
+   for(const name of ['inspect-network','join-network','refresh-network'])await assert.rejects(()=>call(name,'forged'),/Switch to Live/);
+   await call('set-access-policy','live');
    assert.throws(()=>fake.handlers.get('navigate')({...event,senderFrame:{url:'arnsui://app/index.html'}},'unit-one'),/untrusted/);
    await call('navigate','unit-one/path?q=1');assert.equal(content.webContents.response.status,502);
    assert.deepEqual(await call('import-profile'),{canceled:true});
