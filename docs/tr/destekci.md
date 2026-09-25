@@ -30,41 +30,95 @@ Boş bir gelen **TCP** portu ayır. Kurucu **49741** kullanır. Alt seviye peer 
 
 Pi'ye tam Solana veya Arweave düğümü kurmuyoruz. Erişilebilir RPC ve içerik kaynakları hâlâ gerekli. Gerçek Pi donanımı bu sürümde test edilmedi; aşağıdaki bağımlılık kontrolü geçmeden servis kurulumuna geçme.
 
+### Node.js yoksa: Ubuntu / 64-bit Pi OS
+
+Uygun Node.js/npm zaten varsa bu bölümü atla. Yeni Debian tabanlı sistemde aşağıdaki paketleri yönetici kurabilir; Node arşivi adımını normal hesabınla çalıştır. Örnek **CI'da kullanılan 24.19.0** sürümünü sabitler; en yeni güvenlik sürümü olduğu iddia edilmez. Güncel ve desteklenen Node 24 LTS seçerken [resmî indirme sayfasını](https://nodejs.org/en/download) kontrol et. [24.19.0 arşivinde](https://nodejs.org/en/download/archive/v24.19.0) Linux x64 ve ARM64 paketleri vardır.
+
+```sh
+sudo apt-get update
+sudo apt-get install --no-install-recommends git curl ca-certificates xz-utils
+```
+
+```sh
+(
+  set -eu
+  MESH_NODE_VERSION=v24.19.0
+  case "$(uname -m)" in
+    x86_64) MESH_NODE_ARCH=x64 ;;
+    aarch64) MESH_NODE_ARCH=arm64 ;;
+    *) exit 1 ;;
+  esac
+  MESH_NODE_ARCHIVE="node-${MESH_NODE_VERSION}-linux-${MESH_NODE_ARCH}.tar.xz"
+  MESH_NODE_BASE="https://nodejs.org/download/release/${MESH_NODE_VERSION}"
+  MESH_NODE_TMP="$(mktemp -d)"
+  trap 'rm -rf -- "$MESH_NODE_TMP"' EXIT
+  cd "$MESH_NODE_TMP"
+  curl --fail --location --proto '=https' "$MESH_NODE_BASE/$MESH_NODE_ARCHIVE" -o "$MESH_NODE_ARCHIVE"
+  curl --fail --location --proto '=https' "$MESH_NODE_BASE/SHASUMS256.txt" -o SHASUMS256.txt
+  awk -v name="$MESH_NODE_ARCHIVE" '$2 == name {print}' SHASUMS256.txt > selected.sha256
+  test -s selected.sha256
+  sha256sum --check selected.sha256
+  mkdir -p "$HOME/.local/opt"
+  test ! -e "$HOME/.local/opt/node-${MESH_NODE_VERSION}-linux-${MESH_NODE_ARCH}"
+  tar -xJf "$MESH_NODE_ARCHIVE" -C "$HOME/.local/opt"
+)
+```
+
+Mimari `uname -m` sonucundan seçilir. Desteklenmeyen mimari veya hatalı checksum bu bloğu durdurur; hata varsa devam etme. Aynı sürüm dizini zaten varsa üzerine yazılmaz. Bu kontrol resmî HTTPS kaynağındaki checksum ile indirme bütünlüğünü karşılaştırır; ayrıca yayıncı imzası doğrulaması yapmaz.
+
+x86-64 VPS için bu terminalde:
+
+```sh
+export PATH="$HOME/.local/opt/node-v24.19.0-linux-x64/bin:$PATH"
+```
+
+64-bit Raspberry Pi veya ARM64 VPS için **bunun yerine**:
+
+```sh
+export PATH="$HOME/.local/opt/node-v24.19.0-linux-arm64/bin:$PATH"
+```
+
+Gerekirse sana uygun satırı sonraki oturumlar için kullanıcı kabuk ayarına ekle; başka sürüm seçtiysen yolu uyarla. `node --version`, `npm --version` ve `git --version` kontrollerini tekrar yap. Mesh kurucusu Node dosyasının tam yolunu kaydeder; servis için bu dizini koru. Sistem `/usr/bin/node` dosyası değiştirilmez.
+
 ## 3. Ortak kurulum: kaynak ve bağlantı profili
 
 ```sh
-git clone https://github.com/Vevivo/arns-mesh.git
+git clone --branch v0.5.0-preview.7 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-Repo Private ise sahibi erişim vermeli. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh'in içerik erişim yolu değildir.
+Bu komut yayımlanmış preview.7 etiketini yeni bir dizine alır. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh’in içerik erişim yolu değildir. Bağımlılıkları kesintiden önce indir.
 
-Başka destekçiden çalışan bağlantı profili al veya bildiğin gerçek servis adresleriyle üret:
+Başka destekçiden çalışan profil al ve repo klasörünün yanına `mesh-upstream.json` olarak koy. Bu dosya **senin sunucunun veri alacağı kaynakları** gösterir. Kullanılabilir adresleri biliyorsan aşağıdaki komutla üretebilirsin. Buradaki `--peer` mevcut bir kaynaktır; kendi yeni boş sunucunu yazmak ona veri sağlamaz:
 
 ```sh
-node scripts/profile.mjs --peer 192.0.2.10:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../network-profile.private.json
-node scripts/profile.mjs check ../network-profile.private.json
+node scripts/profile.mjs --peer 192.0.2.10:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../mesh-upstream.json
+node scripts/profile.mjs check ../mesh-upstream.json
 ```
 
 **Komuttaki bütün IP'ler çalışmayan belge örnekleridir; gerçek adreslerinle değiştir.** Birden fazla kaynak için ilgili seçeneği tekrarla. RPC, Mesh portu değildir; IP üzerinden HTTP ile gerekli Solana JSON-RPC yöntemlerini sunmalıdır. Sıradan bir HTTPS/domain veya API anahtarlı URL bu profile konulamaz. Mesh sunucusu kurmak Solana RPC kurmak değildir.
 
 Profil en az bir RPC ile en az bir Mesh veya ham Arweave kaynağı ister. Ham Arweave kaynağı olmadan peer'lerden kopyalama mümkün olabilir ama ham paket taraması yeni konum üretemez. Profil kontrolü yalnız biçimi doğrular; servislerin açık olduğunu kanıtlamaz.
 
-```sh
-bash scripts/install-peer.sh ../network-profile.private.json
-"$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
-```
-
-Kurulum ayrı sürüm klasörü oluşturur. Veriler `~/.local/share/ArNS-Mesh-Supporter/data`, programlar `releases`, seçili sürümü başlatan dosya `Start-Peer.sh` içindedir. Başka dizin için kurulum ve servis komutlarında aynı `MESH_INSTALL_ROOT` değerini kullan. Aynı veriye iki süreç çalıştırma. Önde çalışan peer'i **Ctrl+C** ile durdur.
-
-Kurucu bağımlılıkları lockfile ile, kurulum betiklerini çalıştırmadan indirir. Yerel bağımlılıkları ayrıca kontrol et:
+Önce repo dizinindeki bağımlılıkları ve yerel yüklemeyi kontrol et:
 
 ```sh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-node scripts/doctor.mjs ../network-profile.private.json
+node scripts/doctor.mjs ../mesh-upstream.json
 ```
 
-Bu kontrol ağdan gerçek içerik alındığı anlamına gelmez.
+Bu kontrol profili ve yerel bağımlılıkları inceler; ağda gerçek içerik bulunduğunu kanıtlamaz. Başarılıysa kur ve başlat:
+
+```sh
+bash scripts/install-peer.sh ../mesh-upstream.json
+"$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
+```
+
+Başlatıcı önde çalışır ve terminali meşgul tutar. 4. adımdaki kontrolleri ikinci SSH terminalinden yap; arka plan servisine geçmeden önce **Ctrl+C** ile durdur.
+
+Aşağıdaki yollar `MESH_INSTALL_ROOT`/`XDG_DATA_HOME` değiştirilmediğini varsayar. Kurulum ayrı sürüm klasörü oluşturur. Veriler `~/.local/share/ArNS-Mesh-Supporter/data`, programlar `releases`, seçili sürümü başlatan dosya `Start-Peer.sh` içindedir. Başka dizin için kurulum ve servis komutlarında aynı `MESH_INSTALL_ROOT` değerini kullan. Aynı veriye iki süreç çalıştırma. Önde çalışan peer'i **Ctrl+C** ile durdur.
+
+Kurucu bağımlılıkları ayrı sürüme lockfile ile, bağımlılık kurulum betiklerini çalıştırmadan indirir. Arka plan servisi veya firewall kuralı oluşturmaz. Bu doğrudan HTTP/IP kurulumu için domain, nginx veya TLS sertifikası gerekmez.
 
 ## 4. Sunucunun gerçekten erişildiğini dene
 
@@ -95,9 +149,26 @@ Yaklaşık dakikada bir gelen `peer-status` kaydında:
 
 ## 5. Kullanıcılara nasıl vereceksin?
 
-Profil üretme komutunda kendi **erişilebilir Mesh IP/portunu** ve kullanımına izin verilen RPC/ham kaynakları yaz. Üretilen küçük JSON dosyasını masaüstü kullanıcılarına ver. Onlar **Settings → Import connection profile** ile dosyayı seçer; IP veya komut yazmaz.
+Dış ağdan kontrol başarılı olduktan sonra **kullanıcı profili** üret. `mesh-upstream.json` dosyasından farklı olarak bu dosyada **senin yeni sunucunun public Mesh IP ve portu** bulunur. Public IP'yi VPS sağlayıcının ağ panelinden öğren; evdeki Pi için dışarıdan erişilebilir IP ve yönlendirilen portu kullan. `0.0.0.0` dinleme adresidir, kullanıcıların bağlanacağı adres değildir. `127.0.0.1` alıcının kendi bilgisayarını gösterir. Yerel ağ adresi ancak o ağa erişen kişiler içindir.
 
-Aynı şekilde diğer destekçiler senin peer'ini listelerine ekleyebilir. Gizli anahtar veya bütün `data` dizini paylaşılmaz. Profil içindeki servis adresleri alıcılar tarafından görülebilir; yalnız paylaşmayı amaçladığın uçları ekle.
+Aşağıdaki **çalışmayan örnek adreslerin tamamını**, kullanıcıların kullanmasına izin verilen gerçek Mesh/RPC/ham Arweave servisleriyle değiştir:
+
+```sh
+node scripts/profile.mjs --peer 192.0.2.20:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../mesh-connect.json
+node scripts/profile.mjs check ../mesh-connect.json
+```
+
+Başka bağımsız destekçiler için `--peer` seçeneğini, diğer kaynaklar için ilgili seçenekleri tekrarla. Komut mevcut dosyanın üzerine yazmaz; dosya varsa incele veya yeni çıktı adı seç. `check` yalnız biçimi doğrular. [Her alanın açıklaması ve adreslerin nereden alınacağı](baglantilar.md#dosyanın-içine-ne-yazılır).
+
+Kullanıcıya şunları ver:
+
+1. [Windows preview.7 indirme sayfası](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7).
+2. `mesh-connect.json` dosyan ve **Settings → Import connection profile → Check connections** adımları.
+3. IP/port veya kaynak erişimi değişirse yeni profil alabileceği ve hata bildirebileceği iletişim yolu. Profil kendini otomatik güncellemez.
+
+Paylaşacağın dosyanın aynısını ayrı bir masaüstü test profilinde dene. Dosya kullanıcının senin peer'inden veri istemesini sağlar; saklanan siteleri aktarmaz veya her ismin açılacağını garanti etmez. Başlangıçta aldığın kaynak profilini aynen paylaşmak yeni sunucunu listeye eklemez. Diğer destekçiler de senin profilini kendi kaynaklarına ekleyebilir; hiçbir veri kaynağına ulaşmayan kapalı bağlantı döngüsü kurma.
+
+Gizli anahtarı veya bütün `data` dizinini paylaşma. Profildeki servis adresleri alıcılar tarafından görülebilir; yalnız paylaşmayı amaçladığın uçları ekle.
 
 Birden fazla bağımsız peer iyi olur ama gerekli kayıtların ve dosyaların oralarda gerçekten bulunması gerekir. Otomatik küresel kopyalama, otomatik düğüm kaydı ve her RPC işleminde garantili yedek geçişi tamamlanmış değildir.
 
@@ -149,4 +220,4 @@ systemctl --user daemon-reload
 
 `XDG_CONFIG_HOME` özelse yolu uyarla. Program/sürüm klasörlerini süreç kapalıyken silebilirsin. Kimlik, indeks ve içerik silinsin istemiyorsan `data` dizinini koru. Yalnız bu projeye özel eklediğin firewall, port yönlendirme ve lingering ayarlarını kaldır; başka projelerin ayarlarına dokunma.
 
-Windows DNS/gateway engeli ve aynı makinedeki yedekler arasında geçiş gerçek ana belgelerle ölçüldü; [deney kaydı](../disaster-network.md). Gerçek Pi, bağımsız cihaz kaybı ve tam paket kaydı henüz doğrulanmadı. Sıcak peer'de çalışan içerik, boş peer'in bütün isimleri bulabildiği anlamına gelmez. [Durum](durum.md).
+Windows DNS/gateway engeli ve aynı makinedeki yedekler arasında geçiş gerçek ana belgelerle ölçüldü; [deney kaydı](../disaster-network.md). Preview.7’de Internet Fireplace medyası ham Arweave yolundan bulunup doğrulanarak oynatıldı; bu deneyde mevcut Mesh ve IP üzerinden RPC açıktı. [Dosya keşfi](../arweave-resources.md). Gerçek Pi, bağımsız cihaz kaybı ve tam paket kaydı henüz doğrulanmadı. Sıcak peer'de çalışan içerik, boş peer'in bütün isimleri bulabildiği anlamına gelmez. [Durum](durum.md).

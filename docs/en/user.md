@@ -6,11 +6,11 @@ You only need the Windows x64 desktop ZIP and a connection profile from a suppor
 
 ## First start
 
-1. Open [Releases](https://github.com/Vevivo/arns-mesh/releases). Choose a version explicitly marked **Preview** and download `ArNS-Mesh-Browser-Windows-x64-<version>.zip` and `SHA256SUMS.txt`. If no desktop asset is present, the binary is not published yet. GitHub's automatic **Source code** downloads are for developers.
+1. Open [preview.7](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7) and download `ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip` and `SHA256SUMS.txt`. GitHub's automatic **Source code** downloads are for developers.
 2. Optionally check the downloaded ZIP in PowerShell with `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the entire value with the checksum. A matching checksum checks the download; it is not a publisher signature.
 3. Extract **all files** into a new folder. Open `Mesh-Browser.exe` as your ordinary user. Do not run as administrator or disable antivirus protections. If Windows blocks the unsigned build, retain the warning details for the maintainer.
-4. Ask your supporter for their connection-profile JSON. Open **Settings → Import connection profile**, choose that file, and wait for the confirmation. No terminal commands are needed.
-5. Enter a bare name or `ar://name` in the app's own address bar. Paths, queries and fragments can follow the name. ArNS undernames use their actual registered spelling, such as `undername_name`.
+4. Ask your supporter for their connection-profile JSON, for example `mesh-connect.json`. Open **Settings → Import connection profile**, choose that file, and wait for the confirmation. No terminal commands are needed.
+5. Enter a bare name or `ar://name` in the app’s own address bar and press Enter or the arrow button. Paths, queries and fragments can follow the name. ArNS undernames use their actual registered spelling, such as `undername_name`.
 
 The public package has no operator addresses preloaded. A profile gives the reader initial Mesh peer addresses, numeric-IP Solana RPC sources and optional raw Arweave nodes. It contains no password or wallet key. Use profiles from operators you trust: RPC responses influence live name mappings. A syntactically valid profile does not prove its endpoints are online.
 
@@ -25,9 +25,9 @@ The row below the address bar reports **Resolve name → Find sources → Locate
 
 - Use `+` for another tab, the star for a bookmark, and back/forward/reload/stop for navigation.
 - **Page information** separates content verification, name observation, transport and errors. Its network log is an application log, not a complete operating-system packet capture.
-- **Save current page** retains a main document or the files enumerated by its manifest. Wait for the save result. A bookmarked address is not a saved website, and a partial save is not a complete offline copy.
-- **Saved** access uses retained observations/copies. It is not a claim that the mapping is currently the newest one. **Live** access still needs reachable RPC and content sources.
-- External domain-based APIs, embedded videos, fonts and CDNs can be unavailable. The browser does not emulate them or silently fall back to a gateway.
+- **Save current page** retains the main document, manifest entries and supported static Arweave references found in HTML/CSS/JS/JSON, within scan/storage limits. Wait for the save result. A bookmarked address is not a saved website, and a partial save is not a complete offline copy.
+- **Saved** access uses the selected copy’s dated name observation and verified local bytes; missing saved files do not trigger network recovery. It is not a claim that the mapping is currently the newest one. **Live** access still needs reachable RPC and content sources.
+- Supported Arweave-hosted fonts, video and audio can load through Mesh/raw sources; preview.7 can search near a known page location when a linked item lacks a location. This bounded first lookup can take longer. Unavailable raw sources, unknown locations and size/quota limits can still leave files missing. External domain-based APIs and non-Arweave CDNs are not emulated and do not trigger a silent gateway fallback.
 
 ## When something fails
 

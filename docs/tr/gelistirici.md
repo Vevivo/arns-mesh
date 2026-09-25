@@ -2,7 +2,7 @@
 
 Sunucu kurmak isteyenler için [VPS/Pi destekçi rehberi](destekci.md) yeterlidir. Bu sayfa kod ve paketleme içindir.
 
-Node.js 24 LTS, npm ve Git kullan; lockfile'ı değiştirmeden kur:
+Node.js 24 LTS (CI: 24.19.0), npm ve Git kullan. Repoyu yeni geliştirme dizinine klonla veya [preview.7 kaynak ZIP’ini](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.7.zip) çıkar ve bu dizine gir. Kaynak ZIP’i hazır masaüstü uygulaması değildir. Katkı için `main`, yayımlanan kaynağı yeniden üretmek için `v0.5.0-preview.7` etiketini kullan. Lockfile’ı değiştirmeden kur:
 
 ```sh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund

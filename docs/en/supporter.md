@@ -29,20 +29,70 @@ Use a Pi capable of a 64-bit Linux OS. A Pi 4/5 with 4 GB RAM is a conservative 
 
 Prefer an SSD for sustained catalog/index writes. Keep a backup of the peer data. This repository does not install a full Solana or Arweave node on the Pi. It still requires reachable configured RPC/content sources. The native dependency import check below must pass on your Pi; real Pi hardware validation is pending.
 
-## 2. Get the source and a profile
+### If Node.js is not installed (Ubuntu / 64-bit Pi OS)
+
+Skip this if a suitable Node.js/npm is already available. On a newly prepared Debian-based host, an administrator can install these prerequisites; run the Node archive step as your ordinary account. This example uses **24.19.0, the CI baseline**, not a claim that it is the latest security release. Review the [official Node.js release/download page](https://nodejs.org/en/download) when choosing a maintained Node 24 LTS version. The [24.19.0 archive](https://nodejs.org/en/download/archive/v24.19.0) offers both Linux x64 and ARM64 builds.
 
 ```sh
-git clone https://github.com/Vevivo/arns-mesh.git
+sudo apt-get update
+sudo apt-get install --no-install-recommends git curl ca-certificates xz-utils
+```
+
+```sh
+(
+  set -eu
+  MESH_NODE_VERSION=v24.19.0
+  case "$(uname -m)" in
+    x86_64) MESH_NODE_ARCH=x64 ;;
+    aarch64) MESH_NODE_ARCH=arm64 ;;
+    *) exit 1 ;;
+  esac
+  MESH_NODE_ARCHIVE="node-${MESH_NODE_VERSION}-linux-${MESH_NODE_ARCH}.tar.xz"
+  MESH_NODE_BASE="https://nodejs.org/download/release/${MESH_NODE_VERSION}"
+  MESH_NODE_TMP="$(mktemp -d)"
+  trap 'rm -rf -- "$MESH_NODE_TMP"' EXIT
+  cd "$MESH_NODE_TMP"
+  curl --fail --location --proto '=https' "$MESH_NODE_BASE/$MESH_NODE_ARCHIVE" -o "$MESH_NODE_ARCHIVE"
+  curl --fail --location --proto '=https' "$MESH_NODE_BASE/SHASUMS256.txt" -o SHASUMS256.txt
+  awk -v name="$MESH_NODE_ARCHIVE" '$2 == name {print}' SHASUMS256.txt > selected.sha256
+  test -s selected.sha256
+  sha256sum --check selected.sha256
+  mkdir -p "$HOME/.local/opt"
+  test ! -e "$HOME/.local/opt/node-${MESH_NODE_VERSION}-linux-${MESH_NODE_ARCH}"
+  tar -xJf "$MESH_NODE_ARCHIVE" -C "$HOME/.local/opt"
+)
+```
+
+The architecture is selected from `uname -m`. An unsupported architecture or failed checksum stops this block; do not continue after an error. It deliberately refuses to replace an existing version directory. The downloaded checksums detect corruption against the official HTTPS source; this is not a separate signature-verification procedure.
+
+For x86-64 VPS hosts, set PATH in the current terminal:
+
+```sh
+export PATH="$HOME/.local/opt/node-v24.19.0-linux-x64/bin:$PATH"
+```
+
+For a 64-bit Raspberry Pi / ARM64 VPS, use this **instead**:
+
+```sh
+export PATH="$HOME/.local/opt/node-v24.19.0-linux-arm64/bin:$PATH"
+```
+
+Keep the matching line in your user shell configuration if needed for future logins; adapt it if you selected another version. Run `node --version`, `npm --version` and `git --version` again. The Mesh installer records this Node executable's absolute path, so keep that directory available for the service. This does not replace `/usr/bin/node`.
+
+## 2. Get the source and an upstream profile
+
+```sh
+git clone --branch v0.5.0-preview.7 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-Private repositories require access granted by their owner. GitHub/npm domains are used for installation; they are not part of the running Mesh access path.
+This is a fresh checkout of the published preview.7 tag. GitHub/npm domains are used for installation; they are not part of the running Mesh access path. Download dependencies before a disruption.
 
-Obtain a connection profile from an existing supporter, or create one using actual numeric service addresses:
+Obtain a working profile from an existing supporter and save it beside the checkout as `mesh-upstream.json`. This is **your server’s source list**. If you know usable service addresses instead, generate it with the command below. Its `--peer` is an existing source, not your own new empty server:
 
 ```sh
-node scripts/profile.mjs --peer 192.0.2.10:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../network-profile.private.json
-node scripts/profile.mjs check ../network-profile.private.json
+node scripts/profile.mjs --peer 192.0.2.10:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../mesh-upstream.json
+node scripts/profile.mjs check ../mesh-upstream.json
 ```
 
 **All addresses above are nonworking documentation examples. Replace them.** Repeat `--peer`, `--rpc` or `--arweave` to add endpoints. RPC is not the Mesh port and not just any web server. It must expose the supported Solana JSON-RPC methods over HTTP on a literal IP. A normal HTTPS provider hostname or an API-key URL cannot be pasted into this profile. Running a Mesh peer does not provide Solana RPC.
@@ -51,12 +101,23 @@ At least one RPC and at least one Mesh peer or raw Arweave source are required b
 
 ## 3. Install and start
 
+First check dependencies in the checkout:
+
 ```sh
-bash scripts/install-peer.sh ../network-profile.private.json
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+node scripts/doctor.mjs ../mesh-upstream.json
+```
+
+The doctor checks the profile and local dependency imports; it does not establish network availability. If it passes, install and start:
+
+```sh
+bash scripts/install-peer.sh ../mesh-upstream.json
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Default layout:
+The launcher runs in the foreground and keeps this terminal occupied. Leave it running and use a second SSH terminal for the probes in step 4, or stop with **Ctrl+C** before setting up the background service.
+
+Default layout (assuming `MESH_INSTALL_ROOT` and `XDG_DATA_HOME` were not customized):
 
 | Path below `~/.local/share/ArNS-Mesh-Supporter` | Purpose |
 |---|---|
@@ -67,14 +128,7 @@ Default layout:
 
 For a different directory, set `MESH_INSTALL_ROOT` consistently for installation and service setup. For a different port, start with `MESH_LISTEN=0.0.0.0:49742` before the launcher. Never run two processes against the same data directory. Stop the foreground process with **Ctrl+C**.
 
-The installer uses `npm ci --omit=dev --ignore-scripts`; it does not execute dependency install scripts. Verify native imports before enabling a service:
-
-```sh
-npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-node scripts/doctor.mjs ../network-profile.private.json
-```
-
-This doctor checks configuration and local dependencies only; it does not establish reachability or content coverage.
+The installer installs locked dependencies into a separate release with dependency install scripts disabled. It creates neither a background service nor firewall rules. Domain registration, nginx and a TLS certificate are not needed for this direct HTTP/IP deployment.
 
 ## 4. Check that other people can use it
 
@@ -103,7 +157,26 @@ JSON `peer-status` events arrive about once a minute. Useful fields:
 
 ## 5. Give users a profile
 
-Create a reader profile with your reachable Mesh address and approved RPC/raw sources using the same profile command. Give the JSON to users; they use **Settings → Import connection profile**. Give it to other supporters to add your node to their configured peers. Do not share the entire `data` directory or identity files.
+After the outside-network probe succeeds, create a **reader profile**. Unlike `mesh-upstream.json`, this file includes **your new server’s public Mesh IP and port**. Find the public IP in your VPS provider's network panel; for a home Pi, use the externally reachable address and forwarded port. `0.0.0.0` is a listening address, not a destination. `127.0.0.1` points at the recipient’s own computer. A private LAN address only works for recipients with a route to that LAN.
+
+The following addresses are **nonworking documentation examples**. Replace every one, including the RPC/raw sources, with services that recipients may use:
+
+```sh
+node scripts/profile.mjs --peer 192.0.2.20:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../mesh-connect.json
+node scripts/profile.mjs check ../mesh-connect.json
+```
+
+Repeat `--peer` for other independent supporters, and the other source flags as needed. The generator refuses to overwrite a file; if the filename exists, review it or choose a new output name. `check` validates format only. See [profile fields and how to obtain each address](connections.md#what-goes-in-the-file).
+
+Give readers:
+
+1. The [Windows preview.7 download page](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7).
+2. Your `mesh-connect.json` file and **Settings → Import connection profile → Check connections** instructions.
+3. A way to report connection problems and obtain an updated profile when your IP, port or upstream access changes. Profiles do not update themselves.
+
+Test this exact shared file in a separate desktop test profile. A reader who imports it can now request data from your peer; the file does not copy saved sites or guarantee every name will work. Forwarding your original upstream file unchanged does not add your new server. Other supporters can also import/apply your reader profile as part of their source list, avoiding source loops with no useful data.
+
+Do not share the entire `data` directory or identity files.
 
 Profiles expose the service addresses they contain. Only include endpoints you intend recipients to use. Multiple independent peers are preferable; keep their relevant bytes and location records populated. This software does not currently perform automatic global replication, peer enrollment or guaranteed failover of every RPC operation.
 
@@ -157,4 +230,4 @@ Adjust the path if `XDG_CONFIG_HOME` was customized. Remove program releases and
 
 ## What remains unproven
 
-Windows DNS/gateway blocking and same-VM replica loss were exercised with real public main documents; see the [outage experiment](../disaster-network.md). Pi hardware performance, full packet capture and multi-independent-host outage recovery remain pending. Earlier warm-peer successes are not evidence that a newly installed empty peer can independently discover every ArNS location. Published snapshots are incomplete and some deployed catalogs were prepared using external Turbo/Goldsky services. [Status](status.md) lists these separately.
+Windows DNS/gateway blocking and same-VM replica loss were exercised with real public main documents; see the [outage experiment](../disaster-network.md). Preview.7 also demonstrated raw discovery and verified playback of Internet Fireplace media while the existing Mesh and numeric-IP RPC remained available; see [resource discovery](../arweave-resources.md). Pi hardware performance, full packet capture and multi-independent-host outage recovery remain pending. Earlier warm-peer successes are not evidence that a newly installed empty peer can independently discover every ArNS location. Published snapshots are incomplete and some deployed catalogs were prepared using external Turbo/Goldsky services. [Status](status.md) lists these separately.
