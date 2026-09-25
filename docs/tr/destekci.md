@@ -89,7 +89,7 @@ Yaklaşık dakikada bir gelen `peer-status` kaydında:
 | `requestsServed` | Başarısız aramalar dahil istek sayısı; açılan sayfa sayısı değil. |
 | `contentBytesServed`, `contentChunksServed` | Kullanıcılara gönderilen içerik. |
 | `cachedContent`, `indexLocations` | Yerel içerik/konum sayısı; bütün ArNS kapsamı değil. |
-| `catalog.completed`, `catalog.meshReplicated`, `catalog.lastSuccess` | Tamamlanan işler ve kopyalama ilerlemesi. |
+| `catalog.completed`, `catalog.meshReplicated`, `catalog.locationsReplicated`, `catalog.lastSuccess` | Tamamlanan işler ve kopyalama ilerlemesi. |
 | `catalog.catalogError`, `catalog.lastError` | İsim güncelleme ve içerik işlerinin hataları. |
 | `discovery.locationsAdded`, `discovery.lastError` | Ham konum keşfi ve hataları. |
 
@@ -149,4 +149,4 @@ systemctl --user daemon-reload
 
 `XDG_CONFIG_HOME` özelse yolu uyarla. Program/sürüm klasörlerini süreç kapalıyken silebilirsin. Kimlik, indeks ve içerik silinsin istemiyorsan `data` dizinini koru. Yalnız bu projeye özel eklediğin firewall, port yönlendirme ve lingering ayarlarını kaldır; başka projelerin ayarlarına dokunma.
 
-Gerçek Pi, bağımsız düğüm kaybı ve bütün süreçlerde DNS/gateway engelli kabul testleri henüz tamamlanmadı. Sıcak peer'de çalışan içerik, boş peer'in bütün isimleri bulabildiği anlamına gelmez. [Durum](durum.md).
+Windows DNS/gateway engeli ve aynı makinedeki yedekler arasında geçiş gerçek ana belgelerle ölçüldü; [deney kaydı](../disaster-network.md). Gerçek Pi, bağımsız cihaz kaybı ve tam paket kaydı henüz doğrulanmadı. Sıcak peer'de çalışan içerik, boş peer'in bütün isimleri bulabildiği anlamına gelmez. [Durum](durum.md).

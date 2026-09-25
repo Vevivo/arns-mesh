@@ -1,3 +1,15 @@
+# Supporter routing replication — source update
+
+Catalog jobs and bounded supporter lookups now retain peer-provided Arweave
+location hints alongside verified content. Existing locations win, external
+preparation provenance survives, and later downloads still verify item identity
+and signature. Optional hint failures do not invalidate available content.
+Reader navigation and saved opening do not gain extra network requests.
+
+See the [Windows network outage evidence](../disaster-network.md). This supporter
+source change is separate from the already published preview.6 Windows ZIP;
+an existing production service does not update itself.
+
 # ArNS Mesh 0.5.0-preview.6
 
 Fixes the main-process exception when a page tries an external link. The link remains blocked; the current ArNS page and browser controls remain available. CSP-blocked assets and script errors are now reported as a partial page rather than hidden behind a main-document success label. A connection check no longer starts discovery on older peers or mislabels their pending reply as an unavailable peer. Expired name leases receive a specific RPC/clock-qualified explanation.

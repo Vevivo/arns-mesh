@@ -97,7 +97,7 @@ JSON `peer-status` events arrive about once a minute. Useful fields:
 | `requestsServed` | Endpoint requests, including misses; not successful page count |
 | `contentBytesServed`, `contentChunksServed` | Content sent to clients |
 | `cachedContent`, `indexLocations` | Local content/item-location counts; not global coverage |
-| `catalog.completed`, `catalog.meshReplicated`, `catalog.lastSuccess` | Completed fetch/replication progress |
+| `catalog.completed`, `catalog.meshReplicated`, `catalog.locationsReplicated`, `catalog.lastSuccess` | Completed fetch/replication progress |
 | `catalog.catalogError`, `catalog.lastError` | Name refresh versus content-work failures |
 | `discovery.locationsAdded`, `discovery.lastError` | Raw discovery progress/errors |
 
@@ -157,4 +157,4 @@ Adjust the path if `XDG_CONFIG_HOME` was customized. Remove program releases and
 
 ## What remains unproven
 
-Pi hardware performance, a complete hostile-network acceptance run and multi-independent-host outage recovery are pending. Earlier warm-peer successes are not evidence that a newly installed empty peer can independently discover every ArNS location. Published snapshots are incomplete and some deployed catalogs were prepared using external Turbo/Goldsky services. [Status](status.md) lists these separately.
+Windows DNS/gateway blocking and same-VM replica loss were exercised with real public main documents; see the [outage experiment](../disaster-network.md). Pi hardware performance, full packet capture and multi-independent-host outage recovery remain pending. Earlier warm-peer successes are not evidence that a newly installed empty peer can independently discover every ArNS location. Published snapshots are incomplete and some deployed catalogs were prepared using external Turbo/Goldsky services. [Status](status.md) lists these separately.
