@@ -90,10 +90,11 @@ async function localFallback(seedDir){
   const dir=path.join(out,'local-replica-'+id);fs.mkdirSync(path.join(dir,'peer'),{recursive:true});
   fs.cpSync(path.join(seedDir,'content'),path.join(dir,'peer','content'),{recursive:true});fs.copyFileSync(path.join(seedDir,'name-snapshots.json'),path.join(dir,'name-snapshots.json'));
   fs.writeFileSync(path.join(dir,'seed-report.json'),JSON.stringify({fixture:false,preparedFrom:'Windows phase dns-cut',samePhysicalHost:true}));
-  const port=49742+i,log=fs.openSync(path.join(out,'local-'+id+'-private.txt'),'a');
+  const port=0,logPath=path.join(out,'local-'+id+'-private.txt'),log=fs.openSync(logPath,'a');
   const proc=cp.spawn(node,[path.join(__dirname,'replica.mjs'),'serve'],{env:{...process.env,QA_REPLICA_DIR:dir,QA_REPLICA_PORT:String(port),QA_REPLICA_ID:id,QA_PUBLIC_IP:'127.0.0.1'},stdio:['ignore',log,log]});fs.closeSync(log);localPeers.push(proc);
-  for(let n=0;n<80;n++){if(fs.existsSync(path.join(dir,'ready.json')))break;await delay(250);}
-  assert.ok(fs.existsSync(path.join(dir,'ready.json')),'Fallback peer must start');results.push({endpoint:'127.0.0.1:'+port,id});
+  for(let n=0;n<80;n++){if(fs.existsSync(path.join(dir,'ready.json'))||proc.exitCode!==null)break;await delay(250);}
+  if(!fs.existsSync(path.join(dir,'ready.json')))throw new Error('Replica startup failed (exit '+proc.exitCode+'): '+clean(fs.readFileSync(logPath,'utf8')).slice(-4000));
+  const ready=JSON.parse(fs.readFileSync(path.join(dir,'ready.json')));results.push({endpoint:'127.0.0.1:'+ready.port,id});
  }
  return results;
 }

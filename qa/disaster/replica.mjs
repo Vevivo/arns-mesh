@@ -47,7 +47,7 @@ if(mode==='seed'){
  const server=await startDirectPeerServer(peer,{host:'0.0.0.0',port});
  const reportFile=path.join(dir,'serving-report.json');
  const save=()=>fs.writeFileSync(reportFile,JSON.stringify({replica:process.env.QA_REPLICA_ID,remoteFetchEnabled:peer.allowRemoteFetch,witnessPeerId:peer.witnessPeerId,requestsServed:peer.requestsServed,contentChunksServed:peer.contentChunksServed,contentBytesServed:peer.contentBytesServed,network:networkAuditSnapshot(),seed:JSON.parse(fs.readFileSync(path.join(dir,'seed-report.json')))}));
- save();fs.writeFileSync(path.join(dir,'ready.json'),JSON.stringify({host:process.env.QA_PUBLIC_IP,port,witnessPeerId:peer.witnessPeerId,replica:process.env.QA_REPLICA_ID,fixture:false}));
+ save();fs.writeFileSync(path.join(dir,'ready.json'),JSON.stringify({host:process.env.QA_PUBLIC_IP,port:server.address.port,witnessPeerId:peer.witnessPeerId,replica:process.env.QA_REPLICA_ID,fixture:false}));
  const timer=setInterval(save,1000);
  const stop=async()=>{clearInterval(timer);save();await server.close();await peer.stop();process.exit(0);};
  process.on('SIGTERM',stop);process.on('SIGINT',stop);setTimeout(stop,18*60*1000).unref();
