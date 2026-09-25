@@ -2,19 +2,19 @@
 
 [Türkçe](../tr/kullanici.md) · [Home](../../README.md)
 
-You only need the Windows x64 desktop ZIP and a connection profile from a supporter. You do **not** need Chrome, an extension, a VPS, Raspberry Pi, Node.js, a wallet, or an indexer. The ZIP includes the browser engine and Mesh reader. This preview is unsigned; it is not a Microsoft Store application.
+You need the Windows x64 desktop ZIP and an operator connection code or legacy profile. You do **not** need Chrome, an extension, a VPS, Raspberry Pi, Node.js, a wallet, or an indexer. The ZIP includes the browser engine and Mesh reader. This preview is unsigned; it is not a Microsoft Store application.
 
 ## First start
 
-1. Open [preview.7](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7) and download `ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip` and `SHA256SUMS.txt`. GitHub's automatic **Source code** downloads are for developers.
+1. Open [Releases](https://github.com/Vevivo/arns-mesh/releases) and download the Windows x64 ZIP and `SHA256SUMS.txt`. Choose preview.8 or newer for connection codes. GitHub's **Source code** ZIP is for developers.
 2. Optionally check the downloaded ZIP in PowerShell with `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the entire value with the checksum. A matching checksum checks the download; it is not a publisher signature.
 3. Extract **all files** into a new folder. Open `Mesh-Browser.exe` as your ordinary user. Do not run as administrator or disable antivirus protections. If Windows blocks the unsigned build, retain the warning details for the maintainer.
-4. Ask your supporter for their connection-profile JSON, for example `mesh-connect.json`. Open **Settings → Import connection profile**, choose that file, and wait for the confirmation. No terminal commands are needed.
+4. Ask your operator for a `mesh1.` code. In **Settings → Mesh connection code**, paste it, choose **Check code**, review and **Join this network**. This replaces the source list. No terminal commands are needed. Legacy JSON import remains under **Already have a connection file?**.
 5. Enter a bare name or `ar://name` in the app’s own address bar and press Enter or the arrow button. Paths, queries and fragments can follow the name. ArNS undernames use their actual registered spelling, such as `undername_name`.
 
-The public package has no operator addresses preloaded. A profile gives the reader initial Mesh peer addresses, numeric-IP Solana RPC sources and optional raw Arweave nodes. It contains no password or wallet key. Use profiles from operators you trust: RPC responses influence live name mappings. A syntactically valid profile does not prove its endpoints are online.
+The public package has no operator addresses preloaded. A code retrieves a signed source list; a legacy profile gives the reader initial Mesh peer addresses, numeric-IP Solana RPC sources and optional raw Arweave nodes. It contains no password or wallet key. Use codes/profiles from operators you trust: RPC responses influence live name mappings. A syntactically valid profile does not prove its endpoints are online.
 
-Connection setup now opens automatically on a fresh profile. Imports add sources by default; you can explicitly replace them. Use **Check connections** and **Export profile** in the same panel. [Where to get a profile and what the connection list proves](connections.md).
+Connection setup opens on a fresh public installation. See [network codes, automatic updates and Connected downloads](network-code.md). Imports add sources by default; you can explicitly replace them. Use **Check connections** and **Export profile** in the same panel. [Where to get a profile and what the connection list proves](connections.md).
 
 ## Everyday use
 

@@ -1,5 +1,7 @@
 # Developer notes
 
+Connection-code protocol, operator tools and included-network packaging: [network guide](network-code.md). The signed-list tests cover tampering, rollback, cancellation and separate-process seed loss; the Windows workflow drives the real packaged UI. Desktop content serving and paid access are not implemented.
+
 [Supporter deployment](supporter.md) is the server installation guide. This page concerns source development and packaging.
 
 ## Reproduce

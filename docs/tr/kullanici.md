@@ -2,19 +2,19 @@
 
 [Ana sayfa](../../README.tr.md) · [English](../en/user.md)
 
-Gereken yalnızca **Windows x64 masaüstü ZIP'i ve bir destekçinin bağlantı profili**. Chrome, uzantı, VPS, Raspberry Pi, Node.js, cüzdan veya indeksleyici kurmazsın. Tarayıcı motoru ve Mesh okuyucusu paketin içindedir.
+Gereken yalnızca **Windows x64 masaüstü ZIP’i ve sağlayıcının bağlantı kodu veya eski profili**. Chrome, uzantı, VPS, Raspberry Pi, Node.js, cüzdan veya indeksleyici kurmazsın. Tarayıcı motoru ve Mesh okuyucusu paketin içindedir.
 
 ## Kurulum
 
-1. [Preview.7 sürüm sayfasından](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7) `ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip` dosyasını indir. GitHub'ın **Source code** ZIP'i çalıştırılabilir masaüstü değildir.
+1. [Sürümlerden](https://github.com/Vevivo/arns-mesh/releases) Windows x64 ZIP’ini indir. Bağlantı kodları için preview.8 veya yenisini seç. GitHub’ın **Source code** ZIP’i geliştiriciler içindir.
 2. İstersen ZIP'in SHA-256 değerini `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosya.zip'` ile ölçüp aynı sürümün `SHA256SUMS.txt` dosyasıyla karşılaştır. Bu indirme bütünlüğünü kontrol eder; yayıncı imzası değildir.
 3. ZIP'in **tamamını** yeni bir klasöre çıkar. `Mesh-Browser.exe` dosyasını normal kullanıcı olarak aç. Yönetici yetkisi gerekmez. Önizleme kod imzalı değildir; Windows engellerse uyarının ayrıntısını geliştiriciye ilet, antivirüsü kapatma.
-4. Destekçinin verdiği, örneğin `mesh-connect.json` adlı JSON dosyasını **Settings → Import connection profile** ile seç. Normal kullanım için terminal komutu gerekmez.
+4. Sağlayıcının `mesh1.` kodunu **Settings → Mesh connection code** alanına yapıştır. **Check code** ile ağı incele, **Join this network** seç. Bu işlem kaynak listesini değiştirir. Terminal gerekmez. Eski JSON aktarımı **Already have a connection file?** altında durur.
 5. Uygulamanın kendi adres çubuğuna `ar://isim` veya yalnız ismi yazıp Enter’a ya da ok düğmesine bas. `+` sekme açar, yıldız yer imi ekler. Kayıtlı undername, yol, sorgu ve sayfa içi bağlantılar aynı adrese eklenebilir.
 
-**Profil ne?** İlk bağlanılacak Mesh peer, IP üzerinden Solana RPC ve isteğe bağlı ham Arweave düğümlerinin servis adresleri. Parola, cüzdan veya gizli anahtar içermez. Genel pakete işletmecinin özel sunucu adresleri gömülmez. Bu yüzden çalışan profil gerekir; repodaki örnek dosya çalışır sunucu listesi değildir. Güvendiğin destekçiden al: isim eşleşmesinde RPC yanıtına güven devam ediyor.
+**Profil ne?** İlk bağlanılacak Mesh peer, IP üzerinden Solana RPC ve isteğe bağlı ham Arweave düğümlerinin servis adresleri. Parola, cüzdan veya gizli anahtar içermez. Genel pakete işletmecinin özel sunucu adresleri gömülmez. Bu yüzden çalışan kod veya profil gerekir; repodaki örnek dosya çalışır sunucu listesi değildir. Kodu/profili güvendiğin sağlayıcıdan al: isim eşleşmesinde RPC yanıtına güven devam ediyor.
 
-Yeni kurulumda bağlantı ekranı otomatik açılır. Profil varsayılan olarak mevcut kaynaklara eklenir; değiştirme ayrıca seçilir. Aynı ekranda **Check connections** ve **Export profile** bulunur. [Profil kimden alınır, bağlantı listesi neyi gösterir?](baglantilar.md)
+Yeni genel kurulumda bağlantı ekranı otomatik açılır. [Kod, otomatik güncelleme ve Connected paket anlatımı](ag-kodu.md). Profil varsayılan olarak mevcut kaynaklara eklenir; değiştirme ayrıca seçilir. Aynı ekranda **Check connections** ve **Export profile** bulunur. [Profil kimden alınır, bağlantı listesi neyi gösterir?](baglantilar.md)
 
 ## Kullanım ve hata ayrımı
 

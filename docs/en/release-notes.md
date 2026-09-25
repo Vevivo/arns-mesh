@@ -1,3 +1,17 @@
+# ArNS Mesh 0.5.0-preview.8
+
+Readers can now join an operator's network using a reusable connection code. The settings screen checks the signed list, shows its identity and sources, and asks the reader to join. An operator can also build a Connected ZIP with one invitation included for automatic joining on a fresh start. Existing configured sources are preserved.
+
+Live mode refreshes signed addresses on startup and about every 15 minutes, retains the last accepted sources on outages, and rejects invalid signatures, rollback and conflicting equal revisions. Saved mode does not check for network-list updates. Legacy profile import/export remains under **Already have a connection file?**; manual source changes stop managed updates.
+
+Operators can publish a network, share its code, mirror the public signed list without sharing the private key, and install a supporter with `--network`. The authority peer renews its publication before expiry. Neither a mirrored list nor a connection code is a website archive. See [reader/operator instructions](network-code.md) and [Türkçe](../tr/ag-kodu.md).
+
+144 source tests passed on Linux and Windows. The real Windows UI passed code joining, signed updates after directory-process loss, opening `vevivo`, zero new application-audit requests during Saved opening/restart, and included-network automatic joining. Directory peers shared one host and live content sources remained available. [Exact evidence and artifact scope](../network-join.md).
+
+This change does not add paid access, single-use redemption, device licensing, automatic desktop serving, universal discovery or independent-host failover. Live names still use numeric-IP RPC observations. Existing DNS/gateway restrictions remain. Upgrading the desktop does not upgrade a production server.
+
+The public ZIP has no operator code or endpoints included. A newly installed reader needs a real code or profile. A Connected ZIP must be deliberately prepared and distributed by its operator. Historical preview.7 outage/media results below are not a new OS-level outage test of preview.8.
+
 # ArNS Mesh 0.5.0-preview.7
 
 Immutable Arweave resource URLs in pages are now served inside the browser through verified Mesh/raw content, with no gateway or DNS request. GET, HEAD and byte ranges retain full ID/signature verification and the 32 MiB object limit. Unsupported hosts/APIs and external navigation stay blocked.

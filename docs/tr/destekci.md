@@ -2,9 +2,11 @@
 
 [Ana sayfa](../../README.tr.md) · [Yalnız masaüstü kullanıcısı](kullanici.md) · [English](../en/supporter.md)
 
+**Preview.8 kolay kurulum:** [kodla ağa katılma, kendi ağını yayımlama, ikinci liste sunucusu ve Connected masaüstü hazırlama](ag-kodu.md). Aşağıdaki JSON yolu kaynak hazırlığı ve eski kullanıcılar için geçerlidir.
+
 Sunucuda masaüstü tarayıcı değil, **arayüzsüz Node.js peer** çalışır. Doğrulanmış içerik paylaşır, konum ipuçları verir, ArNS/ANT hedeflerini takip eder ve sınırlı bütçeyle ham paket başlıklarından konum üretmeye çalışır. Kendi Windows bilgisayarında masaüstünü ayrıca kullanabilirsin.
 
-**Nasıl yararlı olur?** Diğer kullanıcılar düğümüne ulaşabiliyorsa ve yararlı veri/kayıt barındırıyorsan ek kaynak sağlarsın. Aynı verinin bağımsız ikinci kopyası kesintiye dayanıklılık kazandırabilir. Boş bir sunucuda servisin açık olması bütün siteleri yedeklediğin anlamına gelmez. Bu önizlemede yeni sunucular küresel bir listeye otomatik kaydolmaz; IP bağlantı profilleri paylaşılır. Doğrudan bağlantı modunda otomatik NAT geçişi veya relay yoktur.
+**Nasıl yararlı olur?** Diğer kullanıcılar düğümüne ulaşabiliyorsa ve yararlı veri/kayıt barındırıyorsan ek kaynak sağlarsın. Aynı verinin bağımsız ikinci kopyası kesintiye dayanıklılık kazandırabilir. Boş bir sunucuda servisin açık olması bütün siteleri yedeklediğin anlamına gelmez. Bu önizlemede yeni sunucular küresel bir listeye otomatik kaydolmaz; imzalı ağ kodları veya eski IP bağlantı profilleri paylaşılır. Doğrudan bağlantı modunda otomatik NAT geçişi veya relay yoktur.
 
 ## 1. VPS hazırlığı
 
@@ -83,11 +85,11 @@ Gerekirse sana uygun satırı sonraki oturumlar için kullanıcı kabuk ayarına
 ## 3. Ortak kurulum: kaynak ve bağlantı profili
 
 ```sh
-git clone --branch v0.5.0-preview.7 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 ```
 
-Bu komut yayımlanmış preview.7 etiketini yeni bir dizine alır. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh’in içerik erişim yolu değildir. Bağımlılıkları kesintiden önce indir.
+Bu komut güncel main dalını yeni bir dizine alır. Sabit sürüm gerekiyorsa yayımlanmış bir etiket seç. GitHub/npm kurulum aşamasında kullanılır; çalışan Mesh’in içerik erişim yolu değildir. Bağımlılıkları kesintiden önce indir.
 
 Başka destekçiden çalışan profil al ve repo klasörünün yanına `mesh-upstream.json` olarak koy. Bu dosya **senin sunucunun veri alacağı kaynakları** gösterir. Kullanılabilir adresleri biliyorsan aşağıdaki komutla üretebilirsin. Buradaki `--peer` mevcut bir kaynaktır; kendi yeni boş sunucunu yazmak ona veri sağlamaz:
 
@@ -162,8 +164,8 @@ Başka bağımsız destekçiler için `--peer` seçeneğini, diğer kaynaklar i�
 
 Kullanıcıya şunları ver:
 
-1. [Windows preview.7 indirme sayfası](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7).
-2. `mesh-connect.json` dosyan ve **Settings → Import connection profile → Check connections** adımları.
+1. [Windows indirmeleri](https://github.com/Vevivo/arns-mesh/releases).
+2. `mesh-connect.json` dosyan ve **Settings → Already have a connection file? → Import connection profile → Check connections** adımları.
 3. IP/port veya kaynak erişimi değişirse yeni profil alabileceği ve hata bildirebileceği iletişim yolu. Profil kendini otomatik güncellemez.
 
 Paylaşacağın dosyanın aynısını ayrı bir masaüstü test profilinde dene. Dosya kullanıcının senin peer'inden veri istemesini sağlar; saklanan siteleri aktarmaz veya her ismin açılacağını garanti etmez. Başlangıçta aldığın kaynak profilini aynen paylaşmak yeni sunucunu listeye eklemez. Diğer destekçiler de senin profilini kendi kaynaklarına ekleyebilir; hiçbir veri kaynağına ulaşmayan kapalı bağlantı döngüsü kurma.

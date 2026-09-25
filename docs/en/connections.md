@@ -1,5 +1,7 @@
 # Connections and supporter discovery
 
+For preview.8, use a [connection code and managed network list](network-code.md) for easier setup. This page documents the still-supported JSON format used by operators and older clients.
+
 ## What the current desktop supports
 
 On first start without connections, **Connect to Mesh** opens automatically. Import a connection profile. The default **Add to my existing connections** combines profiles without erasing previous sources; **Replace my connections** is an explicit choice. The limits remain 16 Mesh peers, 8 RPC sources and 16 raw Arweave nodes.

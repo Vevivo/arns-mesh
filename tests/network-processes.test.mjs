@@ -4,7 +4,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {fork} from 'node:child_process';
+import {fork,execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {signDataItem} from '@ardrive/turbo-upload';
 import {NetworkConnection} from '../apps/helper/network-connection.mjs';
@@ -26,6 +27,21 @@ test('two separate peer processes replicate verified bytes; restart discovers th
  assert.notEqual(a.pid,b.pid);
  const profile={schema:'arns-mesh-network-profile/v1',directPeers:[a.address,b.address],rpcSources:['127.0.0.1:8899'],arweavePeers:[]};
  const invitation=await a.call('publish',{profile,seeds:[a.address]});
+ if(process.platform!=='win32'){
+  // Real announcement/CLI joining through the POSIX installer. Dependency
+  // installation alone is a double; CI separately uses the locked real tree.
+  const bin=path.join(root,'bin');fs.mkdirSync(bin);fs.writeFileSync(path.join(bin,'npm'),'#!/bin/sh\nexit 0\n',{mode:0o700});
+  const installRoot=path.join(root,'installed'),env={...process.env,PATH:bin+path.delimiter+process.env.PATH,MESH_INSTALL_ROOT:installRoot};
+  const installer=fileURLToPath(new URL('../scripts/install-peer.sh',import.meta.url));
+  await promisify(execFile)('bash',[installer,'--network',invitation.code],{env,timeout:30000,maxBuffer:1024*1024});
+  assert.deepEqual(readProfile(path.join(installRoot,'data')),profile);
+  assert.equal(new NetworkConnection({dataDir:path.join(installRoot,'data')}).status().joined,true);
+  fs.writeFileSync(path.join(installRoot,'data','identity.json'),'identity-marker');
+  await promisify(execFile)('bash',[installer,'--network',invitation.code],{env,timeout:30000,maxBuffer:1024*1024});
+  assert.equal(fs.readFileSync(path.join(installRoot,'data','identity.json'),'utf8'),'identity-marker');
+  assert.deepEqual(readProfile(path.join(installRoot,'data')),profile);
+ }
+
  const mirror=await b.call('mirror',{file:path.join(root,'a','network-announcement.json')});assert.equal(mirror.hasAuthorityKey,false);
  const readerDir=path.join(root,'reader'),reader=new NetworkConnection({dataDir:readerDir});const preview=await reader.inspect(invitation.code);
  await reader.join(invitation.code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope)});

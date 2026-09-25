@@ -4,7 +4,7 @@
 
 Amaç, domainler, DNS veya gateway hizmetleri kullanılamadığında **IP bağlantısı ve erişilebilir veri kaynakları hâlâ varsa** içeriğe ulaşabilmek. Uygulamaya `ar://isim` yazılır; ismin hedefi bulunur, veri alınır, kimliği ve imzası doğrulanarak gösterilir. Hiçbir erişilebilir kaynakta bulunmayan veri üretilemez.
 
-**Güncel yayımlanmış sürüm: [0.5.0-preview.7](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7)** · [Windows indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.7/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip) · [English](README.md)
+**Kaynak sürümü: 0.5.0-preview.8** · [Yayımlanmış Windows paketleri](https://github.com/Vevivo/arns-mesh/releases) · [English](README.md)
 
 Deneysel, bağımsız bir topluluk projesidir; resmî AR.IO, Arweave veya Solana dağıtımı değildir. Canlı isim çözümü IP üzerinden Solana RPC gözlemlerine dayanır. Bütün içerikleri ilk kez bulma ve bağımsız sunucu kaybına dayanıklılık çalışmaları tamamlanmış değildir.
 
@@ -12,7 +12,7 @@ Deneysel, bağımsız bir topluluk projesidir; resmî AR.IO, Arweave veya Solana
 
 | Amacın | Gereken | Başlangıç |
 |---|---|---|
-| ArNS sitelerini açmak | Windows x64 uygulaması + çalışan bağlantı profili JSON dosyası | [Masaüstü kurulumu](#windows-uygulamasını-kur-ve-kullanmaya-başla) |
+| ArNS sitelerini açmak | Windows x64 uygulaması + sağlayıcının bağlantı kodu (veya eski profil) | [Masaüstü kurulumu](#windows-uygulamasını-kur-ve-kullanmaya-başla) |
 | Başkalarının içeriğe ulaşmasına destek olmak | Erişilebilir Linux VPS veya Raspberry Pi + disk + veri kaynakları | [Destekçi kurulumu](#vps-veya-raspberry-pi-üzerinde-destekçi-kurulumu) |
 | Kodu geliştirmek veya paketlemek | Kaynak kod + Node.js/npm/Git; masaüstü için Electron | [Geliştirici rehberi](docs/tr/gelistirici.md) |
 
@@ -20,6 +20,7 @@ Normal kullanıcı kendi sunucusunu, indeksleyicisini, Node.js’i veya Chrome u
 
 ## Bu yaklaşımın özelliği ne?
 
+- **Kolay ağa katılım:** bağlantı kodunu yapıştır, ağı incele ve katıl. Live modunda imzalı adres listesi güncellemeleri otomatik alınır. Sağlayıcı, kodu içinde bulunan bir indirme paketi de hazırlayabilir. [Nasıl kullanılır?](docs/tr/ag-kodu.md)
 - **Gateway domainine yönlendirmeden erişim:** uygulama profildeki sayısal IP kaynaklarını kullanır. İçerik bulunamayınca sessizce normal bir gateway’e geçmez.
 - **Kullanıcının cihazında doğrulama:** içeriğin kimliği, imzası ve bütünlüğü kontrol edilir. Bu, ismin güncel hedefini bildiren RPC yanıtına güvenmekten ayrı bir kontroldür.
 - **Dosya ve konum bilgisi paylaşımı:** destekçiler doğrulanmış dosyaları ve Arweave verisinin nereden alınabileceğini gösteren kayıtları paylaşabilir. Bağımsız cihazlardaki faydalı kopyalar tek işletmeciye bağımlılığı azaltabilir.
@@ -30,7 +31,7 @@ Mesh, kesintide ek bir erişim yolu geliştirmeyi amaçlar. Arweave depolama ağ
 
 ## İsim yazıldıktan sonra ne oluyor?
 
-1. **İlk kaynaklar bulunur:** bağlantı profili IP adreslerini ve portları verir. Bu önizlemede otomatik genel destekçi rehberi yoktur.
+1. **İlk kaynaklar bulunur:** bağlantı kodu ağın imza anahtarını ve başlangıç IP adreslerini taşır. Bu peer’lerden imzalı kaynak listesi alınır. Eski JSON profilleri de çalışır. Bu, işletmecinin yönettiği listedir; otomatik küresel peer rehberi değildir.
 2. **İsim çözülür:** IP üzerinden Solana RPC’den ArNS/ANT hesap gözlemleri alınır; beklenen hesap sahibi, adres türetimi ve veri biçimi yerelde kontrol edilir. Bu, bağımsız hesap dahil edilme kanıtı değildir.
 3. **İçeriğin konumu aranır:** yerel kayıtlar, peer’ler ve kullanılabilir indeks/ham keşif yolları değerlendirilir. Konum kaydı dosyanın kendisi değildir; yalnız nereden istenebileceğini söyler.
 4. **Veri alınır ve doğrulanır:** Mesh veya ham Arweave üzerinden gelen dosyanın tam kimliği, imzası ve bütünlüğü kontrol edilir.
@@ -38,6 +39,10 @@ Mesh, kesintide ek bir erişim yolu geliştirmeyi amaçlar. Arweave depolama ağ
 6. **İstenirse kaydedilir:** o tarihteki isim eşleşmesi ve bulunan dosyalar saklanır. Saved modunda açılan kopya en güncel canlı sürüm olduğunu iddia etmez.
 
 [Teknik işleyiş ve güven sınırları](docs/en/architecture.md) · [Dosya keşfi ve sınırları](docs/arweave-resources.md)
+
+## Preview.8 bağlantı deneyi
+
+Linux ve Windows’ta 144 test geçti. Gerçek Windows arayüzünde kodla katıldıktan sonra `vevivo` açıldı; ilk liste süreci kapatılıp uygulama yeniden başlatılınca ikinci süreçten güncelleme alındı. Saved açılışı ve yeniden başlatmada uygulama kaydında yeni ağ isteği oluşmadı. Kodu pakette bulunan temiz kurulum otomatik bağlandı. Liste kopyaları aynı makinedeydi; canlı içerik kaynakları açıktı. [Deney ve sınırları](docs/network-join.md).
 
 ## Preview.7 ile gerçekte ne doğrulandı?
 
@@ -51,21 +56,19 @@ Bu gerçek test görüntüsüdür; canlı yayın değildir. Linux ve Windows’t
 
 ## Windows uygulamasını kur ve kullanmaya başla
 
-### Gereken iki dosya
+### İndir, bağlan, isim yaz
 
-| Dosya | Nereden alınır? | Ne işe yarar? |
-|---|---|---|
-| `ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.7.zip` | [GitHub sürüm sayfası](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7) | Çalıştırılabilir masaüstü ve içindeki tarayıcı motoru |
-| Örneğin `mesh-connect.json` adlı bağlantı profili | Kullanılabilir kaynakları işleten destekçi | İlk Mesh, RPC ve isteğe bağlı ham Arweave servis adresleri |
+1. [Sürümlerden](https://github.com/Vevivo/arns-mesh/releases) **Windows ZIP’ini** indir. **Source code (zip)** geliştiriciler içindir. Hazır masaüstü Windows x64 içindir; önizleme kod imzalı değildir. [İndirme kontrolü](docs/tr/kullanici.md).
+2. ZIP’in **tamamını** klasöre çıkar, `Mesh-Browser.exe` dosyasını aç. Ayrıca Node.js veya Chrome kurman gerekmez.
+3. Sağlayıcından `mesh1.` ile başlayan **bağlantı kodunun tamamını** al. **Settings → Mesh connection code → Check code** seç, ağı incele, **Join this network** düğmesine bas. Bu seçim kaynak listesini değiştirir; eski listeyi tutmak istiyorsan önce dışa aktar.
+4. **Check connections** ile kontrol et. **Mesh’in kendi adres çubuğuna** `ar://isim` veya yalnız ismi yazıp Enter’a ya da ok düğmesine bas. Bir kaynağın yanıt vermesi bütün siteleri açabileceği anlamına gelmez.
+5. **Resolve name → Find sources → Locate content → Download → Verify → Open page** adımlarını izle. **Page information** eksik dosyaları ve doğrulamayı gösterir.
 
-**Genel ZIP’te hazır işletmeci adresleri yoktur.** Repodaki örnek JSON çalışmayan belge adresleri içerir. İlk kez kuran kişi canlı isimleri açmadan önce çalışan profil edinmelidir. Aynı bilgisayarda önceden profil aktardıysan normal güncellemede ayrı saklanan ayarların korunur.
+**Genel GitHub ZIP’inde hazır sağlayıcı bulunmaz.** Sağlayıcının hazırladığı **Connected** ZIP temiz kurulumda içindeki ağa otomatik bağlanabilir. Önceden ayarlanmış kaynaklar korunur. Genel pakette kod veya çalışan JSON dosyası gerekir; repodaki örnek IP’ler çalışır servis değildir.
 
-1. **Windows ZIP’ini** indir. GitHub’ın **Source code (zip)** dosyası geliştiriciler içindir. Bu sürümde yayımlanmış masaüstü paketi Windows x64 içindir.
-2. ZIP’in **tamamını** klasöre çıkar, `Mesh-Browser.exe` dosyasını aç. Ayrıca Node.js veya Chrome kurman gerekmez. Topluluk önizlemesi kod imzalı değildir; [kullanıcı rehberinde](docs/tr/kullanici.md) indirme kontrolü ve Windows uyarıları açıklanır.
-3. Destekçinden `mesh-connect.json` dosyasını al. Tanıdığın destekçi yoksa [profil talebi açabilirsin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml). Bu gönüllülerle iletişim içindir; anında dosya veya hizmet garantisi değildir.
-4. **Settings → Import connection profile** ile dosyayı seç. İlk kurulumda **Connect to Mesh** otomatik açılır. Varsayılan aktarım eski kaynaklara ekler; değiştirme ayrıca seçilir.
-5. **Check connections** ile kaynakları kontrol et. **Mesh’in kendi adres çubuğuna** `ar://isim` veya yalnız ismi yazıp Enter’a ya da ok düğmesine bas. Bir kaynağın yanıt vermesi bütün siteleri açabileceği anlamına gelmez.
-6. **Resolve name → Find sources → Locate content → Download → Verify → Open page** adımlarını izle. **Page information** eksik dosyaları ve doğrulamayı gösterir. İlk içerik keşfi tekrar erişimden yavaş olabilir.
+Elinde `mesh-connect.json` varsa **Settings → Already have a connection file? → Import connection profile** yoluyla aktarabilirsin. Varsayılan aktarım eski kaynaklara ekler; değiştirme ayrıca seçilir. Elle aktarım/ayar değişimi ağın otomatik adres güncellemesini durdurur. Sağlayıcı tanımıyorsan [bağlantı bilgisi isteyebilirsin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); bu gönüllü iletişim yoludur, anında hizmet garantisi değildir.
+
+Kod **tekrar kullanılabilir; tek kullanımlık lisans veya parola değildir**. İlk adresleri ve açık doğrulama anahtarını taşır, site dosyalarını taşımaz. [Kullanıcı ve sağlayıcı için ayrıntılı anlatım](docs/tr/ag-kodu.md).
 
 `+` yeni sekme açar; yıldız yer imi ekler. **Yer imi sayfayı kaydetmez.** Dosyaları tutmak için **Save current page** seç ve sonucu bekle; sonra kopyayı **Saved** modunda aç. Dinamik adresler, üçüncü taraf API’leri ve Arweave dışındaki CDN’ler tam saklama garantisinin dışındadır.
 
@@ -87,9 +90,9 @@ Profil yalnız sayısal IP:port kabul eder; domain, HTTPS adresi, parola ve URL 
 
 ## Neden destekçi sunucu çalıştırılır?
 
-Destekçi, kullanıcıların faydalı kayıtlara ve doğrulanmış içeriğe ulaşabileceği ek bir kaynak sunar. İsim/hedef değişikliklerini gözlemleyebilir, sınırlı ham indeksleme yapabilir, yapılandırılmış peer’lerden dosya/konum bilgisi kopyalayabilir ve isteklere yanıt verebilir. Masaüstüyle bağlantısı şöyledir: **kullanıcı sunucunun erişilebilir Mesh adresini içeren profili aktarır; tarayıcı o sunucudan veri ister.**
+Destekçi, kullanıcıların faydalı kayıtlara ve doğrulanmış içeriğe ulaşabileceği ek bir kaynak sunar. İsim/hedef değişikliklerini gözlemleyebilir, sınırlı ham indeksleme yapabilir, yapılandırılmış peer’lerden dosya/konum bilgisi kopyalayabilir ve isteklere yanıt verebilir. Masaüstüyle bağlantısı şöyledir: **kullanıcı, imzalı listesinde sunucunun erişilebilir adresi bulunan ağa katılır; tarayıcı o sunucudan veri ister. Eski profil dosyası da kullanılabilir.**
 
-İşletmecinin görevi erişimi, depolamayı ve kaynak bağlantılarını sürdürmek; hata/kotaları izlemek; peer kimliğini/verisini yedeklemek ve doğru profil dağıtmaktır. Geliştirici sunucu işletmeden koda katkı verebilir; destekçi kod değiştirmeden sunucu çalıştırabilir. Bu repoda otomatik ödül/ödeme mekanizması bulunmaz.
+İşletmecinin görevi erişimi, depolamayı ve kaynak bağlantılarını sürdürmek; hata/kotaları izlemek; peer kimliğini/verisini yedeklemek ve doğru imzalı adres listesi yayımlayıp bağlantı kodunu vermektir. Geliştirici sunucu işletmeden koda katkı verebilir; destekçi kod değiştirmeden sunucu çalıştırabilir. Bu repoda otomatik ödül/ödeme mekanizması bulunmaz.
 
 Boş bir peer’in çalışıyor olması tam yedek değildir. Faydalı kayıt/dosyaların gerçekten birikmesi gerekir; geçici önbellek silinebilir. Tek VPS’i tek Pi’ye taşımak tek hata noktasını kaldırmaz. Yedeklilik, bağımsız erişilebilir cihazlardaki yararlı kopyalarla oluşur.
 
@@ -107,7 +110,7 @@ Boş bir peer’in çalışıyor olması tam yedek değildir. Faydalı kayıt/do
 [Adım adım VPS/Pi rehberi](docs/tr/destekci.md); işletim sistemi/Node hazırlığı, ağ, başlatma, arka plan servisi, kota, yedek ve güncellemeyi açıklar. Ortam hazırlandıktan ve çalışan **kaynak profilini** yeni repo klasörünün yanına koyduktan sonra:
 
 ```sh
-git clone --branch v0.5.0-preview.7 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
+git clone --branch main --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
 cd arns-mesh
 node scripts/profile.mjs check ../mesh-upstream.json
 bash scripts/install-peer.sh ../mesh-upstream.json
@@ -118,7 +121,7 @@ Komutları seçtiğin normal kullanıcıyla, yeni proje dizininde çalıştır. 
 
 Varsayılan dinleme portu **TCP 49741**. Yalnız seçtiğin portu sağlayıcı/işletim sistemi güvenlik duvarında veya modeminde uygun şekilde aç. İkinci terminalde `node scripts/probe-peer.mjs 127.0.0.1:49741` çalıştır; sonra başka bir ağdan gerçek public IP ile dene. Yanıt almak ilk kontroldür; [gerçek içerik ve sayaçları da doğrula](docs/tr/destekci.md#4-sunucunun-gerçekten-erişildiğini-dene).
 
-### Kullanıcıların aktaracağı dosyayı üret
+### Kaynakları hazırla ve kullanıcıya kod ver
 
 Dışarıdan erişim çalıştıktan sonra **senin yeni Mesh sunucunun public adresi** ve izinli RPC/ham kaynaklarla **kullanıcı profili** oluştur. Aşağıdaki IP’ler çalışmayan belge örnekleridir; tamamını değiştir:
 
@@ -127,7 +130,13 @@ node scripts/profile.mjs --peer 192.0.2.20:49741 --rpc 198.51.100.20:8899 --arwe
 node scripts/profile.mjs check ../mesh-connect.json
 ```
 
-Ek kaynaklar için seçenekleri tekrarla. Kullanıcıya `mesh-connect.json`, Windows indirme bağlantısı ve **Settings → Import connection profile** adımını ver. Bütün sunucu veri dizinini veya peer kimliğini gönderme. Başkasından aldığın kaynak profilini aynen paylaşmak senin düğümünü listeye eklemez. [İşletmeciden kullanıcıya dosya aktarımı](docs/tr/destekci.md#5-kullanıcılara-nasıl-vereceksin)
+Ek kaynaklar için seçenekleri tekrarla, sonra peer’in veri dizininden imzalı ağ listesini yayımla:
+
+```sh
+node scripts/network.mjs publish --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --profile ../mesh-connect.json --name "Benim Mesh Agim"
+```
+
+Kullanıcıya komutun verdiği **kodu** ve Windows indirme bağlantısını ver. Güncel peer’in gerçekten çalışıp erişilebilir olması gerekir. Eski yöntemle `mesh-connect.json` da verilebilir. [Kod üretme, yedek liste sunucusu, adres güncelleme ve Connected paket](docs/tr/ag-kodu.md). Bütün sunucu veri dizinini veya peer kimliğini gönderme. Başkasından aldığın kaynak profilini aynen paylaşmak senin düğümünü listeye eklemez. [İşletmeciden kullanıcıya dosya aktarımı](docs/tr/destekci.md#5-kullanıcılara-nasıl-vereceksin)
 
 ## Mevcut sınırlar ve kalan işler
 
@@ -138,14 +147,14 @@ Ek kaynaklar için seçenekleri tekrarla. Kullanıcıya `mesh-connect.json`, Win
 | Bağlı dosya keşfi | Ana sayfa konumu gerekir; başlangıç ve en fazla 64 önceki blok, blok başına 256 işlem, dış bundle başlıkları, 3 dakika, tarama başına 96 MiB ve okuyucuda günlük 256 MiB ayrılan kota |
 | Büyük dosyalar | İmzalı nesne sınırı 32 MiB; büyük dosyayı doğrulayarak akıtma tamamlanmadı |
 | Saklama | Manifestler ve sınırlı sabit Arweave bağlantıları; her dinamik adres/harici hizmet dahil değil |
-| Ağ dayanıklılığı | Otomatik küresel peer listesi/kopyalama yok; bağımsız cihaz kaybı ve tam paket kaydı kabulü bekliyor |
+| Ağ dayanıklılığı | İmzalı işletmeci listesi ve liste kopyaları var; otomatik küresel üyelik/kopyalama yok; bağımsız cihaz kaybı ve tam paket kaydı kabulü bekliyor |
 | Gizlilik | IP bağlantısı anonimlik sağlamaz; Mesh/RPC HTTP trafiği şifreli değildir |
 
 Kesintiye hazırlanırken uygulamayı ve birden fazla kullanılabilir kaynağı önceden edin, önemli sayfaları kaydet. Erişilemeyen ağdan eksik dosya getirilemez. [Durum](docs/tr/durum.md) · [Gizlilik](docs/tr/gizlilik.md)
 
 ## Geliştiriciler ve katkı
 
-[Preview.7 kaynak ZIP’ini indir](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.7.zip) veya repoyu klonla. Kaynak ZIP’i hazır masaüstü uygulaması değildir. Test, Electron ve paketleme için [geliştirici rehberini](docs/tr/gelistirici.md) kullan; bağımlılık kilidini ve ayrı test verisini koru. Bu sürüm bağımsız masaüstüdür; Wayfinder Chrome uzantısı veya başka tarayıcıya P2P düğmesi kurmaz.
+[Güncel kaynak ZIP’ini indir](https://github.com/Vevivo/arns-mesh/archive/refs/heads/main.zip) veya repoyu klonla. Kaynak ZIP’i hazır masaüstü uygulaması değildir. Test, Electron ve paketleme için [geliştirici rehberini](docs/tr/gelistirici.md) kullan; bağımlılık kilidini ve ayrı test verisini koru. Bu sürüm bağımsız masaüstüdür; Wayfinder Chrome uzantısı veya başka tarayıcıya P2P düğmesi kurmaz.
 
 Faydalı katkılar: genel içerik konumu kapsamı, bağımsız peer çoğaltma, isim güncelleme/RPC güvenilirliği, kaynak kotaları, büyük dosya doğrulaması ve Windows/Pi kesinti kanıtları. Ölçülmüş sonuçları, test verilerini ve tamamlanmamış özellikleri ayrı belirt.
 
