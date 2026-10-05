@@ -42,6 +42,17 @@ const endpoint=x=>{const at=x.lastIndexOf(':');return {host:x.slice(0,at).replac
   report.lastNavigation={name,stages:await ui.locator('#access-stages').innerText(),proof:await ui.locator('#proof').innerText()};save();
   assert.equal(await ui.locator('#access-stages [data-stage="open"]').evaluate(e=>e.classList.contains('done')),true,'Page must open: '+name);
   await delay(2500);
+  // Navigation can replace the initial welcome WebContents. Select the actual
+  // rendered ArNS target rather than retaining the newly-created blank target.
+  page=null;
+  for(let i=0;i<60;i++){
+   page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().startsWith('ar://'+name+'/'));
+   if(page)break;
+   await delay(200);
+  }
+  report.renderTargets=browser.contexts().flatMap(c=>c.pages()).map(p=>p.url());save();
+  assert.ok(page,'Rendered ArNS target must exist: '+name);
+  await page.waitForLoadState('domcontentloaded',{timeout:15000});
   const dom=await page.evaluate(()=>({url:location.href,title:document.title,textLength:document.body?.innerText?.length||0,images:[...document.images].map(x=>({complete:x.complete,width:x.naturalWidth,src:x.currentSrc}))}));
   assert.ok(dom.url.startsWith('ar://'+name));assert.ok(dom.textLength>0||dom.images.some(x=>x.width>0),'Rendered content must be visible');
   await page.screenshot({path:path.join(out,name+'.png'),fullPage:true});
