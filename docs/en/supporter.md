@@ -36,12 +36,12 @@ Run in a new directory as the ordinary account that will own this service:
 ```sh
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout feat/resilient-access
+git checkout 94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/install-peer.sh --network 'PASTE_COMPLETE_MESH1_CODE_HERE'
 ```
 
-This installs the current candidate branch; check [PR #9 tests](https://github.com/Vevivo/arns-mesh/pull/9) for the revision you select. Install before an outage: GitHub/npm are download dependencies. Use a separate data directory. The installer preserves existing Mesh settings/data and does not open ports or change other services.
+This pins the tested preview.13 candidate; check [PR #9 tests](https://github.com/Vevivo/arns-mesh/pull/9) for the revision you select. Install before an outage: GitHub/npm are download dependencies. Use a separate data directory. The installer preserves existing Mesh settings/data and does not open ports or change other services.
 
 Default location: `~/.local/share/ArNS-Mesh-Supporter`. Start in the foreground:
 

@@ -36,12 +36,12 @@ Yeni bir dizinde, servisin sahibi olacak normal kullanıcıyla çalıştırın:
 ```sh
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout feat/resilient-access
+git checkout 94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/install-peer.sh --network 'TAM_MESH1_KODUNU_BURAYA_YAPISTIR'
 ```
 
-Daldaki güncel aday kurulur; seçtiğiniz commit için [PR #9 testlerini](https://github.com/Vevivo/arns-mesh/pull/9) kontrol edin. Kesintiden önce kurun: GitHub/npm indirme bağımlılıklarıdır. Başka projenin veri dizinini kullanmayın. Kurucu mevcut Mesh ayar/verilerini korur, port açmaz veya başka servisleri değiştirmez.
+Test edilmiş preview.13 adayı sabit commit ile kurulur; seçtiğiniz commit için [PR #9 testlerini](https://github.com/Vevivo/arns-mesh/pull/9) kontrol edin. Kesintiden önce kurun: GitHub/npm indirme bağımlılıklarıdır. Başka projenin veri dizinini kullanmayın. Kurucu mevcut Mesh ayar/verilerini korur, port açmaz veya başka servisleri değiştirmez.
 
 Varsayılan konum: `~/.local/share/ArNS-Mesh-Supporter`. Önce terminalde başlatın:
 

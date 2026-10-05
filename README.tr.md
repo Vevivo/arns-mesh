@@ -23,7 +23,7 @@ Destekçinin kod yazması gerekmez. Aynı kişi hem tarayıcıyı kullanabilir h
 | Sürüm | Şu an sunulan | İndirme / kaynak |
 |---|---|---|
 | **Yayımlanmış preview.8** | ArNS gezintisi, kayıtlı kopyalar, tekrar kullanılabilir ağ daveti ve imzalı kaynak listesi güncellemeleri | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Sürüm ve sağlama toplamları](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
-| **Preview.13 test adayı** | Önceki kurtarma/arama özellikleri + otomatik destekçi duyurusu, adres paylaşımı ve doğrulanmış kaynağa geçiş | [Kaynak ve Windows test paketi: PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
+| **Preview.13 test adayı** | Önceki kurtarma/arama özellikleri + otomatik destekçi duyurusu, adres paylaşımı ve doğrulanmış kaynağa geçiş | [Windows test ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425) · [Kaynak](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
 | **Sonraki iş** | Bağımsız içerik kopyalarını otomatik yerleştirme ve eksikleri tamamlama | [Uygulananlar ve sınırlar](docs/tr/paylasilan-ag.md) |
 
 Durum **5 Ekim 2026** tarihinde kontrol edildi. `main` hâlâ preview.8 çalışma kodunu içerir; preview.13 henüz birleştirilmemiş adaydır. Actions dosyaları GitHub oturumu gerektirebilir ve süre sonunda silinir. Standart ZIP'te de sağlayıcı daveti yoktur. Ayrı hazırlanmış bir **Connected ZIP**, temiz kurulumda içindeki ağa otomatik katılabilir; bu paketleme desteği vardır, fakat bu indirmeler Connected paket değildir.
@@ -63,7 +63,7 @@ Destekçi mevcut ağ davetiyle kurulur, genel IP/port adresini imzalayıp duyuru
 
 ## Neler test edildi?
 
-- **Preview.13:** Sonradan katılım, ilk peer kapandıktan sonra aktarım, yeniden başlatma, hatalı duyuru/veri reddi ve orijinal isim imzasının aktarımı kontrollü testlerle sınandı. [Güncel test durumu](docs/tr/durum.md).
+- **Preview.13:** Linux/Windows üzerinde 175 kaynak testi ve gerçek Windows uygulamasında 12 arayüz kontrolü geçti. [Çalışma](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233). Sonradan katılım, ilk peer kapandıktan sonra aktarım, yeniden başlatma, hatalı duyuru/veri reddi ve orijinal isim imzasının aktarımı kontrollü testlerle sınandı. [Güncel test durumu](docs/tr/durum.md).
 
 - **Preview.12 adayı:** Linux ve Windows'ta 168 kaynak testi, ZIP'ten çıkarılan gerçek Windows uygulamasında 10 arayüz kontrolü geçti. Kontrollü servisler ve imzalı test belgeleri kullanıldı. [İlgili çalışma](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203).
 - **Yayımlanmış preview.8:** ağ katılımı, imzalı liste güncellemesi, daveti içeren paketin açılışı ve kayıtlı sayfanın yeniden açılması Windows'ta denendi. Liste kopyaları aynı makinedeydi. [Kanıt](docs/network-join.md).

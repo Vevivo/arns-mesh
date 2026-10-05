@@ -2,7 +2,7 @@
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-5 Ekim 2026: Yayımlanmış sürüm ve `main` çalışma kodu preview.8. Güncel geliştirme adayı **preview.13**, [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Önceki preview.12 kanıtları aşağıda ayrı tutuldu; yeni adayın Windows paketlemesi CI ile kontrol edilir.
+5 Ekim 2026: Yayımlanmış sürüm ve `main` çalışma kodu preview.8. Güncel geliştirme adayı **preview.13**, [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Önceki preview.12 kanıtları aşağıda ayrı tutuldu; [Preview.13 testleri](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233) geçti: [aday ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425), [arayüz kanıtları](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327890614).
 
 ## Mevcut, aday ve planlanan
 
@@ -41,6 +41,8 @@ Yayımlanmış sürüm, aday, test düzeneği ve gerçek ağ kanıtları ayrı t
 
 ## Preview.13 doğrulaması
 
-Linux'ta **175 kaynak testi** geçti. Sonradan gelen destekçi, ilk peer kapanması, profil değişmeden adres öğrenme, yeniden başlatma, sahte/eski duyurular, özel adreslere geri bağlantı engeli, orijinal isim imzasını aktarma ve hızlı hatalı içeriği reddetme sınandı. Ayrı süreç testleri aynı makinedeydi. Kurulum/güncelleme duman testi mevcut profil, kimlik ve kayıtlı verilerin korunmasını kontrol eder; npm kurulumu bu duman testinde taklittir.
+Linux ve Windows'ta **175 kaynak testi**, ZIP'ten çıkarılmış gerçek Windows uygulamasında **12 arayüz kontrolü** geçti. Sonradan gelen destekçi, ilk peer kapanması, profil değişmeden adres öğrenme, yeniden başlatma, sahte/eski duyurular, özel adreslere geri bağlantı engeli, orijinal isim imzasını aktarma ve hızlı hatalı içeriği reddetme sınandı. Ayrı süreç testleri aynı makinedeydi. Kurulum/güncelleme duman testi mevcut profil, kimlik ve kayıtlı verilerin korunmasını kontrol eder; npm kurulumu bu duman testinde taklittir.
 
 Bu yeni özelliğin bağımsız genel IP'li sunucular, ev NAT'ı ve Pi üzerinde kabulü tamamlanmadı. [Uygulanan davranış ve sınırlar](paylasilan-ag.md).
+
+Windows okuyucusu açıkken yeni destekçi duyuruldu; profil değişmeden otomatik öğrenildi. İlk peer durdurulduktan sonra orijinal imzalı katalog öğrenilen peer üzerinden alındı. Mevcut VPS preview.13 ile güncellendi; aynı VPS üzerinde ayrı bir temiz okuyucu genel IP adresinden duyuruyu doğruladı ve gerçek `vevivo` belgesini (28.390 bayt) Mesh üzerinden aldı. Bu canlı kontrol ayrı sağlayıcılar arasında yapılmış değildir.

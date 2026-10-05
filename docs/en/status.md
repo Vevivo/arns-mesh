@@ -2,7 +2,7 @@
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-Checked 5 October 2026. Published release / `main` runtime: preview.8. Current development candidate: **preview.13**, [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Earlier preview.12 evidence remains separately identified below; Windows packaging for the new candidate is checked by CI.
+Checked 5 October 2026. Published release / `main` runtime: preview.8. Current development candidate: **preview.13**, [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Earlier preview.12 evidence remains separately identified below; [Preview.13 checks](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233) passed, with [candidate ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425) and [UI evidence](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327890614).
 
 ## Available, candidate, planned
 
@@ -41,6 +41,8 @@ Keep released, candidate, controlled-fixture and real-network evidence separate.
 
 ## Preview.13 validation
 
-**175 source tests passed on Linux.** Coverage includes a later supporter, seed loss, learning without profile changes, restart, forged/old advertisements, private callback target rejection, original name-signature relay and fast invalid content. Separate-process tests share one host. The installer/update smoke test checks preservation of profiles, identity and saved data; its npm installation is a test double.
+**175 source tests passed on Linux and Windows; 12 checks passed in the extracted real Windows application.** Coverage includes a later supporter, seed loss, learning without profile changes, restart, forged/old advertisements, private callback target rejection, original name-signature relay and fast invalid content. Separate-process tests share one host. The installer/update smoke test checks preservation of profiles, identity and saved data; its npm installation is a test double.
 
 Independent public hosts, home NAT and Pi acceptance of this new feature remain pending. [Implemented behavior and limits](shared-network.md).
+
+The running Windows reader learned a later supporter without profile changes, then retrieved the original signed catalogue through that route after the seed stopped. The existing operator VPS was upgraded to preview.13; an isolated fresh reader on that same VPS verified its public-IP advertisement and fetched the real `vevivo` main document (28,390 bytes) through Mesh. This live check is not an independent-provider test.

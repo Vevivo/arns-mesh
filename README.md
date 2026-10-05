@@ -23,7 +23,7 @@ A supporter does not need to write code. One person can browse and operate a sup
 | Track | Available now | Download / source |
 |---|---|---|
 | **Published preview.8** | Desktop browsing, saved copies, reusable network invitations and signed source-list updates | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Release and checksums](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
-| **Preview.13 test candidate** | Earlier recovery/search features + automatic supporter announcements, peer exchange and verified-source switching | [Source and Windows test package: PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
+| **Preview.13 test candidate** | Earlier recovery/search features + automatic supporter announcements, peer exchange and verified-source switching | [Windows test ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425) · [Source](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
 | **Next work** | Automatic placement and repair of independent content replicas | [Implemented behavior and limits](docs/en/shared-network.md) |
 
 Status checked on **5 October 2026**. `main` still has the preview.8 runtime; preview.13 is an unmerged candidate. Actions downloads may require GitHub sign-in and expire; use the exact linked run while available. Neither standard ZIP includes an operator invitation. A separately prepared **Connected ZIP** can join its included network automatically on a fresh installation; this packaging capability already exists, but these standard downloads are not Connected packages.
@@ -63,7 +63,7 @@ A supporter joins with the existing invitation and signs an announcement of its 
 
 ## What has been tested?
 
-- **Preview.13:** Controlled tests cover late enrollment, transfer after seed loss, restart, invalid announcement/content rejection and original name-signature relay. [Current test status](docs/en/status.md).
+- **Preview.13:** 175 source tests on Linux/Windows and 12 real Windows UI checks passed. [Run](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233). Controlled tests cover late enrollment, transfer after seed loss, restart, invalid announcement/content rejection and original name-signature relay. [Current test status](docs/en/status.md).
 
 - **Preview.12 candidate:** 168 source tests passed on Linux and Windows; 10 real Windows UI checks passed from the extracted ZIP. These used controlled services and signed test documents. [Exact run](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203).
 - **Published preview.8:** network joining, signed list updates, included-network startup and saved reopening were exercised in Windows. Directory replicas shared one host. [Evidence](docs/network-join.md).
