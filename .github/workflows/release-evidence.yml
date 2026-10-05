@@ -1,0 +1,50 @@
+name: Finalize published build evidence
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/release-evidence.yml]
+  workflow_run:
+    workflows: [Verify Mesh and build release]
+    types: [completed]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  record-acceptance:
+    if: github.event_name == 'push' || (github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Match the published package to its successful release run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess, tempfile
+          repo = os.environ['GH_REPO']
+          def api(route):
+              return json.loads(subprocess.check_output(['gh', 'api', 'repos/'+repo+'/'+route], text=True))
+          release = api('releases/latest')
+          commit = release['target_commitish']
+          if release['draft'] or release['prerelease'] or not re.fullmatch(r'[a-f0-9]{40}', commit):
+              raise SystemExit('A published stable release with an exact source commit is required')
+          runs = api('actions/runs?head_sha='+commit+'&event=push&per_page=100')['workflow_runs']
+          run = next((r for r in runs if r['head_sha']==commit and r['path']=='.github/workflows/verify.yml' and r['status']=='completed' and r['conclusion']=='success'), None)
+          if run is None:
+              print('Release run has not finished successfully; evidence left unchanged')
+              raise SystemExit(0)
+          with tempfile.TemporaryDirectory() as directory:
+              subprocess.run(['gh','release','download',release['tag_name'],'--pattern','build.json','--dir',directory], check=True)
+              file = pathlib.Path(directory)/'build.json'
+              build = json.loads(file.read_text())
+              asset = next(a for a in release['assets'] if a['name']==build['file'])
+              if asset['state']!='uploaded' or asset['size']!=build['bytes'] or asset.get('digest')!='sha256:'+build['sha256']:
+                  raise SystemExit('Published ZIP does not match build metadata')
+              if release['tag_name']!='v'+build['version']:
+                  raise SystemExit('Release version mismatch')
+              build.update(windowsAcceptance='passed', verifiedApplicationCommit=commit, acceptanceRun=run['html_url'])
+              file.write_text(json.dumps(build,indent=2)+'\n')
+              subprocess.run(['gh','release','upload',release['tag_name'],str(file),'--clobber'], check=True)
+              print(json.dumps({'release':release['tag_name'],'windowsAcceptance':'passed','zipUnchanged':True,'acceptanceRun':run['html_url']}))
+          PY
