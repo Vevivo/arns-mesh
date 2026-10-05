@@ -1,5 +1,10 @@
 # Developer notes
 
+For storage/index support you do not need to change code: use [Supporter setup](supporter.md). The [shared-network design](shared-network.md) records planned automatic enrollment and replication; those features are not implemented.
+
+`main` has the published preview.8 runtime. For the tested preview.12 code use commit `cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e` from [PR #9](https://github.com/Vevivo/arns-mesh/pull/9), in a separate checkout/data directory. Follow current PR status before selecting a contribution base. The advanced packaging section below can create a Connected ZIP using the [network invitation option](network-code.md#prepare-an-included-network-download).
+
+
 Connection-code protocol, operator tools and included-network packaging: [network guide](network-code.md). The signed-list tests cover tampering, rollback, cancellation and separate-process seed loss; the Windows workflow drives the real packaged UI. Desktop content serving and paid access are not implemented.
 
 [Supporter deployment](supporter.md) is the server installation guide. This page concerns source development and packaging.

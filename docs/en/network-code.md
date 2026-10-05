@@ -4,6 +4,19 @@
 
 Requires **preview.8 or newer** on the desktop and peers publishing network lists. Older peers may continue serving content. Installing a desktop update does not upgrade a production supporter.
 
+## Which item do I need?
+
+| Item | Meaning |
+|---|---|
+| Peer address (`IP:port`) | The reachable endpoint of one supporter |
+| Network invitation (`mesh1.…`) | A public network key and initial addresses used to join |
+| Connection profile (`mesh-connect.json`) | Legacy/manual source settings; not website files |
+
+**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). You join with the existing invitation and currently ask its operator to add your reachable address. You do not need to create another network or distribute your own codes. The automatic announcement flow is [planned](shared-network.md).
+
+The sections below document today's connection mechanism and advanced operator actions. Codes remain an optional advanced/recovery mechanism in the intended product; normal users should eventually receive a prepared connected download. Current standard ZIPs still need connection setup.
+
+
 ## For readers
 
 1. Download the Windows desktop ZIP, extract all files and start `Mesh-Browser.exe`.
@@ -62,7 +75,7 @@ Copying a list does **not** copy website content. Catalog/content replication re
 
 Run `publish` again with the same data directory when the reader profile changes. The signing key is retained and the revision increases. An unchanged key and starting-address set produce the same invitation. Changing starting addresses requires a new code for first-time users; an existing member can learn new addresses while an old source remains reachable.
 
-Live desktops check on startup and about every 15 minutes. They reject invalid signatures, expired announcements, revision rollback and conflicting equal revisions. An unavailable update retains the last accepted source files. Saved mode makes no connection-list requests and opens retained files locally.
+Outside Saved mode (Live in preview.8, Automatic in the candidate), desktops check on startup and about every 15 minutes. They reject invalid signatures, expired announcements, revision rollback and conflicting equal revisions. An unavailable update retains the last accepted source files. Saved mode makes no connection-list requests. Complete retained files can open locally; in the candidate missing content may still be requested from Mesh/raw sources, so this is not a system-wide network-off mode.
 
 Default announcement lifetime is 14 days. The running authority peer checks at startup and every six hours, renewing when three days or less remain. Mirrors cannot renew without the key. Expiration blocks new joins/new list acceptance; it does not delete cached sources or saved content. **This is not a subscription expiry policy.**
 

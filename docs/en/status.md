@@ -1,50 +1,40 @@
-# Preview status and evidence boundaries
+# Status and evidence
 
-**Preview.9 source candidate:** [resilient access, bounded preparation, recovery trust and owner monitoring](../resilient-access.md). Local source verification is distinct from the older Windows GUI/outage evidence below. Two-PC acceptance remains deferred.
+[Türkçe](../tr/durum.md) · [Home](../../README.md)
 
+Checked **5 October 2026**. Runtime on `main` and latest published release: **preview.8**. Latest tested development candidate: **preview.12**, source [cbd55a7](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e), [unmerged PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Documentation publication does not publish that candidate's code or a new binary.
 
-**Published preview.8** adds signed connection invitations, cached/managed source lists and optional included-network packages. [Usage and boundaries](network-code.md). [Windows acceptance workflow](../../.github/workflows/network-join.yml) uses controlled directory peers on one machine; this is not independent-host failover or paid licensing. Earlier outage measurements below belong to preview.7.
+## Available, candidate, planned
 
-Desktop source **0.5.0-preview.7** adds direct immutable Arweave resources, bounded nearby-block discovery and static-reference replication/pinning. The real Windows DNS/gateway outage test played the previously missing video/audio and loaded the font. See [measured resource behavior and its limits](../arweave-resources.md).
-
-Published packages and draft status are listed on the [releases page](https://github.com/Vevivo/arns-mesh/releases). The earlier **0.5.0-preview.6** remains a separate measured artifact. See the [25 September outage experiment and supporter routing update](../disaster-network.md). This repository packages the existing standalone reader/core with private endpoints removed, profile import and separate supporter installation. It does not replace an existing operator's production deployment automatically.
-
-| Area | Evidence / status |
+| Capability | Status |
 |---|---|
-| Core regression | `npm test`: signature/identity checks, location hints, manifest paths, resource bounds, retry/cancel, catalog scheduling and replication, two loopback peer stores, shell-state tests. See CI for the exact commit and result. |
-| Desktop shell | Electron API doubles test tabs, isolation options, privileged IPC and profile import. These are explicitly **not rendered-browser tests**. |
-| Installer | Isolated-root smoke/update checks preserve identity/data/profile; no production service is changed by this test. See test report/CI. |
-| Windows package | Automated build pins Electron and dependencies; packaging and executable version checks are not real page rendering or SmartScreen acceptance. |
-| Earlier content experiment | A new Linux reader verified a real HTML document from an already populated peer, then explicit saved access used the retained copy. Private addresses/logs and prepared catalogs are excluded. This is a warm-peer observation, not universal or fresh-index coverage. |
-| Windows desktop GUI | `qa/desktop/user-journey.cjs` drives the packaged executable and native dialogs, captures the Windows desktop, and checks signed saved-page HTML/CSS/JS/image/navigation. It does not substitute production resolver or dialog APIs. Its generated `mesh-qa` name is a synthetic saved observation, not a public ArNS registration; fixtures are excluded from the release. See the [workflow](../../.github/workflows/desktop-user-journey.yml) and release acceptance record for the exact successful run. |
-| Windows end-to-end | Four real main documents opened in the published app during the outage experiment. Some pages have blocked external assets. Full install/update/remove and SmartScreen acceptance remain pending. |
-| Raspberry Pi | Installation instructions and intended ARM64 route; no real hardware acceptance yet. |
-| DNS/gateway independence | Windows Firewall allowlist, IPv6/UDP and system DNS blocking were exercised with the published app and fresh data directories. Unguarded executable probes checked DNS, gateway HTTPS and DoH before/after. Full packet capture remains pending. |
-| Independent-host failover | Pending. Two loopback peers on one machine are not independent infrastructure. |
-| Unknown locations | General first-discovery coverage is incomplete. Old prepared catalogs can depend on prior Turbo/Goldsky preparation. |
+| Desktop ArNS navigation and verified Mesh/raw bytes | Published; coverage is incomplete |
+| Connection invitation and signed source-list updates | Published preview.8 |
+| Included-network automatic startup | Implemented packaging option; standard public ZIPs do not include an invitation |
+| Bounded retained-name recovery and atomic site preparation | Preview.12 candidate, introduced in preview.9 |
+| Local topic search and desktop connection monitor | Preview.12 candidate; catalogue scope and observed endpoint counts are limited |
+| New compact Home and custom Mesh window icon | Preview.12 candidate |
+| Self-announcing new supporters and automatic peer exchange | Planned; no user-facing enrollment button |
+| Per-content measured source selection and automatic replica placement/repair | Planned |
+| Desktop storage sharing | Not implemented; reader has no public serving listener |
+| Full Arweave/CDB64 replica, universal name coverage | Not provided |
+| Raspberry Pi hardware acceptance, independent-provider failover | Pending |
 
-## Reproduce local checks
+## Reproducible evidence
 
-```sh
-npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-npm run check:public
-npm test
-bash scripts/test-install.sh
-```
+| Build | Evidence | Boundary |
+|---|---|---|
+| Preview.12 | [Run 37259769203](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203): 168 source tests on Linux/Windows, 10 Windows UI checks from extracted candidate ZIP | Signed synthetic documents and controlled loopback services; not independent infrastructure or a new OS-level outage test |
+| Preview.8 | [Connection acceptance](../network-join.md): join, list update after first directory process loss, included-network startup, saved reopen/restart | Directory processes shared one host; live sources stayed available |
+| Preview.7 | [Resource/outage evidence](../arweave-resources.md): four public main documents and supported media under Windows DNS/gateway restrictions | Existing Mesh and numeric-IP RPC remained reachable |
+| Earlier replica experiment | [Detailed outage report](../disaster-network.md) | Same-machine replicas and available remote raw nodes are not independent-provider failover |
 
-The install smoke test runs only on POSIX/Bash and supplies a dependency-install test double. CI independently runs real `npm ci`. A fixture's name or signed item is a test input, not a production fallback. Do not preload user-supplied failing names to disguise gaps.
+Candidate ZIP: [windows-preview artifact](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323968857). UI evidence: [windows-search-ui artifact](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323719745). These are time-limited Actions artifacts (14-day retention), not permanent release assets; GitHub sign-in may be required.
 
-## Remaining acceptance work
+## Remaining work before the shared network claim
 
-Use freshly created reader data directories and record how peers were populated. Separate empty-client/warm-peer, unknown-location and saved-only results. Select names from the observed registry, include undernames, changed targets, old/new items, manifests and previously failing targets. Verify assets and navigation, not just main HTML. Test invalid signatures, wrong locations, stale records, interrupted downloads and cancellation. Capture traffic for all related processes while preventing DNS/gateway access; include IPv6, DoH and preexisting sockets. Measure total related-process CPU/RAM/network/disk on Windows and real Pi hardware. Test a genuinely independent peer outage with documented copies and bootstrap/RPC dependencies.
+Use the [agreed design and acceptance conditions](shared-network.md). Test real independent hosts with actual prepared copies, new-peer discovery by an existing reader, original-provider loss and simultaneous RPC/raw outages. Exercise missing/stale/invalid data, announce flooding, capacity limits and expired authority lists. Record which peers held which versions before the outage; an empty server is not a backup.
 
-## Investigation log for this source handoff
+The owner's two-PC test is deferred until those machines are available. Two browser installs alone are not two serving peers. Full egress packet capture and real Pi performance are pending. Application HTTP logs and “responding” indicators have narrower meanings.
 
-| Observation | Cause / uncertainty | Alternatives | Chosen experiment / result | Next step |
-|---|---|---|---|---|
-| Old source packages contain deployment endpoints and private QA fixtures | Direct source/binary upload would disclose them | Publish original package; or sanitize a separate copy and supply operator profiles separately | Separate copy, empty defaults, targeted privacy scan and baseline core tests | Inspect every future commit and release asset |
-| A clean distribution has no peers/RPC configured | Removing endpoints removes bootstrap | Embed operator-approved public endpoints; or import a small profile | Implement profile validator/import and two-role docs; automated checks are in the repository | Repeat native GUI acceptance for each release; operator supplies working profile |
-| A started supporter may be useless to readers | Port/NAT/profile or empty data may be the problem; active status alone is insufficient | Test only local service; or probe from another network then verify actual content | Numeric-IP cache-only probe and explicit content/counter instructions | Independent-host reachability and content test |
-| Missing locations remain possible | An ArNS target ID alone does not identify a bundled item's byte location | Prepared external index; or sparse published indexes plus peer/raw production | Existing bounded mechanisms retained; no per-name success list added | Measure general first-discovery coverage |
-
-No public release should claim these pending acceptance gates have passed merely because CI is green.
+Keep released, candidate, controlled-fixture and real-network evidence separate. A successful compile or green source CI does not establish disaster readiness or global coverage. [Architecture](architecture.md) · [Candidate recovery](../resilient-access.md).

@@ -1,5 +1,6 @@
-# Desktop connection monitor — preview.10 candidate
+# Desktop connection monitor — preview.12 candidate
 
+This describes the **preview.12 candidate**, not the published preview.8 runtime on `main`. [Tested candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
 The strip below the address bar shows Mesh, Solana RPC and raw Arweave separately. Click **Network monitor** to see the source cards, current page origin, session traffic and recent observations. Existing DNS, gateway and renderer restrictions still apply.
 
 - **Responding** means a recent HTTP reply or successful protocol check was observed from this device. It does not prove that a particular site is available. Expand the details to distinguish HTTP replies from validated protocol checks.

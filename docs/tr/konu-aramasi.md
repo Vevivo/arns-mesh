@@ -1,5 +1,6 @@
-# Konuya göre arama — preview.9 adayı
+# Konuya göre arama — preview.12 adayı
 
+Bu sayfa **preview.12 adayını** anlatır; `main` üzerindeki yayımlanmış preview.8 kodunu değil. [Test edilen aday kaynak](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
 Ana sayfada bir konu yazıp **Search Mesh** düğmesine basabilirsin. Üstteki adres çubuğuna ise bildiğin ArNS ismini veya `ar://isim` adresini yazarsın. İkisi farklı giriş yollarıdır; sonuçtaki siteye tıklayınca Mesh'in mevcut isim ve dosya doğrulaması çalışır.
 
 Bu özellik henüz yayımlanmış preview.8 ZIP'inde yoktur. Arama eklenmiş yeni aday sürüm gerekir. Normal ağ kodunla bağlanırsın; ayrıca arama hesabı veya API anahtarı gerekmez. Eski bağlantı profilinde güvenilen peer kimliği yoksa sağlayıcıdan güncel bağlantı bilgisi alınmalıdır.

@@ -48,7 +48,7 @@ A profile carries addresses, not a server identity certificate, access token or 
 | `mesh-upstream.json` | The new supporter server | Existing useful source peers from which it can acquire records/content |
 | `mesh-connect.json` | Readers, or other supporters that want to use the new server | The new supporter's reachable public endpoint, optionally other independent sources |
 
-Both use the **same schema**; their filenames do not change program behavior. Copying the upstream profile unchanged does not add the new peer. Pointing an empty node only to itself supplies no data. Use the [supporter guide](supporter.md#5-give-users-a-profile) to generate and test the reader file. Users import it via the desktop; supporters apply their upstream file during installation or explicitly with `scripts/profile.mjs apply` while the peer is stopped.
+Both use the **same schema**; their filenames do not change program behavior. Copying the upstream profile unchanged does not add the new peer. Pointing an empty node only to itself supplies no data. Use the [supporter guide](supporter-advanced.md#5-give-users-a-profile) to generate and test the reader file. Users import it via the desktop; supporters apply their upstream file during installation or explicitly with `scripts/profile.mjs apply` while the peer is stopped.
 
 Keep a copy of profiles you rely on before a disruption. If an IP, port or service permission changes, the operator must provide an updated file and readers must import it. **Add** preserves existing endpoints; use **Replace** deliberately when removing old ones. A list of several addresses is only useful redundancy when they are independent, reachable and hold useful data; not every background RPC operation currently fails over.
 

@@ -1,5 +1,10 @@
 # Kaynağı geliştirenler
 
+Depolama/indeks desteği vermek için kod değiştirmeniz gerekmez: [Destekçi kurulumu](destekci.md) yeterlidir. [Ortak ağ tasarımı](paylasilan-ag.md) planlanan otomatik katılım ve kopyalamayı anlatır; bunlar henüz uygulanmadı.
+
+`main` yayımlanmış preview.8 kodudur. Test edilen preview.12 için [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) içindeki `cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e` commit'ini ayrı kaynak/veri dizininde kullanın. Katkı tabanını seçerken PR durumunu kontrol edin. Gelişmiş paketleme [ağ davetini içeren Connected ZIP](ag-kodu.md) oluşturabilir.
+
+
 Bağlantı kodu protokolü, işletmeci araçları ve kodu içinde bulunan paket: [ağ rehberi](ag-kodu.md). İmzalı liste testleri değiştirilmiş imza, eski sürüm, iptal ve ayrı süreçlerde başlangıç noktası kaybını kapsar; Windows akışı gerçek paket arayüzünü kullanır. Masaüstünden içerik sunma ve ücretli erişim eklenmedi.
 
 Sunucu kurmak isteyenler için [VPS/Pi destekçi rehberi](destekci.md) yeterlidir. Bu sayfa kod ve paketleme içindir.

@@ -1,5 +1,6 @@
-# Masaüstü bağlantı ekranı — preview.10 adayı
+# Masaüstü bağlantı ekranı — preview.12 adayı
 
+Bu sayfa **preview.12 adayını** anlatır; `main` üzerindeki yayımlanmış preview.8 kodunu değil. [Test edilen aday kaynak](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
 Adres çubuğunun altındaki şerit Mesh, Solana RPC ve ham Arweave bağlantılarını ayrı gösterir. **Network monitor** düğmesi ayrıntıları açar: yanıt alınan kaynaklar, açık sayfanın kaynağı ve bu uygulama oturumunun veri trafiği.
 
 - **Responding:** Bu bilgisayardan yakın zamanda HTTP yanıtı alındı veya protokol kontrolü geçti. Her sitenin açılacağını garanti etmez. Ayrıntılarda bu iki ölçüm ayrılır.

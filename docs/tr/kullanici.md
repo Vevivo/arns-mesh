@@ -1,50 +1,63 @@
-# Sadece masaüstünü kullanmak isteyenler
+# ArNS Mesh kullanımı
 
-[Ana sayfa](../../README.tr.md) · [English](../en/user.md)
+[English](../en/user.md) · [Ana sayfa ve indirmeler](../../README.tr.md)
 
-Gereken yalnızca **Windows x64 masaüstü ZIP’i ve sağlayıcının bağlantı kodu veya eski profili**. Chrome, uzantı, VPS, Raspberry Pi, Node.js, cüzdan veya indeksleyici kurmazsın. Tarayıcı motoru ve Mesh okuyucusu paketin içindedir.
+Windows x64 uygulama ZIP'i gerekir. Sunucu, cüzdan, Node.js veya indeks kurmanız gerekmez. Veriyi sağlayan ayrı servisi destekçiler çalıştırır.
 
-## Kurulum
+## 1. İndir ve aç
 
-1. [Preview.8 sürümünden](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) Windows x64 ZIP’ini indir. Bağlantı kodları için preview.8 veya yenisini seç. GitHub’ın **Source code** ZIP’i geliştiriciler içindir.
-2. İstersen ZIP'in SHA-256 değerini `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosya.zip'` ile ölçüp aynı sürümün `SHA256SUMS.txt` dosyasıyla karşılaştır. Bu indirme bütünlüğünü kontrol eder; yayıncı imzası değildir.
-3. ZIP'in **tamamını** yeni bir klasöre çıkar. `Mesh-Browser.exe` dosyasını normal kullanıcı olarak aç. Yönetici yetkisi gerekmez. Önizleme kod imzalı değildir; Windows engellerse uyarının ayrıntısını geliştiriciye ilet, antivirüsü kapatma.
-4. Sağlayıcının `mesh1.` kodunu **Settings → Mesh connection code** alanına yapıştır. **Check code** ile ağı incele, **Join this network** seç. Bu işlem kaynak listesini değiştirir. Terminal gerekmez. Eski JSON aktarımı **Already have a connection file?** altında durur.
-5. Uygulamanın kendi adres çubuğuna `ar://isim` veya yalnız ismi yazıp Enter’a ya da ok düğmesine bas. `+` sekme açar, yıldız yer imi ekler. Kayıtlı undername, yol, sorgu ve sayfa içi bağlantılar aynı adrese eklenebilir.
+[Ana sayfadaki sürüm tablosundan](../../README.tr.md#indirme-ve-gerçek-durum) seçin. Yayımlanmış preview.8 ve test adayı preview.12 farklı paketlerdir. GitHub Actions dosyaları süre sonunda silinebilir ve oturum açmanızı isteyebilir. **Source code (zip)** yerine uygulama ZIP'ini indirin.
 
-**Profil ne?** İlk bağlanılacak Mesh peer, IP üzerinden Solana RPC ve isteğe bağlı ham Arweave düğümlerinin servis adresleri. Parola, cüzdan veya gizli anahtar içermez. Genel pakete işletmecinin özel sunucu adresleri gömülmez. Bu yüzden çalışan kod veya profil gerekir; repodaki örnek dosya çalışır sunucu listesi değildir. Kodu/profili güvendiğin sağlayıcıdan al: isim eşleşmesinde RPC yanıtına güven devam ediyor.
+**Bütün dosyaları** kalıcı bir klasöre çıkarıp `Mesh-Browser.exe` dosyasını açın. EXE diğer dosyalarla aynı klasörde kalsın. Masaüstüne koymak için EXE'ye Windows kısayolu oluşturun; yalnız EXE'yi klasöründen taşımayın. Önizleme imzasızdır. Uyarıyı aşmak için güvenlik yazılımını kapatmayın veya yönetici çalıştırmayın; engellenirse uyarı ayrıntısını bildirin.
 
-Yeni genel kurulumda bağlantı ekranı otomatik açılır. [Kod, otomatik güncelleme ve Connected paket anlatımı](ag-kodu.md). Profil varsayılan olarak mevcut kaynaklara eklenir; değiştirme ayrıca seçilir. Aynı ekranda **Check connections** ve **Export profile** bulunur. [Profil kimden alınır, bağlantı listesi neyi gösterir?](baglantilar.md)
+Sağlama toplamını kontrol etmek isterseniz PowerShell'de `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosyanin-yolu.zip'` çalıştırıp tamamını o paketin değeriyle karşılaştırın. Sağlama toplamı yayıncı imzası değildir.
 
-## Kullanım ve hata ayrımı
+## 2. Bir kez bağlan
 
-İsim yalnız **üstteki adres çubuğuna** yazılır. Sağ tık → **Paste** ile fare kullanarak yapıştırabilirsin; Ctrl+V de çalışır. Sayfalardaki yazı alanlarında aynı düzenleme menüsü vardır. Ctrl+L adres çubuğunu seçer. Çubuğun yanındaki **Settings** simgesi bağlantı ayarlarının tek girişidir.
-
-Çubuğun altındaki sıra **isim çözümü → kaynak arama → içerik konumu → indirme → doğrulama → sayfayı açma** durumlarını gösterir. Süreye göre ilerleyen bir animasyon değildir; gerçek istek bildirimlerini kullanır. İşler örtüşebilir; önbellek kullanılan adımlar atlanabilir. Adımın üzerine gelince durumu görünür. Hata veya durdurma başarı sayılmaz. Son adım ana sayfa yüklemesi bitince tamamlanır; eksik bağımlılıklar Page information bölümünde ayrı gösterilir.
-
-
-**Page information** dosya doğrulamasını, isim gözlemini ve erişim hatasını ayrı gösterir. Uygulama içi ağ kaydı, işletim sistemi seviyesinde bütün ağın kaydı değildir.
-
-**Save current page** ana belgeyi, manifest girdilerini ve HTML/CSS/JS/JSON içindeki desteklenen sabit Arweave bağlantılarını tarama/depolama sınırları içinde saklar. Sonucun tamamlanmasını bekle. Yıldızlamak dosyaları indirmez; yarım saklama çevrimdışı tam site değildir. **Saved** seçilen kopyanın tarihli isim gözlemini ve doğrulanmış yerel dosyalarını kullanır; eksik dosyayı ağdan tamamlamaz ve son sürüm garantisi vermez. **Live** için erişilebilir RPC ve içerik kaynağı gerekir.
-
-| Durum | Anlamı |
+| Paket | İlk bağlantı |
 |---|---|
-| Connection setup needed | Bağlantı profili gerekli. |
-| RPC/isim hatası | Canlı isim gözlemi alınamadı; destekçi RPC kaynağını kontrol etmeli. |
-| `content_location_unavailable` | İsim çözüldü ama ulaşılabilen kaynaklardan içerik konumu ve doğrulanmış veri alınamadı. İsim yok demek değildir. |
-| İmza/veri hatası | Gelen veri reddedildi; doğrulamayı kapatma. |
-| Büyük dosya açılmıyor | Önizlemede imzalı öğe için 32 MiB sınır var; büyük dosya akışı tamamlanmadı. |
+| Ayrı hazırlanmış **Connected ZIP** | Temiz kurulumda sağlayıcının eklediği ağ doğrulanır ve katılım denenir |
+| Standart GitHub sürüm/adayı | Güvendiğiniz sağlayıcıdan tam `mesh1.` davetini alıp **Settings → Mesh connection code → Check code** yolunda inceleyin; **Join this network** seçin |
+| Önceden ayarlanmış kurulum | Uygulama normalde saklanan bağlantı ayarını kullanır |
 
-Arweave üzerinde bulunan desteklenen font, video ve ses dosyaları Mesh/ham kaynaklardan yüklenebilir. Preview.7, bağlı dosyanın konumu bilinmiyorsa sayfanın bilinen konumuna yakın sınırlı arama yapabilir; ilk erişim daha uzun sürebilir. Kaynak, konum, boyut veya kota sorunu dosyayı yine eksik bırakabilir. Arweave dışındaki CDN ve domain tabanlı canlı API’ler taklit edilmez; gizlice gateway’e geçilmez. Ham tanı dosyalarını herkese açık paylaşma; gezinti isimleri ve IP'ler içerebilir.
+Katılım kaynak listesini değiştirir; eski ayarı tutmak için önce **Export profile** kullanın. Eski `mesh-connect.json` dosyası **Settings → Already have a connection file?** bölümünden aktarılabilir. Elle kaynak düzenlemek veya profil aktarmak yönetilen liste güncellemelerini durdurur.
 
-## Güncelleme, geri dönüş, kaldırma
+Kod tekrar kullanılabilen ağ bilgisidir; şifre, lisans veya ödeme değildir. Standart indirmelerde bugün hazır davet yoktur. Gerekirse [bağlantı yardımı isteyin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); bu gönüllü koordinasyonudur, hizmet garantisi değildir.
 
-Uygulamayı kapat. Yeni sürümü **ayrı klasöre** çıkar; eskisini geri dönüş için sakla. Otomatik güncelleme yoktur. Ayarlar ve saklanan veriler normalde `%APPDATA%\ArNS-Mesh-Browser` içindedir; uygulama kapalıyken bu klasörü yedekle. Yedeği GitHub'a koyma. Eski sürüme dönüş için o sürümün programı ve onunla uyumlu veri yedeği birlikte tutulmalı.
+Kararlaştırılan hedef, kod girmeden açılan varsayılan indirmedir. Yeni destekçiyi otomatik keşfetme hâlâ [planlanan özelliktir](paylasilan-ag.md); bugünkü Connected paketleme bunu sağlamaz.
 
-Kaldırmak için uygulamayı kapatıp program klasörünü sil. Kişisel verilerin korunur. Bunları da silmek istiyorsan `%APPDATA%\ArNS-Mesh-Browser` klasörünü ayrıca silmen gerekir; profil, geçmiş, yer imleri ve saklanan sayfalar gider. Bu paket uzantı veya native-host kaydı kurmaz.
+## 3. Site aç veya konu ara
 
-Kesinti öncesi uygulamayı ve birden fazla bağımsız kaynak içeren profili edin; gerekli siteleri sakla. Çalışma sırasında GitHub/npm gerekmez. Erişilebilir hiçbir kaynakta bulunmayan içerik veya canlı isim bilgisi üretilemez. [Test kapsamı](durum.md).
+**Üst adres çubuğuna** `ar://vevivo` gibi bir isim yazın. Alt isimlerde gerçekten kayıtlı biçimi kullanın; örneğin `undername_name`. Yol, sorgu ve parça eklenebilir. Ctrl+L adres çubuğunu seçer; sağ tık Yapıştır ve Ctrl+V çalışır.
 
-## Preview.9 adayında konu araması
+Preview.12 **Home** alanı ayrıca konu araması yapar. Kaynaklar erişilebilirken **Refresh catalogue** ile sınırlı kataloğu indirin; kelimeler cihazınızda aranır. Sonuç bulunması bütün dosyaların hazır olduğunu göstermez. Bu özellik preview.8'de yoktur. [Arama ayrıntıları](konu-aramasi.md).
 
-Ana sayfadaki kutuya bir konu, üst adres çubuğuna doğrudan ArNS ismi yazılır. **Refresh catalogue** ile güvenilen sağlayıcının küçük kataloğu indirilir; kelimeler cihazda aranır. Katalog kesintide ve yeniden açılışta korunur; siteyi açmak için gerçek dosyalar da gerekir. Yayımlanmış preview.8 ZIP'inde bu özellik yoktur. [Adım adım anlatım](konu-aramasi.md).
+Aşamalar **Resolve name → Find sources → Locate content → Download → Verify → Open page** olarak ilerler; zamanlayıcı değil gerçek işlemler izlenir. Eksik dosya, doğrulama ve tarihli isim kaydı için **Page information** kullanın. Harici API'ler ve Arweave dışı CDN dosyaları kullanılamayabilir.
+
+## 4. Önemli siteleri sakla
+
+Yıldız, adresi yer imine ekler. **Save current page**, desteklenen doğrulanmış dosyaları sınırlar içinde saklar. Sonucu bekleyip eksikleri kontrol edin; ana belgenin kaydedilmesi bütün dinamik sitenin arşivlendiğini kanıtlamaz.
+
+Preview.12 **Automatic** modu, erişilebiliyorsa canlı kaynağı kullanır; erişim hatasında kabul edilmiş tarihli sürüme dönebilir. **Saved** tutulan isim bilgisini kullanır, canlı isim kontrolünü/izleme sorgularını durdurur. Eksik içerik Mesh/ham kaynaklardan istenebilir; Saved bütün ağı kapatan düğme değildir. Tam saklanmış kopya yeniden açılırken uygulama HTTP kaydında sıfır yeni istek test edildi. Preview.8'in eski Live/Saved davranışı ayrıdır. [Adayda kurtarma kapsamı](dayanikli-erisim.md).
+
+Adayın **Network monitor** ekranı cihazınızın Mesh/RPC/ham veri gözlemlerini, trafiğini ve doğrulanmış ana belgenin kaynağını gösterir. Peer sayısı dünyadaki Mesh kullanıcı sayısı değildir. “Not checked” çevrimdışı demek değildir; yanıt gelmesi bütün sitelerin mevcut olduğunu kanıtlamaz. [Göstergelerin anlamı](baglanti-izleme.md).
+
+## Sık karşılaşılan durumlar
+
+| Durum | Kontrol |
+|---|---|
+| İlk açılışta ayarlar geliyor | Standart paket gerçek ağ daveti/profil ister |
+| Peer yanıt veriyor ama site açılmıyor | Gerekli isim kaydı, konum veya dosyalar onda bulunmayabilir |
+| RPC erişilemez | Güncel isim alınamayabilir; adayda kurtarma kabul edilmiş tarihli kayıt ister |
+| Ham Arweave de erişilemez | Gerçek dosyalar yerelde veya erişilebilir Mesh peer'lerinde önceden bulunmalıdır |
+| İmza/kimlik uyuşmazlığı | Veri reddedildi; doğrulamayı kapatmayın |
+| Görseller/API eksik | Page information inceleyin; dış servis, konum veya dosya sınırı neden olabilir |
+| Önceden açılan sayfa kayboldu | Geçici önbellek silinebilir; açıkça kaydedip tamlığını kontrol edin |
+
+Bugünkü imzalı nesne sınırı 32 MiB'dir. Hiçbir sürüm bütün isimleri, anında güncelliği veya erişilebilir kopyasız çalışmayı garanti etmez. Geri bildirimde sürümü ve başarısız aşamayı yazın; özel adresleri, geçmişi ve yolları ayıklayın.
+
+## Güncelleme ve yedek
+
+Uygulamayı kapatın, `%APPDATA%\ArNS-Mesh-Browser` dizinini özel olarak yedekleyin, yeni ZIP'i ayrı klasöre çıkarın. Geri dönüş için eşleşen eski program/veri yedeğini tutun. Otomatik uygulama güncelleyicisi yoktur. Masaüstü güncellemesi sunucuyu güncellemez.
+
+Çıkarılan program klasörünü silmek kullanıcı verisini korur. AppData dizinini ancak ayarları, geçmişi, yer imlerini ve kayıtlı içeriği silmek istiyorsanız ayrıca kaldırın. Chrome eklentisi kurulmaz. [Gizlilik](gizlilik.md) · [Geri bildirim](../../CONTRIBUTING.md).

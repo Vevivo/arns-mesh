@@ -1,9 +1,21 @@
-# Contributing
+# Support ArNS Mesh
 
-Start with the [developer guide](docs/en/developer.md) or [Türkçe rehber](docs/tr/gelistirici.md). There are two product audiences: desktop readers and voluntary VPS/Pi supporters. Preserve that separation; readers should not become background indexers without an explicit product decision.
+You can help without writing code.
 
-Before a pull request, run `npm run check:public` and `npm test`. Explain the problem, resulting behavior, measured validation and remaining limits. Add meaningful tests for security or lifecycle changes. Preserve licenses and upstream attribution.
+## Store and serve data
 
-Do not commit live profiles, deployment addresses, private keys, runtime identities, user caches, screenshots or raw diagnostics. Do not embed individual names or prepared per-name responses to hide discovery failures. Label fixtures and mocked Electron tests honestly. Keep external-index preparation separate from independent runtime discovery claims.
+Run the separate supporter service on a reachable VPS or Raspberry Pi: [English setup](docs/en/supporter.md) · [Türkçe kurulum](docs/tr/destekci.md). Useful contributions include verified file copies, dated name observations, location records and signed network-list mirrors. Measure actual content availability; an empty or unreachable peer does not provide redundancy.
 
-Report security issues through the process in [SECURITY.md](SECURITY.md), not a public issue containing secrets.
+Current enrollment uses an operator-managed list. Automatic announcements, peer exchange and coordinated replicas are [planned](docs/en/shared-network.md), not enabled by opening an issue or installing the browser.
+
+## Give feedback
+
+Use [Issues](https://github.com/Vevivo/arns-mesh/issues) with the application version, operating system, failed step, expected result and what happened. A public ArNS name is helpful only if you choose to disclose it. Redact private addresses, browsing history, credentials and local paths. State whether sources were live, simulated or intentionally stopped. Do not claim independence from a same-machine replica test.
+
+## Work on source
+
+See [developer instructions](docs/en/developer.md) or [Türkçe](docs/tr/gelistirici.md). Preserve the distinction between readers and voluntary supporters. The desktop must not become a background serving/indexing peer without explicit opt-in.
+
+Before code pull requests run `npm run check:public` and `npm test`; add meaningful tests for security/lifecycle changes. Explain the problem, behavior, measured validation and remaining limits. Documentation-only changes should check commands, links and release/candidate boundaries; they do not need synthetic feature tests.
+
+Do not commit live profiles, private keys, runtime identities, user caches or unredacted diagnostics. Do not embed successful per-name responses to hide discovery gaps. Preserve upstream licenses and attribution. Report security issues through [SECURITY.md](SECURITY.md).

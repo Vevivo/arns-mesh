@@ -1,5 +1,6 @@
-# Resilient access — preview.9 source candidate
+# Resilient access — preview.12 source candidate
 
+This describes the **preview.12 candidate**, not the published preview.8 runtime on `main`. [Tested candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
 The project owner operates the initial service. Ordinary desktop users read sites; they do not run a public peer. A supporter voluntarily runs another peer and stores useful copies. A developer can work on the code without hosting anything. The owner dashboard is local service administration, not a new public gateway.
 
 ## What survives which outage?

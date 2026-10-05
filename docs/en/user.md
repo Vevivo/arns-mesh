@@ -1,57 +1,63 @@
-# Desktop users — no server required
+# Use ArNS Mesh
 
-[Türkçe](../tr/kullanici.md) · [Home](../../README.md)
+[Türkçe](../tr/kullanici.md) · [Home and downloads](../../README.md)
 
-You need the Windows x64 desktop ZIP and an operator connection code or legacy profile. You do **not** need Chrome, an extension, a VPS, Raspberry Pi, Node.js, a wallet, or an indexer. The ZIP includes the browser engine and Mesh reader. This preview is unsigned; it is not a Microsoft Store application.
+You need the Windows x64 application ZIP. You do not need a server, wallet, Node.js or an indexer. Supporters run the separate service that supplies useful data.
 
-## First start
+## 1. Download and open
 
-1. Open [preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) and download the Windows x64 ZIP and `SHA256SUMS.txt`. Choose preview.8 or newer for connection codes. GitHub's **Source code** ZIP is for developers.
-2. Optionally check the downloaded ZIP in PowerShell with `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the entire value with the checksum. A matching checksum checks the download; it is not a publisher signature.
-3. Extract **all files** into a new folder. Open `Mesh-Browser.exe` as your ordinary user. Do not run as administrator or disable antivirus protections. If Windows blocks the unsigned build, retain the warning details for the maintainer.
-4. Ask your operator for a `mesh1.` code. In **Settings → Mesh connection code**, paste it, choose **Check code**, review and **Join this network**. This replaces the source list. No terminal commands are needed. Legacy JSON import remains under **Already have a connection file?**.
-5. Enter a bare name or `ar://name` in the app’s own address bar and press Enter or the arrow button. Paths, queries and fragments can follow the name. ArNS undernames use their actual registered spelling, such as `undername_name`.
+Choose a package from the [download/status table](../../README.md#downloads-and-actual-status). Published preview.8 and test candidate preview.12 are different builds. GitHub Actions artifacts can expire and may require sign-in. Download the application ZIP, not **Source code (zip)**.
 
-The public package has no operator addresses preloaded. A code retrieves a signed source list; a legacy profile gives the reader initial Mesh peer addresses, numeric-IP Solana RPC sources and optional raw Arweave nodes. It contains no password or wallet key. Use codes/profiles from operators you trust: RPC responses influence live name mappings. A syntactically valid profile does not prove its endpoints are online.
+Extract **all** files into a permanent folder and start `Mesh-Browser.exe`. Keep the executable with the other files. To put it on the desktop, create a Windows shortcut to the executable; do not move just the EXE out of its folder. The preview is unsigned. Do not disable security tools or run it as administrator to bypass a warning; report the warning details if blocked.
 
-Connection setup opens on a fresh public installation. See [network codes, automatic updates and Connected downloads](network-code.md). Imports add sources by default; you can explicitly replace them. Use **Check connections** and **Export profile** in the same panel. [Where to get a profile and what the connection list proves](connections.md).
+If checking a supplied checksum in PowerShell, run `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the whole value with the checksum shipped for that exact package. A checksum is not a publisher signature.
 
-## Everyday use
+## 2. Connect once
 
-The top address bar is the only name-entry field. Right-click it and choose **Paste**, or use Ctrl+V. The same native editing menu works in page text fields. Ctrl+L focuses the address bar. The **Settings** slider icon beside the address bar is the single connection-settings entry.
-
-The row below the address bar reports **Resolve name → Find sources → Locate content → Download → Verify → Open page**. It follows actual request events, not a timed animation. Work can overlap; cached content may skip unused stages. Hover over a step for its state. A failed or stopped stage is not a completed one. **Open page** completes when the main page finishes loading; individual missing dependencies remain visible in Page information.
-
-
-- Use `+` for another tab, the star for a bookmark, and back/forward/reload/stop for navigation.
-- **Page information** separates content verification, name observation, transport and errors. Its network log is an application log, not a complete operating-system packet capture.
-- **Save current page** retains the main document, manifest entries and supported static Arweave references found in HTML/CSS/JS/JSON, within scan/storage limits. Wait for the save result. A bookmarked address is not a saved website, and a partial save is not a complete offline copy.
-- **Saved** access uses the selected copy’s dated name observation and verified local bytes; missing saved files do not trigger network recovery. It is not a claim that the mapping is currently the newest one. **Live** access still needs reachable RPC and content sources.
-- Supported Arweave-hosted fonts, video and audio can load through Mesh/raw sources; preview.7 can search near a known page location when a linked item lacks a location. This bounded first lookup can take longer. Unavailable raw sources, unknown locations and size/quota limits can still leave files missing. External domain-based APIs and non-Arweave CDNs are not emulated and do not trigger a silent gateway fallback.
-
-## When something fails
-
-| Message or symptom | What it means / what to do |
+| Package | First connection |
 |---|---|
-| Connection setup needed | Import a working profile. The example profile in the repository is deliberately nonworking. |
-| RPC/name observation error | Check the profile's RPC availability with your supporter. A peer being online does not make an RPC online. |
-| `content_location_unavailable` | Name resolution succeeded, but the content could not be located and verified through the available sources. Report the failed stage and sanitized diagnostics. Do not assume the name does not exist. |
-| Signature/data mismatch | The returned data was rejected. Do not disable verification. |
-| Large file unavailable | This preview has a 32 MiB signed-item limit. Streaming large files is not complete. |
-| Previously opened page stops working | Its temporary cache may have been evicted, the target changed, or a source disappeared. A bookmark does not preserve content. |
+| A separately prepared **Connected ZIP** | On a fresh install, Mesh validates and joins the network included by that operator |
+| The standard GitHub release/candidate ZIP | Obtain a full `mesh1.` invitation from a trusted operator; paste into **Settings → Mesh connection code → Check code**, review, then **Join this network** |
+| Existing configured installation | The app normally reuses its saved connection settings |
 
-Do not post raw diagnostics publicly: they can contain browsing names, IPs and paths. See [privacy](privacy.md).
+Joining replaces the source list; use **Export profile** first if you want to keep the old one. A legacy `mesh-connect.json` can still be imported under **Settings → Already have a connection file?**. Manual edits/imports stop managed source-list updates.
 
-## Update, backup and remove
+The code is reusable network information, not a password, license or payment. Standard downloads currently contain no invitation. [Request connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if needed; this is volunteer coordination, not guaranteed service.
 
-Close the app before an update. Extract the next preview into a **different folder**, keep the old folder for rollback, then start the new executable. There is no automatic update download. Settings and saved data normally live under `%APPDATA%\ArNS-Mesh-Browser`; back up this directory while the app is closed. Do not publish the backup. Schema compatibility with arbitrary older releases is not guaranteed: retain both the matching old executable and its data backup.
+The agreed product direction is a default download that opens without code entry. Automatic new-supporter discovery is still [planned](shared-network.md); today's connected packaging does not implement it.
 
-To remove the portable app, close it and delete its extracted program folder. This preserves local user data. Delete `%APPDATA%\ArNS-Mesh-Browser` separately only if you intend to erase your profile, bookmarks, history and saved content. No browser extension or native-host registration is installed by this package.
+## 3. Open a site or search
 
-## Prepare before a disruption
+Enter a name such as `ar://vevivo` in **Mesh's top address bar**. Use the actual registered spelling for undernames, for example `undername_name`. Paths, queries and fragments are supported. Ctrl+L focuses the address bar; right-click Paste and Ctrl+V work.
 
-Download the program, receive a profile with several reachable independent peers/RPC sources, and save the sites you need beforehand. GitHub and npm are installation sources, not required runtime services. If every reachable source lacks a file, or no usable live name source remains, the app cannot produce the missing information. See [tested scope](status.md).
+The preview.12 **Home** field is a separate topic search. Choose **Refresh catalogue** while sources are available, then search the bounded downloaded catalogue locally. A search result does not guarantee all files are available. This feature is absent from preview.8. [Search details](../topic-search.md).
 
-## Topic search in the preview.9 candidate
+The progress row follows **Resolve name → Find sources → Locate content → Download → Verify → Open page**. It reflects actual work, not a timer. Use **Page information** for missing files, content verification and the dated name observation. Third-party APIs and non-Arweave CDN files may remain unavailable.
 
-Home has a separate topic search field; the top bar continues to open known ArNS addresses. Download a trusted catalogue with **Refresh catalogue**, then search locally. Cached results survive provider outages and restart, but opening a site still needs its actual content. This feature is not in the published preview.8 ZIP. [Instructions and limits](../topic-search.md).
+## 4. Save what matters
+
+The star bookmarks an address. **Save current page** retains supported verified files within limits. Wait for its result and inspect missing files; saving a main document is not proof that the entire dynamic site was archived.
+
+Preview.12 **Automatic** access uses live sources where available and can fall back to an accepted historical version on availability failures. **Saved** access uses retained name information and suspends live name checks/monitor probes. Missing content can still be requested from Mesh/raw sources; Saved is not a system-wide network-off switch. A complete retained copy was tested across restart with zero new application HTTP requests. Preview.8 has its older Live/Saved behavior. [Candidate recovery scope](../resilient-access.md).
+
+The candidate's **Network monitor** shows this device's Mesh/RPC/raw observations, traffic and verified main-document source. Its peer count is not a worldwide Mesh user count. “Not checked” is not “offline”; a reply does not establish that every site is available. [Indicator meanings](../connection-monitor.md).
+
+## Common questions
+
+| Situation | What to check |
+|---|---|
+| Settings opens on first launch | A standard package needs a real invitation/profile |
+| A peer responds but a site fails | That peer may not have the required name record, location or bytes |
+| RPC is unreachable | Current names may be unavailable; candidate recovery needs an accepted dated observation |
+| Raw Arweave is unreachable too | The required content must already exist locally or on reachable Mesh peers |
+| Signature or identity mismatch | Data was rejected; keep verification enabled |
+| Some images/APIs are missing | Check Page information; external services, missing locations or file limits can explain it |
+| A previously opened page disappeared | A temporary cache can be evicted; use an explicit saved copy and check completeness |
+
+The current signed-object limit is 32 MiB. No version guarantees all names, instant latest updates or access without a reachable copy. Send the version and failed stage in feedback; redact private addresses, browsing history and paths from diagnostics.
+
+## Update and backup
+
+Close the app, keep a private backup of `%APPDATA%\ArNS-Mesh-Browser`, and extract the new ZIP into a different folder. Keep the matching old app/data backup for rollback. There is no automatic application updater. A desktop update does not update a supporter server.
+
+Removing the extracted program folder preserves user data. Delete the AppData directory separately only if you intend to erase settings, history, bookmarks and saved content. No Chrome extension is installed. [Privacy](privacy.md) · [Feedback](../../CONTRIBUTING.md).

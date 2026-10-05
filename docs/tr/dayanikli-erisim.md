@@ -1,5 +1,6 @@
-# Dayanıklı erişim — preview.9 kaynak adayı
+# Dayanıklı erişim — preview.12 kaynak adayı
 
+Bu sayfa **preview.12 adayını** anlatır; `main` üzerindeki yayımlanmış preview.8 kodunu değil. [Test edilen aday kaynak](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
 Proje sahibi ilk hizmet sağlayıcısıdır: sunucuyu, depolama bütçesini, ağ kimliğini ve hizmet kapsamını yönetir. Normal kullanıcı masaüstünü indirip site açar. Destekçi isterse ayrı bir peer çalıştırıp veri kopyaları tutar. Geliştirici kod yazar; sunucu çalıştırması şart değildir. Masaüstünü iki bilgisayara kurmak, kendiliğinden iki veri sunucusu oluşturmaz.
 
 | Çalışan kaynaklar | Mesh'in kullanacağı yol |
