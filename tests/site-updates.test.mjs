@@ -52,7 +52,7 @@ test('legacy complete-file metadata without its original binding is re-prepared 
 test('strict Mesh-only content asks for cached bytes and never consults raw/index alternatives',async t=>{
  const f=await fixture(t);let requests=0;
  const client={content:async(id,options)=>{assert.equal(options.cacheOnly,true);requests++;return verifyStoredContent(f.a.getRaw(),id);},locateCandidates(){throw new Error('must not use index');}};
- const r=await fetchMeshContent(f.a.id,{client,contentStore:f.store,contentSources:'mesh-only',locationsFile:'/this-path-must-not-be-read'});assert.equal(r.direct.payload.toString(),'<h1>old complete version</h1>');assert.equal(requests,1);
+ const r=await fetchMeshContent(f.a.id,{client,contentStore:f.store,contentSources:'mesh-only',locationsFile:'/this-path-must-not-be-read'});assert.equal(r.direct.payload.toString(),'<h1>old complete version</h1>');assert.equal(requests,1);assert.equal(r.contentSource,'mesh');
  client.content=async()=>{throw new Error('missing');};await assert.rejects(fetchMeshContent(f.b.id,{client,contentSources:'mesh-only'}),/content_location_unavailable/);
 });
 test('unavailable latest content reports its target when a prepared historical version is used',async()=>{

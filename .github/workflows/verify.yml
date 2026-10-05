@@ -53,15 +53,17 @@ jobs:
           & ./dist/Mesh-Browser/Mesh-Browser.exe --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Remove-Item Env:ELECTRON_RUN_AS_NODE
-      - name: Install isolated search UI driver
+      - name: Extract the candidate ZIP and install isolated UI driver
         shell: pwsh
         run: |
           "QA_TOOLS=$env:RUNNER_TEMP/mesh-search-tools" >> $env:GITHUB_ENV
           "QA_OUTPUT=$env:RUNNER_TEMP/mesh-search-ui" >> $env:GITHUB_ENV
-          "QA_EXE=$env:GITHUB_WORKSPACE/dist/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
+          $zip = Get-ChildItem dist/ArNS-Mesh-Browser-Windows-x64-*.zip | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath "$env:RUNNER_TEMP/candidate-zip"
+          "QA_EXE=$env:RUNNER_TEMP/candidate-zip/Mesh-Browser/Mesh-Browser.exe" >> $env:GITHUB_ENV
           npm install --prefix "$env:RUNNER_TEMP/mesh-search-tools" playwright@1.62.1 --ignore-scripts --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Exercise topic search in real Windows Electron renderers
+      - name: Exercise search and connection monitor in real Windows Electron
         run: node qa/desktop/search.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

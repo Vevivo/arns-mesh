@@ -6,7 +6,7 @@ export async function resolveArUrl(raw,{quorum=2,onProgress=()=>{},contentStore=
   const {resolveAndFetchSwarm}=await import('../../src/swarm-access.mjs');
   const r=await resolveAndFetchSwarm(raw,{quorum,onProgress,contentStore,snapshotStore,accessPolicy,trustedPeers,signal,preparedSnapshotStore,contentSources,fixedSnapshot,nameTimeoutMs});
   return {body:r.body,contentType:r.contentType||'application/octet-stream',peerPayload:r.shareBundle,
-    meta:{input:raw,name:r.name,dataId:r.dataId,rootTxId:r.rootTxId,
+    meta:{contentSource:r.contentSource||null,input:raw,name:r.name,dataId:r.dataId,rootTxId:r.rootTxId,
       nameObservedAt:r.record?.witnessedAt||r.recovery?.observedAt||null,
       nameTargetId:r.record?.txId||r.recovery?.rootDataId||null,
       verification:r.verification,snapshotSaveError:r.snapshotSaveError||null,recovery:r.recovery||null,accessSnapshot:r.accessSnapshot||null,provider:r.provider?`${r.provider.host}:${r.provider.port}`:null,

@@ -1,4 +1,6 @@
-# ArNS Mesh 0.5.0-preview.9 — candidate
+# ArNS Mesh 0.5.0-preview.10 — candidate
+
+Adds a desktop connection strip and monitor: separately dated Mesh/RPC/raw observations, bounded panel-only protocol checks, verified main-document origin, session traffic and Saved-mode probe suspension. Endpoint counts are local observations, not global Mesh users. [Indicator semantics and test scope](../connection-monitor.md).
 
 The candidate also adds a Home topic search with signed, bounded provider catalogues, local keyword queries and dated availability labels. Supporter peers can mirror the original signed catalogue; readers retain it across restart and outages. The address bar keeps direct ArNS navigation. See [search scope, trust and budgets](../topic-search.md).
 

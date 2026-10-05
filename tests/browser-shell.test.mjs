@@ -27,9 +27,10 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    assert.equal(fake.messages.at(-1).data.url,'');
    let childBlocked=false;content.webContents.emit('will-frame-navigate',{preventDefault(){childBlocked=true;}},{url:'arnsui://app/search-refresh',isMainFrame:false});assert.equal(childBlocked,true);
    assert.throws(()=>fake.handlers.get('navigate')({sender:content.webContents,senderFrame:content.webContents.mainFrame},'unit-one'),/untrusted/);
-   for(const name of ['inspect-network','join-network','refresh-network','stop-network-updates'])assert.throws(()=>fake.handlers.get(name)({sender:content.webContents,senderFrame:content.webContents.mainFrame},'forged'),/untrusted/);
+   for(const name of ['inspect-network','join-network','refresh-network','stop-network-updates','monitor-visible','check-connections'])assert.throws(()=>fake.handlers.get(name)({sender:content.webContents,senderFrame:content.webContents.mainFrame},'forged'),/untrusted/);
    await assert.rejects(()=>call('join-network','forged'),/Review/);
    await call('set-access-policy','saved');
+   await assert.rejects(()=>call('check-connections'),/paused in Saved mode/);
    for(const name of ['inspect-network','join-network','refresh-network'])await assert.rejects(()=>call(name,'forged'),/Switch to Live/);
    await call('set-access-policy','live');
    assert.throws(()=>fake.handlers.get('navigate')({...event,senderFrame:{url:'arnsui://app/index.html'}},'unit-one'),/untrusted/);

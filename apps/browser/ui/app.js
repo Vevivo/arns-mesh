@@ -1,12 +1,12 @@
 const $=id=>document.getElementById(id),api=window.arnsMesh;
-const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel'];
+const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel','monitor-panel'];
 let activePanel=null,lastState={},pendingUrl=null,libraryKind='history',savedKey='',previousFocus=null,uiError='';
 const busy=s=>s.loading||['resolving','content','loading','rendering'].includes(s.phase);
 const errorText=error=>String(error.message||error).replace(/^Error invoking remote method '[^']+':\s*(?:Error:\s*)?/,'');
 const report=error=>{uiError=errorText(error);$('message').textContent=uiError;};
 const run=fn=>Promise.resolve().then(fn).catch(report);
-function closePanel(){const wasOpen=activePanel;activePanel=null;for(const id of panelIds)$(id).classList.add('hidden');$('backdrop').classList.add('hidden');$('menu-button').setAttribute('aria-expanded','false');run(()=>api.panel(false));if(wasOpen)previousFocus?.focus();}
-function openPanel(id){if(!activePanel)previousFocus=document.activeElement;activePanel=id;for(const name of panelIds)$(name).classList.toggle('hidden',name!==id);$('backdrop').classList.remove('hidden');$('menu-button').setAttribute('aria-expanded',String(id==='menu-panel'));run(()=>api.panel(true));$(id).querySelector('button,input,select,summary')?.focus();}
+function closePanel(){const wasOpen=activePanel;if(wasOpen==='monitor-panel')run(()=>api.monitorVisible(false));$('monitor-button').setAttribute('aria-expanded','false');activePanel=null;for(const id of panelIds)$(id).classList.add('hidden');$('backdrop').classList.add('hidden');$('menu-button').setAttribute('aria-expanded','false');run(()=>api.panel(false));if(wasOpen)previousFocus?.focus();}
+function openPanel(id){if(activePanel==='monitor-panel'&&id!=='monitor-panel')run(()=>api.monitorVisible(false));$('monitor-button').setAttribute('aria-expanded',String(id==='monitor-panel'));if(id==='monitor-panel')run(()=>api.monitorVisible(true));if(!activePanel)previousFocus=document.activeElement;activePanel=id;for(const name of panelIds)$(name).classList.toggle('hidden',name!==id);$('backdrop').classList.remove('hidden');$('menu-button').setAttribute('aria-expanded',String(id==='menu-panel'));run(()=>api.panel(true));$(id).querySelector('button,input,select,summary')?.focus();}
 function togglePanel(id){activePanel===id?closePanel():openPanel(id);}
 function submitAddress(){const value=$('address').value.trim();if(!value||pendingUrl===value)return;uiError='';pendingUrl=value;closePanel();run(()=>api.navigate(value)).finally(()=>{if(pendingUrl===value)pendingUrl=null;});$('address').blur();}
 $('nav').addEventListener('submit',event=>{event.preventDefault();submitAddress();});
@@ -54,7 +54,7 @@ api.onState(s=>{
  const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
  $('message').textContent=uiError||(s.networkJoining?'Connecting to the included Mesh network…':setupNeeded&&s.phase!=='error'?'Connect to Mesh in Settings with a connection code.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='partial'?' partial':s.phase==='loaded'?' loaded':'');
  $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':s.meta?.recovery?'P2P · Retained version':'P2P · Automatic';
- renderSaved(s);renderDetails(s);renderElapsed();if(activePanel==='settings-panel')renderNetwork(s.networkConnection);
+ renderMonitor(s);renderSaved(s);renderDetails(s);renderElapsed();if(activePanel==='settings-panel')renderNetwork(s.networkConnection);
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
 });
 let journeyKey='';
@@ -152,3 +152,36 @@ $('join-network').onclick=async()=>{
 };
 $('refresh-network').onclick=async()=>{settingsResult('Checking for connection updates…');try{await api.refreshNetwork();await showSettings();settingsResult('Network connections checked.');}catch(error){settingsResult(errorText(error),true);}};
 $('stop-network-updates').onclick=async()=>{try{await api.stopNetworkUpdates();await showSettings();settingsResult('Automatic network updates stopped. Current addresses are kept.');}catch(error){settingsResult(errorText(error),true);}};
+
+$('monitor-button').onclick=()=>togglePanel('monitor-panel');
+$('monitor-check').onclick=()=>run(()=>api.checkConnections());
+const monitorLabels={responding:'Responding',requesting:'Requesting',unavailable:'Request failed',unknown:'Not checked',stale:'Out of date',unconfigured:'No sources',paused:'Paused'};
+const humanBytes=n=>{if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KiB';return (n/1048576).toFixed(1)+' MiB';};
+const observedTime=at=>at?'Observed '+new Date(at).toLocaleTimeString('en-GB'):'No observation yet';
+let monitorEvidenceKey='';
+function renderMonitor(s){
+ const m=s.connectionMonitor;if(!m)return;
+ for(const kind of ['mesh','rpc','arweave']){
+  const g=m.groups[kind],label=monitorLabels[g.status];
+  $(kind+'-dot').className='status-dot '+g.status;
+  $(kind+'-live').textContent=kind==='mesh'&&g.replied?`${g.replied}/${g.total} replied`:label;
+  $(kind+'-state').textContent=label;$(kind+'-state').className='route-state '+g.status;
+  $(kind+'-card').dataset.status=g.status;
+  $(kind+'-count').textContent=g.status==='paused'?'Skipped':g.total?`${g.replied} / ${g.total}`:'—';
+  $(kind+'-detail').textContent=g.status==='paused'?'Saved names · No live RPC checks':kind==='mesh'?'Endpoints with a recent reply · Known peers':kind==='rpc'?'Endpoints with a recent reply · Name sources':'Endpoints with a recent reply · Raw sources';
+  $(kind+'-time').textContent=observedTime(g.lastAt);
+ }
+ $('traffic-live').textContent=m.active?`${m.active} requests in progress`:`${humanBytes(m.bytes)} received`;
+ $('monitor-bytes').textContent=humanBytes(m.bytes);$('monitor-active').textContent=m.active;$('monitor-requests').textContent=m.requests;
+ $('monitor-transfer').textContent=m.active?'Requesting data from available sources…':m.bytes?'No requests in progress · Data received earlier this session':'No data received this session';
+ $('monitor-check').disabled=m.checking||m.saved;$('monitor-check').textContent=m.checking?'Checking…':'Check now';
+ $('monitor-cadence').textContent=m.saved?'Saved mode · Connection probes paused. Missing files may still be requested from Mesh or Arweave.':m.checking?'Checking configured sources · Traffic updates every second.':'Checks run every 60 seconds while this panel is open. Traffic updates every second.';
+ const meta=s.meta||{},source=meta.contentSource;
+ $('page-source').textContent=meta.contentSignatureVerified?({local:'From this device',mesh:'From a Mesh peer',arweave:'From raw Arweave'}[source]||'Verified document'):s.url?'Waiting for a verified document':'Open an ArNS page';
+ $('page-source-detail').textContent=s.url||'Its verified main document source will appear here.';
+ $('page-signature').textContent=meta.contentSignatureVerified?'✓ Main document signature verified':'No verified document loaded';
+ $('page-name-source').textContent=meta.recovery?'Retained name · '+new Date(meta.recovery.observedAt).toLocaleString():meta.verification?.nameStateChecked?'Name: RPC observation · No inclusion proof':'No live name observation';
+ const evidenceKey=JSON.stringify([m.events,m.groups]);if(evidenceKey===monitorEvidenceKey)return;monitorEvidenceKey=evidenceKey;
+ $('monitor-events').replaceChildren();for(const e of m.events.slice(0,5)){const row=document.createElement('p');row.className='monitor-event';row.textContent=new Date(e.at).toLocaleTimeString('en-GB')+' · '+({mesh:'Mesh',rpc:'Solana RPC',arweave:'Raw Arweave'}[e.kind])+' · '+(e.status==='reply'?'HTTP reply received':'Request failed')+' · '+humanBytes(e.bytes);$('monitor-events').append(row);}
+ $('monitor-endpoints').replaceChildren();for(const [kind,g] of Object.entries(m.groups))for(const e of g.entries){const row=document.createElement('p');row.className='monitor-event';row.textContent=({mesh:'Mesh',rpc:'RPC',arweave:'Arweave'}[kind])+' · '+e.address+' · '+({checked:'Protocol check passed',reply:'HTTP reply; availability not verified',failed:'Request or protocol check failed',stale:'Last observation expired',unknown:'Not checked'}[e.status])+(e.elapsedMs!==null?' · '+e.elapsedMs+' ms':'');$('monitor-endpoints').append(row);}
+}

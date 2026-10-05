@@ -271,7 +271,7 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
       storageKind:current.storageKind,
       dataId,
       rootTxId:current.direct.rootTxId,
-      provider:current.direct.peer,
+      provider:current.direct.peer,contentSource:current.contentSource||null,
       dataItemSignatureVerified:current.storageKind==='ans104',
       l1SignatureVerified:Boolean(current.direct.l1SignatureVerified),
       l1DataRootVerified:Boolean(current.direct.l1DataRootVerified),

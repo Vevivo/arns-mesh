@@ -22,12 +22,12 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
  if(!['all','mesh-only','local-only'].includes(contentSources))throw new Error('invalid_content_sources');
  if(!/^[A-Za-z0-9_-]{43}$/.test(dataId))throw new Error('invalid_data_id');
  const cached=contentStore?.get(dataId);
- if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation&&contentSources==='all'?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
+ if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation&&contentSources==='all'?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {contentSource:'local',loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
  if(contentSources!=='all'){
   try{
    if(contentSources==='local-only')throw new Error('content_not_saved');
    const direct=await withTransferBudget(()=>client.content(dataId,{onProgress,signal,cacheOnly:true}),signal);
-   const result={loc:null,direct,storageKind:direct.storageKind||'ans104'};
+   const result={contentSource:'mesh',loc:null,direct,storageKind:direct.storageKind||'ans104'};
    try{if(contentStore)await contentStore.put(dataId,direct.storedBytes||direct.rawItem);}catch(error){result.cacheError=String(error.message);}
    return result;
   }catch(error){signal?.throwIfAborted();throw new Error('content_location_unavailable: '+error.message);}
@@ -93,10 +93,10 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
     if(hints.length)saveDiscoveredLocations(locationsFile,hints);
    }catch{/* A hint/cache failure cannot authorize bytes or invalidate a verified parent. */}
   }
-  return {loc:{record,transport},direct,storageKind:'ans104'};
+  return {contentSource:'arweave',loc:{record,transport},direct,storageKind:'ans104'};
  };
  const tasks=[
-  attempt('mesh-content',async s=>{const direct=await withTransferBudget(()=>client.content(dataId,{onProgress:progress,signal:s}),s);return {loc:null,direct,storageKind:direct.storageKind||'ans104'};}),
+  attempt('mesh-content',async s=>{const direct=await withTransferBudget(()=>client.content(dataId,{onProgress:progress,signal:s}),s);return {contentSource:'mesh',loc:null,direct,storageKind:direct.storageKind||'ans104'};}),
   attempt('mesh-index',async s=>{
    const candidates=await client.locateCandidates(dataId,{signal:s});
    return firstVerified(candidates.map(loc=>inner=>retrieve(loc.record,'mesh-index',inner)),{signal:s});
@@ -111,7 +111,7 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
   }catch(error){preferredFailure();throw error;}
  }));
  if(historical)tasks.push(attempt('historical-index',async s=>{await waitForPreferred(s);const found=await historical.find(dataId,{onProgress:progress,signal:s});if(!found)throw new Error('not_in_published_index');return retrieve(found,'historical-index',s);}));
- tasks.push(attempt('arweave-l1',async s=>{await waitForPreferred(s);return {loc:null,direct:await withTransferBudget(()=>fetchL1Direct({dataId,maxBytes:32*1024*1024,onProgress:progress,signal:s}),s),storageKind:'l1'};}));
+ tasks.push(attempt('arweave-l1',async s=>{await waitForPreferred(s);return {contentSource:'arweave',loc:null,direct:await withTransferBudget(()=>fetchL1Direct({dataId,maxBytes:32*1024*1024,onProgress:progress,signal:s}),s),storageKind:'l1'};}));
  onProgress({stage:'location',status:'active',message:'Looking for content through peers and raw Arweave in parallel…'});
  try{
   const result=await firstVerified(tasks,{signal});

@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ConnectionMonitor} from '../apps/browser/connection-monitor.mjs';
+const profile={directPeers:['127.0.0.1:9000'],rpcSources:['127.0.0.1:9001'],arweavePeers:[]};
+const time=Date.parse('2026-10-05T02:00:00Z');
+const iso=t=>new Date(t).toISOString();
+test('monitor distinguishes unknown, recent, failed, expired and paused observations without a global count',()=>{
+ const m=new ConnectionMonitor();m.configure(profile);
+ assert.equal(m.snapshot({now:time}).groups.mesh.status,'unknown');
+ assert.equal(m.snapshot({now:time}).groups.arweave.status,'unconfigured');
+ m.check({kind:'Mesh peer',address:profile.directPeers[0],status:'responded',checkedAt:iso(time),elapsedMs:8});
+ assert.equal(m.snapshot({now:time}).groups.mesh.replied,1);
+ assert.equal(m.snapshot({now:time+90001}).groups.mesh.status,'stale');
+ m.check({kind:'Solana RPC',address:profile.rpcSources[0],status:'unavailable',checkedAt:iso(time)});
+ assert.equal(m.snapshot({now:time}).groups.rpc.status,'unavailable');
+ assert.equal(m.snapshot({now:time,saved:true}).groups.rpc.status,'paused');
+ m.configure({...profile,directPeers:[]});m.check({kind:'Mesh peer',address:profile.directPeers[0],status:'responded',checkedAt:iso(time)});
+ assert.equal(m.snapshot({now:time}).groups.mesh.total,0);
+});
+test('monitor accounts real requests, excludes probes and cancellation failures, bounds discovered nodes',()=>{
+ const m=new ConnectionMonitor();m.configure(profile);
+ const e={purpose:'mesh-peer',host:'127.0.0.1',port:9000,at:iso(time),scope:'browse'};
+ m.observe({...e,type:'request',id:1});assert.equal(m.snapshot({now:time}).active,1);
+ m.observe({...e,type:'response',requestId:1,bytes:320});assert.equal(m.snapshot({now:time}).active,0);
+ assert.equal(m.snapshot({now:time}).groups.mesh.entries[0].status,'reply');
+ m.observe({...e,type:'response',bytes:800,scope:'connection-check'});assert.equal(m.snapshot({now:time}).bytes,320);
+ m.observe({...e,type:'request',id:2});m.observe({...e,type:'request-error',requestId:2,error:'The operation was aborted'});
+ assert.equal(m.snapshot({now:time}).failures,0);assert.equal(m.snapshot({now:time}).active,0);
+ m.observe({...e,type:'request-error',error:'ECONNREFUSED',at:iso(time+1)});assert.equal(m.snapshot({now:time+1}).groups.mesh.status,'unavailable');
+ for(let port=10000;port<10400;port++)m.observe({...e,purpose:'raw-arweave',port,type:'response'});
+ assert.ok(m.rows.size<=128);assert.ok(m.events.length<=12);
+ assert.equal(m.snapshot({now:time}).groups.mesh.configured,1);
+});

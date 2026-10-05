@@ -1,5 +1,6 @@
 import '../../src/network-lockdown.mjs';
 import fs from 'node:fs';
+import {ConnectionMonitor} from './connection-monitor.mjs';
 import {SearchCatalog} from '../../src/search-catalog.mjs';
 import {loadDirectPeers} from '../../src/direct-peer.mjs';
 import {homeQuery,renderSearchHome} from './search-home.mjs';
@@ -23,7 +24,7 @@ import {ResponseCache} from '../helper/response-cache.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
 import {WorkBudget,transferBudgetStatus} from '../../src/resource-budget.mjs';
 import {shareQuery} from '../../src/query-work.mjs';
-import {networkAuditSnapshot,recordNetwork} from '../../src/network-audit.mjs';
+import {networkAuditSnapshot,recordNetwork,observeNetworkAudit,withNetworkAudit} from '../../src/network-audit.mjs';
 import {attachContextMenu} from './context-menu.mjs';
 import {BrowserState,normalizeAddress} from './browser-state.mjs';
 import {Tabs} from './tabs.mjs';
@@ -34,6 +35,9 @@ const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/we
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
 let win,toolbar,runtime,store,pinner,library,related,settingsFile,timer,panelOpen=false,shuttingDown=false;
 let searchCatalog,searchTimer,searchController,lastSearchSync=0;
+const monitor=new ConnectionMonitor();
+const stopMonitor=observeNetworkAudit(e=>monitor.observe(e));
+let monitorVisible=false,lastConnectionCheck=0,checkProfile='';
 let accessPolicy='auto',trustedPeers=[],witnessQuorum=2;
 let connectionCheck=null,network=null,networkPreview=null,networkInspection=null,networkJoining=false;
 process.chdir(coreRoot);
@@ -53,12 +57,14 @@ app.commandLine.appendSwitch('disable-features','DnsOverHttps,MediaRouter');
 function send(extra={}){
   if(!toolbar||toolbar.webContents.isDestroyed())return;
   const tab=tabs.active,wc=tab?.view?.webContents,audit=networkAuditSnapshot();
+  if(runtime)monitor.configure(readProfile(runtime.dataDir));
   toolbar.webContents.send('state',{
     version:app.getVersion(),url:tab?.url||'',title:tab?.title||'',tabs:tabs.snapshot(),tabLimit:tabs.limit,
     loading:wc?.isLoading()||false,canGoBack:wc?.navigationHistory.canGoBack()||false,canGoForward:wc?.navigationHistory.canGoForward()||false,
     canBookmark:Boolean(tab?.url),bookmarked:library?.has(tab?.url)||false,zoom:Math.round((wc?.getZoomFactor()||1)*100),
     phase:tab?.phase||'ready',message:tab?.message||'Enter an ArNS address.',meta:tab?.meta||null,progress:tab?.progress.snapshot(),resources:tab?.resources,
     mode:'p2p',accessPolicy,networkConnection:network?.status(),networkJoining,connectionConfigured:runtime?connectionConfigured():false,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
+    connectionMonitor:monitor.snapshot({saved:accessPolicy==='saved'}),
     discovery:runtime?.discovery.status(),network:{...audit,events:audit.events.slice(-8)},
     resourceBudget:{role:'client',pageCacheBytes:cache.bytes,pageCacheLimit:cache.maxBytes,pageRequests:requests.status(),transfers:transferBudgetStatus()},...extra,
   });
@@ -168,7 +174,7 @@ async function arHandler(tab,request){
   }finally{if(tabs.isCurrent(tab,epoch)){tab.resources.pending=Math.max(0,tab.resources.pending-1);updatePageHealth(tab);}send();}
 }
 function layout(){
-  if(!win||!toolbar)return;const [width,height]=win.getContentSize(),bar=178;
+  if(!win||!toolbar)return;const [width,height]=win.getContentSize(),bar=234;
   for(const tab of tabs.rows.values())if(tab.view){tab.view.setVisible(tab.id===tabs.activeId&&!panelOpen);tab.view.setBounds({x:0,y:bar,width,height:Math.max(0,height-bar)});}
   toolbar.setBounds({x:0,y:0,width,height:panelOpen?height:bar});
 }
@@ -322,10 +328,23 @@ handle('export-profile',async()=>{
   fs.writeFileSync(choice.filePath,JSON.stringify(profile,null,2)+'\n',{mode:0o600});
   return {exported:true};
 });
-handle('check-connections',async()=>{
-  connectionCheck?.abort();const controller=new AbortController();connectionCheck=controller;
-  try{return await checkConnections(readProfile(runtime.dataDir),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});}
-  finally{if(connectionCheck===controller)connectionCheck=null;}
+async function runConnectionChecks(){
+  if(accessPolicy==='saved')throw new Error('Connection checks are paused in Saved mode.');
+  if(connectionCheck)return [];
+  const profile=readProfile(runtime.dataDir),profileKey=JSON.stringify(profile);
+  monitor.configure(profile);checkProfile=profileKey;lastConnectionCheck=Date.now();
+  const controller=connectionCheck=new AbortController();monitor.checking=true;send();
+  try{return await withNetworkAudit('connection-check',()=>checkConnections(profile,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)]),onResult:result=>{
+    if(!controller.signal.aborted&&accessPolicy!=='saved'&&JSON.stringify(readProfile(runtime.dataDir))===profileKey){monitor.check(result);send();}
+  }}));}
+  finally{if(connectionCheck===controller){connectionCheck=null;monitor.checking=false;send();}}
+}
+handle('check-connections',runConnectionChecks);
+handle('monitor-visible',value=>{
+ monitorVisible=value===true;
+ if(!monitorVisible)connectionCheck?.abort();
+ else if(accessPolicy!=='saved'&&Date.now()-lastConnectionCheck>60000)void runConnectionChecks().catch(()=>{});
+ send();
 });
 handle('save-settings',data=>{
   if(!data||typeof data!=='object')throw new Error('invalid_settings');
@@ -340,12 +359,12 @@ handle('save-settings',data=>{
 async function setAccessPolicy(value){
   if(!['auto','live','saved'].includes(value))throw new Error('invalid_access_policy');
   for(const tab of tabs.rows.values())stop(tab);accessPolicy=value;
-  if(value==='saved'){searchController?.abort();networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
+  if(value==='saved'){connectionCheck?.abort();searchController?.abort();networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
   savePrefs();cache.clear();send();
   if(tabs.active.url)await navigate(tabs.active.url);
 }
 handle('set-access-policy',setAccessPolicy);
-handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';networkInspection?.abort();networkPreview=null;network.stop();savePrefs();cache.clear();return navigate(raw);});
+handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';connectionCheck?.abort();searchController?.abort();networkInspection?.abort();networkPreview=null;network.stop();savePrefs();cache.clear();return navigate(raw);});
 handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name,{accessPolicy,trustedPeers:effectiveTrustedPeers(),snapshot:tabs.active.meta?.accessSnapshot}).then(()=>send()).catch(error=>report(error));send();return true;});
 handle('unpin-site',name=>{pinner.remove(name);send();});
 async function saveDocument(){
@@ -360,7 +379,7 @@ async function saveDocument(){
 handle('save-document',saveDocument);
 handle('diagnostics',async()=>{
   const choice=await dialog.showSaveDialog(win,{defaultPath:'ArNS-Mesh-Browser-diagnostics.json'});if(choice.canceled)return false;
-  fs.writeFileSync(choice.filePath,JSON.stringify({at:new Date().toISOString(),version:app.getVersion(),platform:process.platform,role:'reader',tabs:tabs.snapshot(),accessPolicy,meta:tabs.active.meta,network:networkAuditSnapshot(),discovery:runtime.discovery.status(),historicalIndex:runtime.historical.status(),savedSites:pinner.status(),limitations:['RPC observations are not independent account inclusion proofs.','Some peer catalogs may use Turbo/Goldsky preparation; no private catalog is bundled.','One configured peer is not a resilient network.']},null,2));return true;
+  fs.writeFileSync(choice.filePath,JSON.stringify({at:new Date().toISOString(),version:app.getVersion(),platform:process.platform,role:'reader',tabs:tabs.snapshot(),accessPolicy,meta:tabs.active.meta,connectionMonitor:monitor.snapshot({saved:accessPolicy==='saved'}),network:networkAuditSnapshot(),discovery:runtime.discovery.status(),historicalIndex:runtime.historical.status(),savedSites:pinner.status(),limitations:['RPC observations are not independent account inclusion proofs.','Some peer catalogs may use Turbo/Goldsky preparation; no private catalog is bundled.','One configured peer is not a resilient network.']},null,2));return true;
 });
 async function start(){
   if(process.platform!=='darwin')Menu.setApplicationMenu(null);
@@ -378,7 +397,10 @@ async function start(){
   win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);attachContextMenu(toolbar.webContents,Menu,()=>win);win.on('resize',layout);
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
-  timer=setInterval(()=>send(),1000);send();
+  timer=setInterval(()=>{
+    send();
+    if(monitorVisible&&accessPolicy!=='saved'&&!connectionCheck&&(Date.now()-lastConnectionCheck>60000||checkProfile!==JSON.stringify(readProfile(runtime.dataDir))))void runConnectionChecks().catch(()=>{});
+  },1000);send();
   void syncSearch().catch(()=>{});searchTimer=setInterval(()=>void syncSearch().catch(()=>{}),15*60000);
   if(accessPolicy!=='saved'){
     network.start();
@@ -405,4 +427,4 @@ if(!app.requestSingleInstanceLock())app.quit();else{
   app.whenReady().then(start).catch(error=>{console.error(error);dialog.showErrorBox('ArNS Mesh Browser could not start',String(error.message||error));app.quit();});
 }
 app.on('window-all-closed',()=>app.quit());
-app.on('will-quit',()=>{clearInterval(timer);clearInterval(searchTimer);searchController?.abort();connectionCheck?.abort();networkInspection?.abort();network?.stop();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});
+app.on('will-quit',()=>{clearInterval(timer);stopMonitor();clearInterval(searchTimer);searchController?.abort();connectionCheck?.abort();networkInspection?.abort();network?.stop();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});

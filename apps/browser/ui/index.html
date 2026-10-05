@@ -10,9 +10,32 @@
  <form id="nav"><button id="details" type="button" class="icon address-info" aria-label="Page information" title="Page information and verification"><svg><use href="#i-info"/></svg></button><input id="address" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Address" placeholder="Open an ArNS name"><button id="bookmark" type="button" class="icon" aria-label="Bookmark this page" title="Bookmark this page (Ctrl+D)" disabled><svg><use href="#i-star"/></svg></button><button id="open-address" type="submit" class="icon go" aria-label="Go" title="Go"><svg><use href="#i-next"/></svg></button></form>
  <button id="settings-button" class="icon settings-button" aria-label="Settings" title="Settings"><svg><use href="#i-settings"/></svg></button><button id="saved-button" class="icon" aria-label="Saved pages" title="Saved pages"><svg><use href="#i-save"/></svg></button><button id="menu-button" class="icon" aria-label="Browser menu" title="Browser menu" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
 </header>
+<div class="connection-strip" aria-label="Connection overview">
+ <button id="monitor-button" class="monitor-launch" aria-label="Open connection monitor" aria-expanded="false"><span class="signal-mark" aria-hidden="true">◉</span><span>Network monitor</span><span aria-hidden="true">↗</span></button>
+ <div class="connection-pill"><span class="status-dot" id="mesh-dot"></span><span>Mesh</span><strong id="mesh-live">Not checked</strong></div>
+ <div class="connection-pill"><span class="status-dot" id="rpc-dot"></span><span>RPC</span><strong id="rpc-live">Not checked</strong></div>
+ <div class="connection-pill"><span class="status-dot" id="arweave-dot"></span><span>Arweave</span><strong id="arweave-live">Not checked</strong></div>
+ <span id="traffic-live" class="traffic-live">No requests in progress</span>
+</div>
 <nav class="journey" aria-label="Page access progress"><ol id="access-stages"></ol></nav>
 <div class="status"><span id="indicator" class="indicator"></span><span id="message" role="status">Ready to explore.</span><span id="elapsed"></span><span id="mode-badge">P2P · Live</span></div>
 <button id="backdrop" class="backdrop hidden" aria-label="Close browser panel" tabindex="-1"></button>
+<section id="monitor-panel" class="panel monitor-panel hidden" aria-label="Connection monitor">
+ <div class="panel-head"><div><small>YOUR CONNECTION · LIVE SESSION</small><h2>Every route, in view.</h2></div><div class="monitor-actions"><button id="monitor-check" class="secondary">Check now</button><button data-close class="icon" aria-label="Close connection monitor">×</button></div></div>
+ <p id="monitor-cadence" class="monitor-caption">Checks run every 60 seconds while this panel is open. Traffic updates every second.</p>
+ <div class="route-grid">
+  <article class="route-card" id="mesh-card"><div class="route-heading"><span>01 / MESH PEERS</span><span class="route-state" id="mesh-state">Not checked</span></div><h3 id="mesh-count">—</h3><p id="mesh-detail">Peers seen from this device</p><div class="route-footer" id="mesh-time">No observation yet</div></article>
+  <article class="route-card" id="rpc-card"><div class="route-heading"><span>02 / SOLANA RPC</span><span class="route-state" id="rpc-state">Not checked</span></div><h3 id="rpc-count">—</h3><p id="rpc-detail">Current name records</p><div class="route-footer" id="rpc-time">No observation yet</div></article>
+  <article class="route-card" id="arweave-card"><div class="route-heading"><span>03 / ARWEAVE IP</span><span class="route-state" id="arweave-state">Not checked</span></div><h3 id="arweave-count">—</h3><p id="arweave-detail">Raw content sources</p><div class="route-footer" id="arweave-time">No observation yet</div></article>
+ </div>
+ <div class="monitor-lower">
+  <article class="page-route"><small>CURRENT PAGE</small><h3 id="page-source">Open an ArNS page</h3><p id="page-source-detail">Its verified main document source will appear here.</p><div class="page-trust"><span id="page-signature">No document loaded</span><span id="page-name-source">No name observation</span></div></article>
+  <article class="session-traffic"><small>THIS APP SESSION · HTTP</small><div class="traffic-values"><div><strong id="monitor-bytes">0 B</strong><span>received</span></div><div><strong id="monitor-active">0</strong><span>in progress</span></div><div><strong id="monitor-requests">0</strong><span>requests</span></div></div><p id="monitor-transfer">Waiting for traffic</p><p class="monitor-caption">Connection probes excluded. Received bytes include metadata and failed transfers.</p></article>
+ </div>
+ <div class="monitor-bottom"><span class="policy-label">IP access · External domains blocked</span><span>Reader mode · This desktop does not serve files to others</span></div>
+ <details class="monitor-evidence"><summary>Recent activity & source details</summary><div id="monitor-events"></div><div id="monitor-endpoints"></div></details>
+ <p class="monitor-caption monitor-limits">This is your device's view, not the total number of Mesh users. Replies expire after 90 seconds. A reachable source may still lack a file or current name record. Peer upstreams are not measured here. These are app observations, not an independent packet capture.</p>
+</section>
 <section id="menu-panel" class="panel menu-panel hidden" aria-label="Browser menu">
  <div class="menu-heading">ArNS Mesh Browser <span id="build-version"></span></div>
  <button id="download-document" class="menu-item">Download document <kbd>Ctrl+S</kbd></button><button id="history-button" class="menu-item">History <kbd>Ctrl+H</kbd></button><button id="bookmarks-button" class="menu-item">Bookmarks <kbd>Ctrl+Shift+B</kbd></button><button id="menu-saved" class="menu-item">Saved pages <span>Stored files</span></button><button id="pin-site" class="menu-item">Keep site files on this device <svg><use href="#i-save"/></svg></button>
