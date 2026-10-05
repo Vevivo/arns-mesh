@@ -4,8 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_pro
 const {createRequire}=require('node:module');
 const {chromium}=createRequire(path.join(process.env.QA_TOOLS,'package.json'))('playwright');
 const output=path.resolve(process.env.QA_OUTPUT),data=path.join(output,'user-data');fs.mkdirSync(output,{recursive:true});
-const report={scope:'Windows Electron search and connection monitor UI; synthetic signed documents and loopback catalogue; no live chain or OS-level outage claim',checks:[],errors:[]};
-let app,browser,peerApp,peerRequests=0;const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const report={scope:'Windows Electron search and connection monitor UI; synthetic signed documents and loopback catalogue and automatic late supporter; no live chain or OS-level outage claim',checks:[],errors:[]};
+let app,browser,peerApp,peerRequests=0,lateRequests=0;const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function launch(){
  const log=fs.openSync(path.join(output,'electron.log'),'a');app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1'],{env:{...process.env,ARNS_MESH_USER_DATA:data},stdio:['ignore',log,log]});fs.closeSync(log);
  for(let i=0;i<60;i++){try{browser=await chromium.connectOverCDP('http://127.0.0.1:9223',{timeout:1000});break;}catch(e){if(i===59)throw e;await pause(500);}}
@@ -22,7 +22,7 @@ async function close(){if(browser){await browser.close();browser=null;}if(app&&a
 async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const child=peerApp;peerApp=null;await new Promise(resolve=>{const timer=setTimeout(()=>{child.kill();resolve();},5000);child.once('exit',()=>{clearTimeout(timer);resolve();});child.send('stop');});}
 (async()=>{try{
  peerApp=cp.fork(path.join(__dirname,'search-peer.mjs'),[],{env:process.env,stdio:['ignore','inherit','inherit','ipc']});
- peerApp.on('message',message=>{if(message.request)peerRequests++;});
+ peerApp.on('message',message=>{if(message.request)peerRequests++;if(message.route==='b')lateRequests++;});
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('fixture peer startup timeout')),15000);peerApp.once('error',reject);peerApp.on('message',m=>{if(m.ready){clearTimeout(timer);resolve();}});});
  let {ui,home}=await launch();
  await home.locator('.refresh-catalogue').click();await home.locator('.catalogue-status').filter({hasText:'1 indexed site'}).waitFor();
@@ -49,6 +49,18 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await ui.locator('#monitor-check').click();await ui.locator('#rpc-state').filter({hasText:'Request failed'}).waitFor();await ui.locator('#arweave-state').filter({hasText:'Request failed'}).waitFor();assert.equal(await ui.locator('#mesh-state').innerText(),'Responding');
  await capture('06-monitor-upstreams-stopped.png');report.checks.push('RPC and raw fixtures stopped independently of Mesh; failed checks distinguished');
  await ui.getByRole('button',{name:'Close connection monitor',exact:true}).click();
+ // A new supporter appears after this real reader has already been running.
+ const originalProfile=fs.readFileSync(path.join(data,'mesh-ip-peers.json'),'utf8');
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('late peer startup timeout')),10000);peerApp.on('message',m=>{if(m.fixtureError)reject(new Error(m.fixtureError));if(m.lateReady){clearTimeout(timer);resolve();}});peerApp.send('late-supporter');});
+ await ui.locator('#settings-button').click();
+ await ui.locator('#peer-discovery-status').filter({hasText:'1 learned peer addresses'}).waitFor({timeout:85000});
+ assert.equal(fs.readFileSync(path.join(data,'mesh-ip-peers.json'),'utf8'),originalProfile);
+ await capture('10-learned-supporter.png');report.checks.push('already joined Windows reader automatically learns a later supporter without code or profile changes');
+ await ui.getByRole('button',{name:'Close settings',exact:true}).click();
+ await new Promise(resolve=>{peerApp.on('message',m=>{if(m.seedStopped)resolve();});peerApp.send('stop-seed');});
+ const beforeLate=lateRequests;await home.locator('.refresh-catalogue').click();for(let i=0;i<150&&lateRequests===beforeLate;i++)await pause(100);await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
+ assert.ok(lateRequests>beforeLate,'catalogue requested from learned survivor after seed loss');assert.match(await home.locator('.catalogue-status').innerText(),/1 indexed site/);
+ report.checks.push('seed stopped; real reader retrieves the original signed catalogue through the automatically learned survivor');
  await closeProvider();await close();
  fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'saved',trustedPeers:[],witnessQuorum:2}));
  ({ui,home}=await launch());await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();await home.screenshot({path:path.join(output,'03-offline-restart.png'),fullPage:true});report.checks.push('provider stopped; restarted Saved reader searches retained catalogue');
