@@ -13,7 +13,16 @@ export class SitePinner{
   try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}
   for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
  }
- isReady(row){return Boolean(row&&['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)&&row.saved===row.total&&!row.failed);}
+ isReady(row){
+  if(!row||!['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)||row.saved!==row.total||row.failed)return false;
+  // Older releases did not embed the dated binding in saved-site metadata.
+  // A later observation of the same target cannot reconstruct the old date.
+  const binding=row.snapshot||this.snapshots.get(row.name);
+  if(!binding||binding.txId!==row.rootDataId||binding.observedAt!==row.observedAt)return false;
+  try{validateSnapshot(binding,row.name);}catch{return false;}
+  const ids=this.store.pins?.[row.pinGroup||row.name]||[];
+  return ids.length>=row.total&&ids.every(id=>this.store.has(id));
+ }
  readySnapshot(name,{trustedPeers=[]}={}){if(!this.isReady(this.rows[name]))return null;return this.snapshotStore({trustedPeers}).get(name);}
  preparedStore({trustedPeers=[]}={}){return {get:name=>this.readySnapshot(name,{trustedPeers})};}
  status(){return {sites:Object.values(this.rows),storage:this.store.pinStats(),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}

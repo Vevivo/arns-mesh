@@ -43,6 +43,12 @@ test('disk failure at version publication never unpins the previously published 
  await assert.rejects(pinner.start('update'),/disk_failure/);f.store.maxBytes=0;f.store.prune();assert.ok(f.store.has(f.a.id));
  assert.equal(new SitePinner(f.options).readySnapshot('update').txId,f.a.id);
 });
+test('legacy complete-file metadata without its original binding is re-prepared instead of advertised ready',async t=>{
+ const f=await fixture(t);let pinner=new SitePinner(f.options);f.observe(f.a.id,1);await pinner.start('update');
+ delete pinner.rows.update.snapshot;pinner.rows.update.observedAt=new Date(Date.now()-60000).toISOString();pinner.save();
+ pinner=new SitePinner(f.options);assert.equal(pinner.status().ready,0);assert.equal(pinner.readySnapshot('update'),null);assert.ok(f.store.has(f.a.id));
+ await pinner.start('update');assert.equal(pinner.status().ready,1);assert.equal(pinner.readySnapshot('update').observedAt,f.names.get('update').observedAt);
+});
 test('strict Mesh-only content asks for cached bytes and never consults raw/index alternatives',async t=>{
  const f=await fixture(t);let requests=0;
  const client={content:async(id,options)=>{assert.equal(options.cacheOnly,true);requests++;return verifyStoredContent(f.a.getRaw(),id);},locateCandidates(){throw new Error('must not use index');}};
