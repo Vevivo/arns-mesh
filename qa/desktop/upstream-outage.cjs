@@ -46,7 +46,7 @@ const endpoint=x=>{const at=x.lastIndexOf(':');return {host:x.slice(0,at).replac
   // rendered ArNS target rather than retaining the newly-created blank target.
   page=null;
   for(let i=0;i<60;i++){
-   page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().startsWith('ar://'+name+'/'));
+   page=browser.contexts().flatMap(c=>c.pages()).find(p=>{try{const u=new URL(p.url());return u.protocol==='ar:'&&u.hostname===name;}catch{return false;}});
    if(page)break;
    await delay(200);
   }
