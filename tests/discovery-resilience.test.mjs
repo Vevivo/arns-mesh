@@ -88,14 +88,15 @@ function scannerFixture(t,{maxTransactions=1,txsPerBlock=6}={}){
   return {config,attempts,instantiate,advance:()=>{height+=3;}};
 }
 
-test('history, live blocks and retries all advance with one work unit per restart',async t=>{
+test('history, catch-up, recent blocks and retries all advance with one work unit per restart',async t=>{
   const f=scannerFixture(t);let scanner=f.instantiate();
+  scanner.state.historyCursor=4;scanner.state.tip=6;scanner.state.queue=[5,6];
   scanner.state.retries.push({txId:idFor('retry'),height:50,error:'unavailable_bundle',work:{}});scanner.save();
   for(let i=0;i<12;i++){scanner=f.instantiate();await scanner.pass();f.advance();}
-  assert.deepEqual(scanner.status().laneAttempts,{retry:4,history:4,live:4});
-  assert.equal(scanner.state.activeBlocks.history.position,4);
-  assert.equal(scanner.state.activeBlocks.live.position,4);
-  assert.equal(scanner.state.retries[0].work.visits,4);
+  assert.deepEqual(scanner.status().laneAttempts,{retry:3,history:3,live:3,recent:3});
+  assert.equal(scanner.state.activeBlocks.history.position,3);
+  assert.equal(scanner.state.activeBlocks.live.position,3);
+  assert.equal(scanner.state.retries[0].work.visits,3);
   assert.ok(scanner.status().queuedBlocks>0);
   assert.equal(scanner.status().allHistoryCovered,false);
 });
@@ -119,7 +120,7 @@ test('legacy active transaction, nested work and byte quota survive scheduler mi
   assert.equal(restored.state.historyCursor,99);assert.equal(restored.state.activeBlock,undefined);
 });
 
-test('a failing live block does not prevent history from advancing on the next pass',async t=>{
+test('a failing catch-up block cannot prevent recent and historical work',async t=>{
   const f=scannerFixture(t,{txsPerBlock:1});const scanner=f.instantiate();
   await scanner.pass();f.advance();const original=scanner.json;
   scanner.json=route=>route==='/block/height/101'?Promise.reject(new Error('live_block_unavailable')):original(route);
@@ -146,7 +147,7 @@ test('an unresponsive transaction cannot hold a block head; its retry survives r
   const config={locationsFile:path.join(dir,'locations'),peersFile:path.join(dir,'peers'),stateFile:path.join(dir,'state'),maxTransactions:3,transactionTimeoutMs:100};
   fs.writeFileSync(config.peersFile,JSON.stringify([peer]));
   const instantiate=()=>{const s=new RawLedgerDiscovery(config);s.peers=[peer];s.peersAt=Date.now();return s;};
-  const scanner=instantiate();await scanner.pass();
+  const scanner=instantiate();scanner.state.recentTip=10;await scanner.pass();
   assert.ok(seen.includes('/tx/'+healthy),'later transaction was reached despite the hanging first request');
   assert.equal(scanner.state.activeBlocks.history,null);
   assert.equal(scanner.state.retries.length,1);
@@ -155,4 +156,14 @@ test('an unresponsive transaction cannot hold a block head; its retry survives r
   assert.equal(scanner.state.blocksCompleted,0,'a block with a pending transaction is not complete');
   const resumed=instantiate();assert.equal(resumed.state.retries[0].txId,slow);
   recovered=true;await resumed.pass();assert.equal(resumed.state.retries.length,0);
+});
+
+test('an old catch-up queue cannot hide the current chain tip and survives restart',async t=>{
+ const f=scannerFixture(t,{maxTransactions:3,txsPerBlock:1}),scanner=f.instantiate();
+ scanner.state.historyCursor=4;scanner.state.tip=6;scanner.state.queue=[5,6];scanner.state.nextLane='history';
+ await scanner.pass();
+ assert.ok(f.attempts.some(x=>x.height===100),'current tip inspected without waiting for catch-up');
+ assert.ok(f.attempts.some(x=>x.height===4),'history still advances');
+ assert.ok(f.attempts.some(x=>x.height===5),'catch-up still advances');
+ const resumed=f.instantiate();assert.equal(resumed.state.queue[0],6);assert.ok(resumed.state.recentQueue.length>0);assert.equal(resumed.state.recentTip,100);
 });

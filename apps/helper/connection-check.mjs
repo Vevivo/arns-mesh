@@ -2,12 +2,12 @@ import {requestIpJson,rpcIp} from '../../src/ip-transport.mjs';
 import {parsePeerAddresses} from '../../src/direct-peer.mjs';
 
 // Reachability only: no content is fetched, and a reply is not an identity or
-// name-freshness proof. Only already configured literal-IP endpoints are probed.
+// name-freshness proof. Only configured or identity-checked learned literal-IP endpoints are probed.
 export async function checkConnections(profile,{signal,onResult=()=>{}}={}){
  const rows=[...profile.directPeers.map(address=>({kind:'Mesh peer',address})),
   ...profile.rpcSources.map(address=>({kind:'Solana RPC',address})),
   ...profile.arweavePeers.map(address=>({kind:'Raw Arweave',address}))];
- if(rows.length>40)throw new Error('Too many configured connections.');
+ if(rows.length>72)throw new Error('Too many configured connections.');
  let cursor=0;
  const results=new Array(rows.length);
  async function worker(){

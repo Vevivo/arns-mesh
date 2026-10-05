@@ -24,10 +24,10 @@ test('catalog refresh timeout leaves the content phase a live, separate deadline
  w.catalog.step=({signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
  await w.pass();assert.ok(contentRan);assert.equal(w.status().completed,1);assert.match(w.status().catalogError,/catalog_refresh_timeout/);
 });
-test('catalog byte-budget exhaustion reserves bytes for content and counts both phases',async t=>{
- const w=setup(t,{dailyBytes:1024,fetchContent:async()=>{accountBudgetBytes(200);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+test('name byte-budget exhaustion cannot consume the independent content quota',async t=>{
+ const w=setup(t,{dailyBytes:1024,nameDailyBytes:768,fetchContent:async()=>{accountBudgetBytes(200);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
  w.catalog.step=async()=>{accountBudgetBytes(778);};await w.pass();
- assert.equal(w.status().completed,1);assert.equal(w.status().dayResponseBytes,978);assert.match(w.status().catalogError,/catalog_network_budget/);
+ assert.equal(w.status().completed,1);assert.equal(w.status().dayResponseBytes,200);assert.equal(w.status().nameSync.dayResponseBytes,778);assert.match(w.status().catalogError,/catalog_network_budget/);
 });
 test('in-flight job is persisted before fetch and failed work survives restart',async t=>{
  let w;w=setup(t,{fetchContent:async()=>{const disk=JSON.parse(fs.readFileSync(w.file));assert.equal(disk.jobs[0].id,id);throw new Error('missing_location');}});
@@ -95,4 +95,49 @@ test('verified manifest graphs are no longer truncated at 1024 assets',async t=>
  const manifest={manifest:'arweave/paths',version:'0.1.0',paths:Object.fromEntries(children.map((id,n)=>[String(n),{id}]))};
  const w=setup(t,{fetchContent:async()=>({direct:{storedBytes:Buffer.from('x'),payload:Buffer.from(JSON.stringify(manifest)),tags:[{name:'Content-Type',value:'application/x.arweave-manifest+json'}]}})});
  await w.pass();assert.equal(w.status().queued,1200);assert.ok(w.queuedIds.has(children[1199]));
+});
+
+test('names keep refreshing after content quota exhaustion and both meters survive restart',async t=>{
+ const w=setup(t,{dailyBytes:1024,nameDailyBytes:2048});let scans=0;
+ w.state.day=new Date().toISOString().slice(0,10);w.state.bytes=1024;
+ w.catalog.step=async()=>{scans++;accountBudgetBytes(500);};await w.pass();
+ assert.equal(scans,1);assert.equal(w.status().completed,0);assert.equal(w.status().contentBudgetExhausted,true);
+ const next=new CatalogWorker({dataDir:path.dirname(w.file),peer:w.peer,endpoint:'http://127.0.0.1:1',client:{},dailyBytes:1024,nameDailyBytes:2048});
+ next.catalog.step=async()=>{scans++;accountBudgetBytes(500);};await next.pass();
+ assert.equal(scans,2);assert.equal(next.status().dayResponseBytes,1024);assert.equal(next.status().nameSync.dayResponseBytes,1000);assert.equal(next.status().queued,1);
+});
+test('full asset queue leaves live-demand slots and processes the requested item after restart',async t=>{
+ const w=setup(t,{maxJobs:256});for(let i=0;i<255;i++)w.enqueue(numbered(i));
+ w.catalog.state.targets=Object.fromEntries(Array.from({length:400},(_,n)=>['name'+n,{dataId:numbered(n+1000)}]));
+ w.prioritizeRoots();assert.equal(w.state.priorityJobs.length,192);
+ const requested=numbered('request');assert.equal(w.enqueueDemand(requested),true);assert.equal(w.enqueueDemand(requested),false);
+ const fetched=[];const next=new CatalogWorker({dataDir:path.dirname(w.file),peer:w.peer,endpoint:'http://127.0.0.1:1',client:{},maxJobs:256,fetchContent:async id=>{fetched.push(id);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+ next.catalog.step=async()=>{};await next.pass();assert.deepEqual(fetched,[requested]);assert.equal(next.state.jobs.length,256);
+ for(let i=0;i<70;i++)next.enqueueDemand(numbered('request'+i));assert.equal(next.state.priorityJobs.filter(j=>j.demand).length,64);
+});
+test('demand during a fetch cannot move the in-flight job or drop another item',async t=>{
+ let w;w=setup(t,{fetchContent:async requested=>{assert.equal(w.enqueueDemand(requested),false);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+ const other=numbered('other');w.enqueue(other);await w.pass();assert.deepEqual(w.state.jobs.map(j=>j.id),[other]);
+});
+test('new catalog roots advance alongside a full asset backlog',async t=>{
+ const fetched=[];const w=setup(t,{maxJobs:256,jobsPerPass:2,fetchContent:async id=>{fetched.push(id);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+ for(let i=0;i<255;i++)w.enqueue(numbered(i));const root=numbered('new-root');w.catalog.state.targets={newname:{dataId:root}};
+ await w.pass();assert.deepEqual(fetched,[root,id]);assert.equal(w.status().completed,2);
+});
+test('promoting a failed background root preserves its retry backoff',t=>{
+ const w=setup(t);w.catalog.state.targets={example:{dataId:id}};w.state.jobs[0].after=Date.now()+60000;w.state.jobs[0].attempt=4;
+ w.prioritizeRoots();assert.equal(w.enqueueDemand(id),true);
+ assert.equal(w.state.priorityJobs[0].demand,true);assert.equal(w.state.priorityJobs[0].attempt,4);assert.ok(w.state.priorityJobs[0].after>Date.now());
+});
+
+test('continuous name observations advance while a content request remains blocked',async t=>{
+ let release,entered;const waiting=new Promise(r=>entered=r);
+ const w=setup(t,{independentNames:true,fetchContent:async()=>{entered();await new Promise(r=>release=r);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+ const content=w.pass();await waiting;let calls=0;
+ w.catalog.step=async()=>{calls++;accountBudgetBytes(41);w.catalog.state.targets['new'+calls]={dataId:numbered(calls),observedAt:Date.now()};};
+ await w.refreshNames();await w.refreshNames();
+ assert.equal(calls,2);assert.equal(w.status().nameSync.dayResponseBytes,82);assert.ok(w.state.priorityJobs.some(j=>j.id===numbered(2)));
+ release();await content;
+ const resumed=new CatalogWorker({dataDir:path.dirname(w.file),peer:w.peer,endpoint:'http://127.0.0.1:1',client:{}});
+ assert.equal(resumed.status().nameSync.dayResponseBytes,82);assert.equal(resumed.status().completed,1);
 });

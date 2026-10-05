@@ -1,0 +1,1132 @@
+{
+  "schema": "arns-mesh-upstream-outage/v1",
+  "at": "2026-10-05T22:24:47.213Z",
+  "runtimeVersion": "0.5.0",
+  "interfaces": [
+    "lo"
+  ],
+  "samePhysicalHost": true,
+  "originalPublisherSignaturesPreserved": true,
+  "providerRemoteFetch": false,
+  "readerInitiallyEmpty": true,
+  "controls": [
+    {
+      "kind": "local-mesh",
+      "ok": true
+    },
+    {
+      "kind": "solana-rpc",
+      "ok": false,
+      "error": "ENETUNREACH"
+    },
+    {
+      "kind": "arweave",
+      "ok": false,
+      "error": "ENETUNREACH"
+    },
+    {
+      "kind": "arweave",
+      "ok": false,
+      "error": "ENETUNREACH"
+    },
+    {
+      "kind": "dns-tcp",
+      "ok": false,
+      "error": "ENETUNREACH"
+    },
+    {
+      "kind": "external-https",
+      "ok": false,
+      "error": "ENETUNREACH"
+    }
+  ],
+  "samples": [
+    {
+      "name": "vevivo",
+      "preparedStatus": "document-saved",
+      "scope": "document",
+      "expectedFiles": 1,
+      "resources": [
+        {
+          "id": "HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk",
+          "verified": true,
+          "bytes": 28390
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 28390,
+      "sha256": "2f448209ce7a6955035b081d8e51b13c166eb16abb621f2488fcc7011cfc863c",
+      "dataId": "HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T22:09:37.106Z",
+      "preparedResourcesVerified": 1,
+      "completePreparedSet": true,
+      "elapsedMs": 1095
+    },
+    {
+      "name": "bilolbabagate",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:26.128Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 919
+    },
+    {
+      "name": "binance",
+      "preparedStatus": "document-saved",
+      "scope": "document",
+      "expectedFiles": 1,
+      "resources": [
+        {
+          "id": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+          "verified": true,
+          "bytes": 7670
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7670,
+      "sha256": "15f7c82866c368e6f3eb66df991b58aa4f41da96e9644cbc17a4f8cbbc3978d2",
+      "dataId": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:27.387Z",
+      "preparedResourcesVerified": 1,
+      "completePreparedSet": true,
+      "elapsedMs": 300
+    },
+    {
+      "name": "bingbangboomshackalakwallawallabingbang",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:27.977Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 320
+    },
+    {
+      "name": "bingbangboomshakalawallawallabingbang",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:29.132Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 178
+    },
+    {
+      "name": "biomathematics",
+      "preparedStatus": "document-saved",
+      "scope": "document",
+      "expectedFiles": 1,
+      "resources": [
+        {
+          "id": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+          "verified": true,
+          "bytes": 7670
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7670,
+      "sha256": "15f7c82866c368e6f3eb66df991b58aa4f41da96e9644cbc17a4f8cbbc3978d2",
+      "dataId": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:29.774Z",
+      "preparedResourcesVerified": 1,
+      "completePreparedSet": true,
+      "elapsedMs": 17
+    },
+    {
+      "name": "bionica4_bionica",
+      "preparedStatus": "document-saved",
+      "scope": "document",
+      "expectedFiles": 1,
+      "resources": [
+        {
+          "id": "JH8TGW8NYlG_-VCWvXbZWM07X_dNx6j908dZQ3xkUqo",
+          "verified": true,
+          "bytes": 277397
+        }
+      ],
+      "opened": true,
+      "contentType": "image/jpeg",
+      "bytes": 277397,
+      "sha256": "dcff83375b19f8ce2585b4f4eb95ed179305ac57a26e95426802ecc929be64e0",
+      "dataId": "JH8TGW8NYlG_-VCWvXbZWM07X_dNx6j908dZQ3xkUqo",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:30.296Z",
+      "preparedResourcesVerified": 1,
+      "completePreparedSet": true,
+      "elapsedMs": 203
+    },
+    {
+      "name": "bionica",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:30.300Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 194
+    },
+    {
+      "name": "about_bit4096",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:33.573Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 113
+    },
+    {
+      "name": "bit4096",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:33.581Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 183
+    },
+    {
+      "name": "bitcoiner",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 5,
+      "resources": [
+        {
+          "id": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+          "verified": true,
+          "bytes": 7628
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "dYuIOAQ-ON40ICTXhwgnuaZty1Yulb9ZPgrJ6_WH6Mw",
+          "verified": true,
+          "bytes": 5064418
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7628,
+      "sha256": "dd692143d3c8cad3d9058445209a196286aa51400d7e35dd33136a80abb2a567",
+      "dataId": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:34.708Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": false,
+      "elapsedMs": 3620
+    },
+    {
+      "name": "bitcoiners",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 5,
+      "resources": [
+        {
+          "id": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+          "verified": true,
+          "bytes": 7628
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "dYuIOAQ-ON40ICTXhwgnuaZty1Yulb9ZPgrJ6_WH6Mw",
+          "verified": true,
+          "bytes": 5064418
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7628,
+      "sha256": "dd692143d3c8cad3d9058445209a196286aa51400d7e35dd33136a80abb2a567",
+      "dataId": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:35.647Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": false,
+      "elapsedMs": 613
+    },
+    {
+      "name": "bitget",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 5,
+      "resources": [
+        {
+          "id": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+          "verified": true,
+          "bytes": 7628
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "dYuIOAQ-ON40ICTXhwgnuaZty1Yulb9ZPgrJ6_WH6Mw",
+          "verified": true,
+          "bytes": 5064418
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7628,
+      "sha256": "dd692143d3c8cad3d9058445209a196286aa51400d7e35dd33136a80abb2a567",
+      "dataId": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:38.652Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": false,
+      "elapsedMs": 309
+    },
+    {
+      "name": "bitnet-barter",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 7,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 598
+    },
+    {
+      "name": "bitnet-barter-machine",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 7,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 158
+    },
+    {
+      "name": "bitnetbarter",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 7,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 206
+    },
+    {
+      "name": "bitnetbartermachine",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 7,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 174
+    },
+    {
+      "name": "bitquest",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:42.802Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 112
+    },
+    {
+      "name": "bitscape",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:43.270Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 125
+    },
+    {
+      "name": "bitshiftmod",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:43.712Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 178
+    },
+    {
+      "name": "bittensor",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 5,
+      "resources": [
+        {
+          "id": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+          "verified": true,
+          "bytes": 7628
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "dYuIOAQ-ON40ICTXhwgnuaZty1Yulb9ZPgrJ6_WH6Mw",
+          "verified": true,
+          "bytes": 5064418
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7628,
+      "sha256": "dd692143d3c8cad3d9058445209a196286aa51400d7e35dd33136a80abb2a567",
+      "dataId": "oork_YifB3-JQQZg8EgMPQJytua_QCHKNmMqt5kmnCo",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:44.732Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": false,
+      "elapsedMs": 303
+    },
+    {
+      "name": "bizarhasani2025",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:45.323Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 394
+    },
+    {
+      "name": "upcvm_black-intelligence",
+      "preparedStatus": "partial",
+      "scope": "linked-arweave",
+      "expectedFiles": 5,
+      "resources": [
+        {
+          "id": "fdHHWvv-rVplgmMNxJ-JxyEAFmObQvKQGHn0fi3v9Ks",
+          "verified": true,
+          "bytes": 7638
+        },
+        {
+          "id": "AnYvLJTWcG9lr2Ll5MwYWZR2o5uTE39WbpYB0zCxwKM",
+          "verified": true,
+          "bytes": 10808
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "dYuIOAQ-ON40ICTXhwgnuaZty1Yulb9ZPgrJ6_WH6Mw",
+          "verified": true,
+          "bytes": 5064418
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7638,
+      "sha256": "10b2e9be325981c6302e91f5b584684fdddb60ecb4efbbeafb0ec5ca58f9eb86",
+      "dataId": "fdHHWvv-rVplgmMNxJ-JxyEAFmObQvKQGHn0fi3v9Ks",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:30:45.904Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": false,
+      "elapsedMs": 411
+    },
+    {
+      "name": "blackcatneedsleep",
+      "preparedStatus": "partial",
+      "scope": "manifest",
+      "expectedFiles": 5,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 507
+    },
+    {
+      "name": "blackrain",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:47.981Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 177
+    },
+    {
+      "name": "blackrock",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:30:48.492Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 131
+    },
+    {
+      "name": "blntbytk197519751975",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+          "verified": true,
+          "bytes": 4233
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4233,
+      "sha256": "75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00",
+      "dataId": "UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:50.434Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 93
+    },
+    {
+      "name": "blocedge",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:52.086Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 107
+    },
+    {
+      "name": "blockalchemy",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:53.147Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 157
+    },
+    {
+      "name": "blockbank",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:53.763Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 193
+    },
+    {
+      "name": "blockbooster",
+      "preparedStatus": "linked-resources-saved",
+      "scope": "linked-arweave",
+      "expectedFiles": 4,
+      "resources": [
+        {
+          "id": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+          "verified": true,
+          "bytes": 4905
+        },
+        {
+          "id": "DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs",
+          "verified": true,
+          "bytes": 2885
+        },
+        {
+          "id": "RjXXBjP2GCZZUg4gSW1Hyr9GtLG-o59QCHrKiITtpQw",
+          "verified": true,
+          "bytes": 367792
+        },
+        {
+          "id": "0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc",
+          "verified": true,
+          "bytes": 564175
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 4905,
+      "sha256": "208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d",
+      "dataId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:54.641Z",
+      "preparedResourcesVerified": 4,
+      "completePreparedSet": true,
+      "elapsedMs": 107
+    },
+    {
+      "name": "blockchain",
+      "preparedStatus": "document-saved",
+      "scope": "document",
+      "expectedFiles": 1,
+      "resources": [
+        {
+          "id": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+          "verified": true,
+          "bytes": 7670
+        }
+      ],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 7670,
+      "sha256": "15f7c82866c368e6f3eb66df991b58aa4f41da96e9644cbc17a4f8cbbc3978d2",
+      "dataId": "T9_V2HfiAq5qlLzObfyayj2-cjPujxpg25TRi4OZbe4",
+      "recovery": "rpc-unavailable",
+      "contentSource": "local",
+      "nameObservedAt": "2026-10-05T21:31:55.177Z",
+      "preparedResourcesVerified": 1,
+      "completePreparedSet": true,
+      "elapsedMs": 14
+    },
+    {
+      "name": "iainball",
+      "preparedStatus": "not-prepared",
+      "scope": "root-only",
+      "expectedFiles": 1,
+      "resources": [],
+      "opened": false,
+      "error": "current_name_state_unavailable: Error: no_state_evidence:[{\"ok\":false,\"endpoint\":\"http://[network-address]:8899\",\"error\":\"connect ENETUNREACH [network-address]:8899 - Local ([network-address]:0)\",\"unavailable\":true}]",
+      "elapsedMs": 210
+    },
+    {
+      "name": "toon_boughtviatoonnode",
+      "preparedStatus": "not-prepared",
+      "scope": "root-only",
+      "expectedFiles": 1,
+      "resources": [],
+      "opened": true,
+      "contentType": "text/html",
+      "bytes": 34268,
+      "sha256": "288783f3bb0a20d2d33ca16e6db111a9ab2245413c8a8a7b848841587d9c93ce",
+      "dataId": "rAEvwshqhL-oWbcnqfY6iwimpcLbZW-N14FMAsy577o",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:32:12.422Z",
+      "preparedResourcesVerified": 0,
+      "completePreparedSet": false,
+      "elapsedMs": 168
+    },
+    {
+      "name": "ardrive-logo-2026",
+      "preparedStatus": "not-prepared",
+      "scope": "root-only",
+      "expectedFiles": 1,
+      "resources": [],
+      "opened": true,
+      "contentType": "image/png",
+      "bytes": 30202,
+      "sha256": "571043ccfdf9911ff44b02b2f210e276c96b04232c14b3437c9aaa700298e04c",
+      "dataId": "u6QLHxUOV3uncbdZM20ChM393lziN2AEgeDptEwPoso",
+      "recovery": "rpc-unavailable",
+      "contentSource": "mesh",
+      "nameObservedAt": "2026-10-05T21:12:36.373Z",
+      "preparedResourcesVerified": 0,
+      "completePreparedSet": false,
+      "elapsedMs": 121
+    }
+  ],
+  "limits": [
+    "OS network namespace on one Linux host; not independent-provider failover",
+    "Content and name records were retained before isolation",
+    "This run verifies the desktop access engine and stored resources; GUI rendering is tested separately"
+  ],
+  "requests": 264,
+  "summary": {
+    "names": 35,
+    "opened": 29,
+    "completePreparedSets": 22,
+    "distinctMainObjects": 9
+  },
+  "passed": true
+}

@@ -1,6 +1,6 @@
-# Dayanıklı erişim — preview.12 kaynak adayı
+# Dayanıklı erişim — Mesh 0.5.0
 
-Bu sayfa **preview.12 adayını** anlatır; `main` üzerindeki yayımlanmış preview.8 kodunu değil. [Test edilen aday kaynak](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
+Bu sayfa güncel Mesh 0.5.0 sürümünü anlatır.
 Proje sahibi ilk hizmet sağlayıcısıdır: sunucuyu, depolama bütçesini, ağ kimliğini ve hizmet kapsamını yönetir. Normal kullanıcı masaüstünü indirip site açar. Destekçi isterse ayrı bir peer çalıştırıp veri kopyaları tutar. Geliştirici kod yazar; sunucu çalıştırması şart değildir. Masaüstünü iki bilgisayara kurmak, kendiliğinden iki veri sunucusu oluşturmaz.
 
 | Çalışan kaynaklar | Mesh'in kullanacağı yol |
@@ -14,7 +14,7 @@ Her durumda Mesh peer'lerine ulaşan IP bağlantısı gerekir. Kopyası olmayan 
 
 Yeni kod, bağlantı sorunu olduğunda uygun kayıtlı sürüme otomatik geçer. Yeni hedefin dosyaları tamamlanmadıysa önceki hazırlanmış sürüm korunur. Yeni sürüm ayrı hazırlanır; gerekli bulunan dosyalar tamamlanmadan eskisinin yerini almaz. Sayfanın alt kaynakları da aynı tarihli isim eşleşmesini kullanır. İmza/isim yetkisi hataları güncel doğrulama başarılıymış gibi gösterilmez.
 
-Sağlayıcı, ağ kodunun imzalayan anahtarıyla hangi peer kimliklerinin tarihli isim kayıtlarına güvenileceğini bildirebilir. Kullanıcı dosya/anahtar taşımaz; ağın bağlantı bilgileriyle birlikte bu açık kimlikleri alır. Gizli anahtar paylaşılmaz. Preview.8'in bağlantı listesini okuyabilmesi korunur; yeni kurtarma bilgisi yeni sürüm içindir.
+Sağlayıcı, ağ kodunun imzalayan anahtarıyla hangi peer kimliklerinin tarihli isim kayıtlarına güvenileceğini bildirebilir. Kullanıcı dosya/anahtar taşımaz; ağın bağlantı bilgileriyle birlikte bu açık kimlikleri alır. Gizli anahtar paylaşılmaz.
 
 Sunucu güncel isimleri izleyip tarihli kayıtlar ve sınırlı sayıda hazırlanmış site tutabilir. Registry listesi yaklaşık 15 dakikada yenilenmeye çalışılır; hedefler her turda sekiz isim grubuyla artımlı taranır. Tüm tarama saatler sürebilir; kota ve hatalar süreyi uzatır. Bir isim değiştiği anda yakalama veya bütün ArNS sitelerini saklama garantisi yoktur. Otomatik hazırlık varsayılan olarak kapalıdır; sağlayıcı açar ve kotasını belirler. Bu çalışma bütün CDB64 indeksini indirmez.
 

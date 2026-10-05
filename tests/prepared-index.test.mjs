@@ -6,6 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import http from 'node:http';
 import {signDataItem} from '@ardrive/turbo-upload';
+import {OnlineLocationPreparer} from '../src/online-location-preparation.mjs';
 import {LocationIndex} from '../src/location-index.mjs';
 import {fetchMeshContent} from '../src/content-fetcher.mjs';
 const snapshot=rows=>({schema:'wayfinder-prepared-locations/v1',preparedAt:'2026-09-23T10:00:00Z',origin:{kind:'external-index-preparation',provider:'https://arweave.net/graphql'},rows});
@@ -23,7 +24,7 @@ test('prepared hints retain external provenance and invalid replacement is never
  fs.writeFileSync(preparedFile,'{broken');assert.equal(index.get(id),null);
 });
 
-for(const nested of [false,true])test(`prepared ${nested?'nested':'flat'} manifest derives only its own child locations and verifies their bytes`,async t=>{
+for(const [nested,late] of [[false,false],[true,false],[false,true]])test(`prepared ${late?'late automatic':nested?'nested':'flat'} manifest derives only its own child locations and verifies their bytes`,async t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prepared-nested-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const key=crypto.generateKeyPairSync('rsa',{modulusLength:4096}).privateKey.export({format:'jwk'});
  const html=signDataItem(key,{data:Buffer.from('signed HTML child'),tags:[{name:'Content-Type',value:'text/html'}]});
@@ -47,19 +48,25 @@ for(const nested of [false,true])test(`prepared ${nested?'nested':'flat'} manife
  const seeds=path.join(dir,'seeds.json'),prepared=path.join(dir,'prepared.json'),local=path.join(dir,'local.json');
  fs.writeFileSync(seeds,JSON.stringify([{host:'127.0.0.1',port:server.address().port}]));
  fs.writeFileSync(prepared,JSON.stringify(snapshot({[leaf.idB64Url]:{rootTxId:root,path:nested?[parent.idB64Url]:[]}})));
- const env={ARWEAVE_PEERS:seeds,ARWEAVE_PEER_SEEDS:seeds,ARNS_PREPARED_LOCATIONS:prepared,ARNS_HISTORICAL_INDEX:'0'};
+ const inbox=path.join(dir,'location-preparation-inbox');
+ if(late)fs.rmSync(prepared);
+ const env={...(late?{ARNS_PREPARATION_INBOX:inbox}:{}),ARWEAVE_PEERS:seeds,ARWEAVE_PEER_SEEDS:seeds,ARNS_PREPARED_LOCATIONS:prepared,ARNS_HISTORICAL_INDEX:'0'};
  const old=Object.fromEntries(Object.keys(env).map(k=>[k,process.env[k]]));Object.assign(process.env,env);
  t.after(()=>{for(const [k,v] of Object.entries(old))if(v===undefined)delete process.env[k];else process.env[k]=v;});
  const client={content:async()=>{throw new Error('empty_peer');},locateCandidates:async()=>[]};
+ let preparation;
+ if(late){const w=new OnlineLocationPreparer({dataDir:dir,query:async(_o,ids)=>new Map(ids.map(id=>[id,id===leaf.idB64Url?root:null]))});w.file=prepared;preparation=setInterval(()=>void w.pass(),50);t.after(()=>clearInterval(preparation));}
  const result=await fetchMeshContent(leaf.idB64Url,{client,locationsFile:local,signal:AbortSignal.timeout(5000)});
  assert.deepEqual(JSON.parse(result.direct.payload),manifest);assert.equal(result.loc.record.preparation.kind,'external-index-preparation');
- const saved=new LocationIndex(local,{preparedFile:undefined});assert.equal(saved.get(leaf.idB64Url).itemSize,leaf.binary.length);assert.equal(saved.get(leaf.idB64Url).preparation.provider,'arweave-graphql');
+ assert.equal(result.contentSource,'arweave');
+ const saved=new LocationIndex(local,{preparedFile:undefined});assert.equal(saved.get(leaf.idB64Url).itemSize,leaf.binary.length);assert.equal(saved.get(leaf.idB64Url).preparation.provider,late?'turbo-graphql':'arweave-graphql');
  assert.ok(saved.get(html.idB64Url));assert.equal(saved.get(unrelated.idB64Url),null);
  assert.ok(Number.isSafeInteger(saved.get(html.idB64Url).weaveOffset));
  metadataAvailable=false;const beforeChild=offsetRequests;
+ if(preparation)clearInterval(preparation);
  fs.rmSync(prepared); // Child location was generated from raw bundle headers.
  const child=await fetchMeshContent(html.idB64Url,{client,locationsFile:local,signal:AbortSignal.timeout(5000)});
  assert.equal(child.direct.payload.toString(),'signed HTML child');assert.equal(child.loc.record.preparation.kind,'external-index-preparation');
- assert.equal(unrelatedL1Requests,0,'a successful known bundle hint must cancel delayed L1 probes');
+ if(!late)assert.equal(unrelatedL1Requests,0,'a successful known bundle hint must cancel delayed L1 probes');else assert.ok(unrelatedL1Requests<=1,'a fresh unknown item may also try its direct L1 transaction');
  assert.equal(offsetRequests,beforeChild,'child access survives loss of the transaction-metadata peer');
 });

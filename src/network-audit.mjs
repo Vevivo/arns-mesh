@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {AsyncLocalStorage} from 'node:async_hooks';
 const scope=new AsyncLocalStorage();
+const observers=new Set();
+export function observeNetworkAudit(fn){observers.add(fn);return ()=>observers.delete(fn);}
 let serial=0,file=null,events=[];
 const totals={requests:0,completed:0,receivedBytes:0,blocked:0,dnsBlocked:0};
 export function configureNetworkAudit(directory){fs.mkdirSync(directory,{recursive:true});file=path.join(directory,'network-audit.jsonl');}
@@ -12,6 +14,7 @@ export function recordNetwork(event){
  if(row.type==='response')totals.completed++;
  if(row.type==='response'||row.type==='request-error')totals.receivedBytes+=row.bytes||0;
  if(row.type==='blocked'){totals.blocked++;if(row.reason==='dns_forbidden')totals.dnsBlocked++;}
+ for(const fn of observers)try{fn(row);}catch{/* Monitoring cannot interrupt transport. */}
  events.push(row);if(events.length>1000)events.shift();
  if(file)try{if(fs.existsSync(file)&&fs.statSync(file).size>4*1024*1024){fs.rmSync(file+'.previous',{force:true});fs.renameSync(file,file+'.previous');}fs.appendFileSync(file,JSON.stringify(row)+'\n',{mode:0o600});}catch{}
  return row.id;

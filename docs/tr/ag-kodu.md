@@ -2,7 +2,7 @@
 
 [Ana sayfa](../../README.tr.md) · [VPS / Pi kurulumu](destekci.md) · [English](../en/network-code.md)
 
-Bu yol **preview.8 ve üzerindeki** masaüstü ve peer içindir. Eski peer'ler içerik sunmaya devam edebilir; bağlantı listesi yayımlamak için güncellenmeleri gerekir. Yazılım güncellemesi çalışan sunucunu kendiliğinden değiştirmez.
+Masaüstü ve destekçi için **Mesh 0.5.0** kullanın. Masaüstünü güncellemek sunucudaki kurulumu değiştirmez.
 
 ## Hangisine ihtiyacım var?
 
@@ -12,7 +12,7 @@ Bu yol **preview.8 ve üzerindeki** masaüstü ve peer içindir. Eski peer'ler i
 | Ağ daveti (`mesh1.…`) | Ağa katılmak için açık ağ anahtarı ve başlangıç adresleri |
 | Bağlantı profili (`mesh-connect.json`) | Eski/elle kullanılan kaynak ayarı; site dosyası değildir |
 
-**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılırsınız. Preview.13 erişilebilir içerik adresini otomatik duyurur; yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. [İşleyiş ve sınırlar](paylasilan-ag.md).
+**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılırsınız. 0.5.0 erişilebilir içerik adresini otomatik duyurur; yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. [İşleyiş ve sınırlar](paylasilan-ag.md).
 
 Aşağıdaki bölümler bugünkü bağlantı mekanizmasını ve gelişmiş sağlayıcı işlemlerini anlatır. Hedef üründe kod gelişmiş/kurtarma yolu olarak kalabilir; normal kullanıcı hazırlanmış bağlantılı indirmeyle başlayacaktır. Bugünkü standart ZIP'lerde bağlantı ayarı hâlâ gerekir.
 
@@ -64,7 +64,7 @@ bash scripts/install-peer.sh --network 'SAGLAYICIDAN_ALDIGIM_MESH1_KODU'
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Tırnak içindeki örneği gerçek kodun tamamıyla değiştir. Sunucu bu ağın kaynak listesini edinir ve güncel tutar. Preview.13'te erişilebilir içerik adresini otomatik duyurur; yeni sürüm peer ve okuyucular bunu öğrenir. İmzalı yetkili listesi değişmez, isim yetkisi verilmez. Eski sürümler için yönetici adresi listeye ekleyip `publish` ile yeniden yayımlar. [Yeni davranış ve sınırlar](paylasilan-ag.md).
+Tırnak içindeki örneği gerçek kodun tamamıyla değiştir. Sunucu bu ağın kaynak listesini edinir ve güncel tutar. 0.5.0'te erişilebilir içerik adresini otomatik duyurur; yeni sürüm peer ve okuyucular bunu öğrenir. İmzalı yetkili listesi değişmez, isim yetkisi verilmez. Eski sürümler için yönetici adresi listeye ekleyip `publish` ile yeniden yayımlar. [Yeni davranış ve sınırlar](paylasilan-ag.md).
 
 Güncelleme kurulumu mevcut kaynak ayarlarını korur. Mevcut sunucuyu bilinçli olarak başka ağa geçirmek için peer'i durdur, veriyi yedekle, ardından `node scripts/network.mjs join 'GERCEK_KOD' --data VERI_DIZINI` çalıştır ve yeniden başlat. Bu komut kaynağı değiştirir; masaüstündeki gibi ikinci bir onay ekranı göstermez.
 
@@ -84,7 +84,7 @@ Liste kopyalamak site dosyalarını kopyalamaz. İçerik/katalog çoğaltması a
 
 Kullanıcı listesi değişince aynı veri diziniyle `publish` komutunu yeniden çalıştır. Anahtar korunur, sürüm numarası artar. Kodda anahtar ve başlangıç adresleri aynıysa kod da aynı kalır. Başlangıç adreslerini değiştirirsen ilk kurulumlar için yeni kod dağıt; bütün eski başlangıç adresleri erişilemezken yeni kullanıcı kendiliğinden ilk kaynağı bulamaz.
 
-Masaüstü Saved dışında (preview.8 Live, adayda Automatic) açılışta ve yaklaşık 15 dakikada bir güncelleme arar. İmzası değiştirilmiş, süresi geçmiş, eski sürümlü veya aynı sürümde çelişen listeleri kabul etmez. Kaynaklara erişemediğinde son kabul ettiği adresleri silmez. **Saved** modunda liste sorgusu yapmaz. Tam kayıtlı dosyalar yerelden açılabilir; adayda eksik içerik Mesh/ham kaynaklardan istenebilir. Bu bütün ağı kapatma modu değildir.
+Masaüstü Automatic modunda açılışta ve yaklaşık 15 dakikada bir güncelleme arar. İmzası değiştirilmiş, süresi geçmiş, eski sürümlü veya aynı sürümde çelişen listeleri kabul etmez. Kaynaklara erişemediğinde son kabul ettiği adresleri silmez. **Saved** modunda liste sorgusu yapmaz. Tam kayıtlı dosyalar yerelden açılabilir; adayda eksik içerik Mesh/ham kaynaklardan istenebilir. Bu bütün ağı kapatma modu değildir.
 
 Bir yayın varsayılan 14 gün geçerlidir. Yetkili anahtarın bulunduğu çalışan peer, başlangıçta ve altı saatte bir kontrol eder; üç gün veya daha az kalınca listeyi yeniler. Mirror tek başına süreyi uzatamaz. Süre dolması önceden kaydedilmiş adresleri veya dosyaları silmez; yeni katılım ve yeni liste kabulü için geçerli yayın gerekir. Bu **abonelik süresi değildir**.
 

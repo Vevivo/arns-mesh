@@ -1,0 +1,41 @@
+{
+  "version": "0.5.0-preview.8",
+  "date": "2026-09-25",
+  "testedApplicationCommit": "8eb51685e4aef02b2eba1e42bedbdba8dbc370ce",
+  "nodeTests": {
+    "passed": 144,
+    "failed": 0,
+    "platforms": [
+      "Linux",
+      "Windows"
+    ],
+    "node": "24.19.0"
+  },
+  "windowsUI": {
+    "run": "https://github.com/Vevivo/arns-mesh/actions/runs/36108198567",
+    "passed": true,
+    "checks": [
+      "invalid-code",
+      "review-and-join",
+      "cached-peer-after-process-loss",
+      "live-vevivo",
+      "saved-open-no-requests",
+      "saved-restart-no-requests",
+      "included-invitation-auto-join"
+    ],
+    "directoryPeers": "controlled same-host separate processes",
+    "liveSources": "existing approved operator sources retained",
+    "packetCapture": false
+  },
+  "installer": "Profile install/update and code join/update in isolated directories; npm dependency-install double, actual locked install separate in CI",
+  "pending": [
+    "independent physical-host content failover",
+    "Raspberry Pi hardware",
+    "general unknown-location coverage",
+    "full OS egress capture",
+    "production operator rollout"
+  ],
+  "paidLicensing": false,
+  "desktopContentServing": false,
+  "evidence": "../network-join.md"
+}

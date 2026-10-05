@@ -1,6 +1,6 @@
 # Bağlantılar ve destekçi keşfi
 
-Preview.8 için [bağlantı kodu ve otomatik güncellenen ağ listesi](ag-kodu.md) daha kolay kurulum sağlar. Bu sayfa işletmecilerin ve eski kullanıcıların kullanabildiği JSON biçimini açıklar.
+Mesh 0.5.0 içinde [bağlantı kodu ve otomatik güncellenen ağ listesi](ag-kodu.md) daha kolay kurulum sağlar. Bu sayfa işletmecilerin ve eski kullanıcıların kullanabildiği JSON biçimini açıklar.
 
 ## Şu anki masaüstü
 
@@ -35,7 +35,7 @@ Dosya adı serbesttir; bu rehberlerde kullanıcının aldığı dosya `mesh-conn
 | `rpcSources` | Canlı ArNS/ANT gözlemlerinde kullanılan, IP üzerinden HTTP ile uyumlu Solana JSON-RPC. İşletmecisinden kullanımına izin verilen adres al veya bu servisi ayrıca kurup yönet. Mesh peer kurmak RPC oluşturmaz. |
 | `arweavePeers` | Ham veri/başlık ve konum keşfi sunan isteğe bağlı gerçek Arweave HTTP düğümleri. IP ve portu düğüm işletmecisinden al; buradaki 1984 yalnız örnektir. Mesh ile ham düğüm API’si farklıdır. |
 
-En az bir RPC ve en az bir Mesh **veya** ham Arweave kaynağı gerekir. Yalnız peer’lerden kopyalayan yapı ham düğüm olmadan çalışabilir; preview.7’de gösterilen ham keşif için çalışan ham kaynak gerekir. Sınırlar: 16 Mesh, 8 RPC, 16 ham adres ve 8 KiB profil dosyası. IPv4 `IP:port` ve köşeli parantezli IPv6 `[adres]:port` kabul edilir; domain, URL, yol, parola veya API anahtarı parametresi kabul edilmez. Biçimin kabul edilmesi uçtan uca IPv6 kurulumunun denendiği anlamına gelmez.
+En az bir RPC ve en az bir Mesh **veya** ham Arweave kaynağı gerekir. Yalnız peer’lerden kopyalayan yapı ham düğüm olmadan çalışabilir; ham içerik keşfi için çalışan ham kaynak gerekir. Sınırlar: 16 Mesh, 8 RPC, 16 ham adres ve 8 KiB profil dosyası. IPv4 `IP:port` ve köşeli parantezli IPv6 `[adres]:port` kabul edilir; domain, URL, yol, parola veya API anahtarı parametresi kabul edilmez. Biçimin kabul edilmesi uçtan uca IPv6 kurulumunun denendiği anlamına gelmez.
 
 Bir sağlayıcının domainini rastgele IP ile değiştirince TLS/API anahtarlı hizmetinin çalışacağını varsayma; bu taşıma biçimine uygun adres iste. Mesh portunu üç alana da yazma: her alan kendi servisini gerektirir. Kullanıcılara dağıtılacak dosyada `0.0.0.0` veya `127.0.0.1` yerine dışarıdan erişilebilir hedef bulunmalı. Yerel ağ adresi yalnız o ağa erişebilen kullanıcılar içindir.
 

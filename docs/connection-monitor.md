@@ -1,6 +1,6 @@
-# Desktop connection monitor — preview.12 candidate
+# Desktop connection monitor — Mesh 0.5.0
 
-This describes the **preview.12 candidate**, not the published preview.8 runtime on `main`. [Tested candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
+This page describes Mesh 0.5.0.
 The strip below the address bar shows Mesh, Solana RPC and raw Arweave separately. Click **Network monitor** to see the source cards, current page origin, session traffic and recent observations. Existing DNS, gateway and renderer restrictions still apply.
 
 - **Responding** means a recent HTTP reply or successful protocol check was observed from this device. It does not prove that a particular site is available. Expand the details to distinguish HTTP replies from validated protocol checks.
@@ -16,4 +16,4 @@ The strip below the address bar shows Mesh, Solana RPC and raw Arweave separatel
 
 ## Acceptance scope
 
-Source tests cover state expiry, cancellation, bounds, configuration replacement and preservation of the content-origin route. The Windows workflow extracts the actual candidate ZIP, runs its Electron executable and exercises controlled loopback Mesh/RPC/raw fixtures, independent upstream stops, Saved restart, zero HTTP requests for the complete saved page, direct navigation and topic search. Its screenshots are real app captures with synthetic test content, not public-network or OS-firewall outage evidence. Physical two-PC and independent-host failover tests remain pending.
+Source tests cover state expiry, cancellation, bounds, configuration replacement and preservation of the content-origin route. The Windows workflow extracts the actual release ZIP, runs its Electron executable and exercises controlled loopback Mesh/RPC/raw fixtures, independent upstream stops, Saved restart, zero HTTP requests for the complete saved page, direct navigation and topic search. Its screenshots are real app captures with synthetic test content, not public-network or OS-firewall outage evidence. Physical two-PC and independent-host failover tests remain pending.

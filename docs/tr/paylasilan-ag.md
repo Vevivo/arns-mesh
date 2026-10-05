@@ -1,8 +1,8 @@
-# Destekçilerin ortak ağı — preview.13
+# Destekçilerin ortak ağı — 0.5.0
 
 [English](../en/shared-network.md) · [Ana sayfa](../../README.tr.md) · [VPS / Pi kurulumu](destekci.md)
 
-Preview.13, destekçinin kendini duyurmasını, peer adreslerinin paylaşılmasını ve okuyucunun öğrendiği kaynaklara otomatik yönelmesini uygular. Windows preview.13 paketi ön sürüm olarak yayımlanmıştır; sunucu kurulumu için destekçi rehberindeki sabit güncel kaynağı kullanın. Bağımsız içerik kopyalarını otomatik yerleştirme ve kayıp kopyaları tamamlama henüz yoktur.
+0.5.0, destekçinin kendini duyurmasını, peer adreslerinin paylaşılmasını ve okuyucunun öğrendiği kaynaklara otomatik yönelmesini uygular. Masaüstü ve destekçide aynı 0.5.0 sürümü kullanılır. Bağımsız içerik kopyalarını otomatik yerleştirme ve kayıp kopyaları tamamlama henüz yoktur.
 
 ## Yeni destekçi gelince ne olur?
 
@@ -12,7 +12,7 @@ Preview.13, destekçinin kendini duyurmasını, peer adreslerinin paylaşılmas�
 4. Peer'ler bu imzalı adresleri paylaşır. Aynı ağa daha önce katılmış tarayıcı, adresleri kendisi de kontrol ederek saklar. Kullanıcı yeni kod almaz, profil aktarmaz. İşlem açılışta ve yaklaşık dakikada bir, işlem süresi eklenerek yapılır. Saved modunda durur.
 5. Dosya için daha önce doğrulanmış veri sunan, hızlı yanıt veren kaynaklar tercih edilir. İlk istekten 150 ms sonra ikinci kaynak denenebilir; aynı anda en fazla iki istek vardır. Hatalı kaynakların önceliği düşer. Dosyanın kimliği ve imzası doğrulanmadan sonuç kabul edilmez. Bu, bütün dünyadaki en hızlı peer'i veya sunucu yükünü ölçen bir sistem değildir.
 
-Katılan destekçilerin ve masaüstünün bu protokolü içeren preview.13 veya sonrası kodu kullanması gerekir. Eski peer'ler eski işlevlerini sunabilir; yeni duyuruları paylaşamaz. Eski masaüstü kendiliğinden yeni sürüme yükselmez.
+Katılan destekçilerin ve masaüstünün bu protokolü içeren 0.5.0 veya sonrası kodu kullanması gerekir. Eski peer'ler eski işlevlerini sunabilir; yeni duyuruları paylaşamaz. Eski masaüstü kendiliğinden yeni sürüme yükselmez.
 
 ## Adres öğrenmek isim yetkisi vermek değildir
 

@@ -21,7 +21,7 @@ EnvironmentFile=-$install_root/peer.env
 NoNewPrivileges=yes
 UMask=0077
 CPUQuota=25%
-MemoryMax=512M
+MemoryMax=768M
 TasksMax=128
 LimitNOFILE=2048
 [Install]

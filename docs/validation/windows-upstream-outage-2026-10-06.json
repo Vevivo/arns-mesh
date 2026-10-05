@@ -1,0 +1,220 @@
+{
+  "schema": "arns-mesh-windows-upstream-outage/v1",
+  "startedAt": "2026-10-05T23:44:09.528Z",
+  "version": "0.5.0",
+  "realPublicContent": true,
+  "freshReader": true,
+  "osFirewall": true,
+  "sameMachineReplica": true,
+  "pages": [
+    {
+      "name": "vevivo",
+      "opened": true,
+      "elapsedMs": 3463,
+      "url": "ar://vevivo/",
+      "title": "vevivo",
+      "textLength": 78,
+      "images": [
+        {
+          "complete": true,
+          "width": 467,
+          "src": "data:image/webp;base64,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"
+        }
+      ],
+      "proof": "Address       ar://vevivo/\nData ID       HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk\nArweave TX    -\nSHA-256       2f448209ce7a6955035b081d8e51b13c166eb16abb621f2488fcc7011cfc863c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 \u00b7 stake link not verified\nObserved at: 2026-10-05T23:43:16.886Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "bilolbabagate",
+      "opened": true,
+      "elapsedMs": 3002,
+      "url": "ar://bilolbabagate/",
+      "title": "ArNS - Arweave Name System",
+      "textLength": 269,
+      "images": [
+        {
+          "complete": true,
+          "width": 503,
+          "src": "https://arweave.net/0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        }
+      ],
+      "proof": "Address       ar://bilolbabagate/\nData ID       -k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI\nArweave TX    -k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI\nSHA-256       208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 \u00b7 stake link not verified\nObserved at: 2026-10-05T23:35:56.153Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "bionica",
+      "opened": true,
+      "elapsedMs": 2982,
+      "url": "ar://bionica/",
+      "title": "ArNS - Arweave Name System",
+      "textLength": 263,
+      "images": [
+        {
+          "complete": true,
+          "width": 503,
+          "src": "https://arweave.net/0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        }
+      ],
+      "proof": "Address       ar://bionica/\nData ID       UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk\nArweave TX    UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk\nSHA-256       75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 \u00b7 stake link not verified\nObserved at: 2026-10-05T23:35:59.055Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "ardrive-logo-2026",
+      "opened": true,
+      "elapsedMs": 2719,
+      "url": "ar://ardrive-logo-2026/",
+      "title": "ardrive-logo-2026 (750\u00d7750)",
+      "textLength": 0,
+      "images": [
+        {
+          "complete": true,
+          "width": 750,
+          "src": "ar://ardrive-logo-2026/"
+        }
+      ],
+      "proof": "Address       ar://ardrive-logo-2026/\nData ID       u6QLHxUOV3uncbdZM20ChM393lziN2AEgeDptEwPoso\nArweave TX    -\nSHA-256       571043ccfdf9911ff44b02b2f210e276c96b04232c14b3437c9aaa700298e04c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 \u00b7 stake link not verified\nObserved at: 2026-10-05T23:28:24.447Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    }
+  ],
+  "limitations": [
+    "Same-machine isolated supporter, not independent-provider failover",
+    "Pre-retained public sites; this is not all ArNS coverage"
+  ],
+  "firewall": {
+    "activeBlockRules": 9,
+    "ipv6Blocked": true,
+    "dnsCacheServiceBlocked": true,
+    "profiles": [
+      {
+        "enabled": true,
+        "name": "Domain"
+      },
+      {
+        "enabled": true,
+        "name": "Private"
+      },
+      {
+        "enabled": true,
+        "name": "Public"
+      }
+    ],
+    "globalDnsPortsBlocked": true,
+    "programCount": 2
+  },
+  "packaged-browserControls": {
+    "at": "2026-10-05T23:44:14.188Z",
+    "checks": [
+      {
+        "label": "mesh",
+        "kind": "mesh",
+        "ok": true,
+        "value": true
+      },
+      {
+        "label": "dns",
+        "kind": "dns",
+        "ok": false,
+        "error": "ETIMEOUT"
+      },
+      {
+        "label": "rpc",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "original-peer",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      }
+    ]
+  },
+  "supporterControls": {
+    "at": "2026-10-05T23:44:16.279Z",
+    "checks": [
+      {
+        "label": "mesh",
+        "kind": "mesh",
+        "ok": true,
+        "value": true
+      },
+      {
+        "label": "dns",
+        "kind": "dns",
+        "ok": false,
+        "error": "ETIMEOUT"
+      },
+      {
+        "label": "rpc",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "original-peer",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      }
+    ]
+  },
+  "lastNavigation": {
+    "name": "ardrive-logo-2026",
+    "stages": "Resolve name\n2\nFind sources\nLocate content\nDownload\nVerify\nOpen page",
+    "proof": "Address       ar://ardrive-logo-2026/\nData ID       u6QLHxUOV3uncbdZM20ChM393lziN2AEgeDptEwPoso\nArweave TX    -\nSHA-256       571043ccfdf9911ff44b02b2f210e276c96b04232c14b3437c9aaa700298e04c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 \u00b7 stake link not verified\nObserved at: 2026-10-05T23:28:24.447Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+  },
+  "renderTargets": [
+    "arnsui://app/index.html",
+    "arnsui://app/welcome.html",
+    "ar://vevivo/",
+    "ar://bilolbabagate/",
+    "ar://bionica/",
+    "ar://ardrive-logo-2026/"
+  ],
+  "passed": true,
+  "firewallCleanup": {
+    "cleared": true,
+    "previousProfileSettingsRestored": true
+  }
+}

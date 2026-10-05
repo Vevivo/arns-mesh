@@ -6,11 +6,11 @@ You only need the Windows application and a working connection invitation. You d
 
 ## 1. Download
 
-Use the **[preview.13 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip)**. GitHub's **Source code** archives are for developers.
+Use the **[0.5.0 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip)**. GitHub's **Source code** archives are for developers.
 
 Extract the entire ZIP into a folder you want to keep. Open `Mesh-Browser.exe` inside it. Keep the other files beside the EXE; create a shortcut if you want a desktop icon.
 
-This is an unsigned community preview. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) and report the warning. Do not disable security tools to bypass it.
+This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0) and report the warning. Do not disable security tools to bypass it.
 
 ## 2. Connect once
 
@@ -34,7 +34,7 @@ Mesh resolves the name, finds the files, verifies them and opens the page. **Pag
 
 The large shared index and supporter archives belong on the **server**. You do not download them to browse, and the browser does not automatically serve your disk to other users.
 
-However, preview.13 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
+However, 0.5.0 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
 
 There is currently no supported zero-persistent-storage mode. Moving archive work to supporters does not make the existing browser diskless.
 

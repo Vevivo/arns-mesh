@@ -1,69 +1,46 @@
 # ArNS Mesh
 
-**Open ArNS websites through a network of supporters.**
+**Open ArNS sites without domains or DNS.**
 
-[Windows download](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip) · [Start using Mesh](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+[Download Mesh 0.5.0 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
-## What is Mesh?
+Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
-ArNS Mesh is an independent community project for reading ArNS websites. Type `ar://name` into the Windows browser. Mesh finds the name's content, retrieves available files and checks their identity and signatures before displaying them.
+## Start using Mesh
 
-Its purpose is to keep useful copies and routes available when ordinary domain or gateway access is disrupted. The reader uses numeric-IP sources; it does not redirect the page to `name.ar.io` or another gateway domain. Internet connectivity to a useful source is still required.
+1. Download the Windows ZIP above and extract the whole folder.
+2. Open `Mesh-Browser.exe`.
+3. Enter your operator's complete `mesh1.` code under **Settings → Mesh connection code → Check code → Join this network**.
+4. Enter `ar://vevivo` or the ArNS name you want to open in the address bar.
 
-## Choose how to participate
+No wallet, payment, Node.js installation or personal server is required. The standard package does not include an operator's connection code. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
 
-| I want to… | What I need | Guide |
-|---|---|---|
-| Try Mesh and browse sites | Windows x64, the application ZIP and an operator's connection code | [User guide](docs/en/user.md) |
-| Contribute storage and bandwidth | A reachable Linux VPS or a 64-bit Raspberry Pi | [Supporter guide](docs/en/supporter.md) |
-| Understand or develop the software | The matching source revision and an isolated development environment | [Developer guide](docs/en/developer.md) |
+## What if Solana RPC and Arweave are unavailable too?
 
-A browser installation is a **reader**. A supporter runs a separate service on a server or Pi. Installing two browsers does not create two content-serving supporters.
+**Content with retained name records and files remains accessible through Mesh.** The reader obtains the accepted name record and verified files from a reachable supporter. The reader does not need to have visited the site before.
 
-## How it works
+On 6 October 2026, a reader and supporter were isolated together from external networks. RPC, Arweave and external DNS addresses were unreachable; an initially empty reader opened the main content for 29 of 35 names. All 22 records marked ready passed verification of their retained file sets. [Test procedure and results](docs/validation/upstream-outage-2026-10-06.md).
 
-1. **Find the name:** obtain its target from available RPC observations or an accepted, dated record.
-2. **Find the content:** use Mesh supporters, stored location records and reachable raw Arweave sources.
-3. **Verify and open:** check the retrieved content, then display the page and supported resources.
+A file absent from every reachable supporter cannot be retrieved during the outage. A retained name record describes a previously observed version.
 
-Supporters retain three different things: **name-to-content records, content locations, and actual files**. All three have a role. A large location index does not itself contain the websites.
+## How Mesh works
 
-### The R84 improvement
+- **While sources are available:** supporters prepare name records and content. R84 indexes help locate files on Arweave.
+- **When a reader opens a site:** Mesh retrieves files from available sources and verifies their identities and signatures.
+- **During an upstream outage:** retained names and files continue to travel through Mesh.
 
-The supporter can read signed indexes introduced by AR.IO Release 84 from its own disk. This makes more content locations available without waiting for each website to be downloaded in the background. The existing preview.13 browser can use these replies.
+Large indexes stay on supporter servers. The Windows reader keeps bounded local caches and settings. [Local storage](docs/en/user.md#data-on-your-computer).
 
-The separate index updater uses HTTPS while preparing files; ordinary Mesh navigation reads the installed index through the supporter. Users do not download this large index. [How to add R84 indexes to a supporter](docs/shared-index.md).
+## Support the network
 
-## Download and first use
+Run a supporter on a VPS or Raspberry Pi to serve name records, content locations and files. Independent supporters help preserve access when another server goes away.
 
-1. Download the **[Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip)**.
-2. Extract the entire ZIP and open `Mesh-Browser.exe`.
-3. Obtain a complete `mesh1.` connection code from a trusted operator. Open **Settings → Mesh connection code → Check code → Join this network**.
-4. Enter an ArNS address such as `ar://vevivo` in Mesh's address bar.
+**[VPS setup](docs/en/vps.md)** · **[Raspberry Pi setup](docs/en/raspberry-pi.md)** · [R84 index setup](docs/shared-index.md) · [Prepare another server for takeover](docs/en/resilience.md)
 
-The standard public ZIP contains no connection code. Existing installations keep their connection settings. Codes are reusable network invitations; no wallet, payment or activation licence is needed. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
+## Developers
 
-You do not need to operate a server or store the shared index to browse. The current browser does keep local settings, browsing state and a content cache; manually saving pages retains additional files. There is no zero-storage mode in this preview. [Storage details](docs/en/user.md#storage-on-your-computer).
+The desktop and supporter share the **0.5.0** source tree. `main` contains the current implementation; use tag `v0.5.0` to reproduce the release.
 
-## Keeping access alive when a supporter stops
+[Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 
-Preview.13 learns reachable supporters after joining the network and can switch content sources. To help during an outage, another independent machine must already hold the relevant files and accepted name records, and readers must know a reachable route to it.
-
-**Discovery is implemented; automatic placement and repair of independent replicas are not.** A new empty server does not become a complete backup merely by joining. Follow the [preparation and failover guide](docs/en/resilience.md) before describing a supporter as a backup.
-
-## Current release and evidence
-
-**Windows: v0.5.0-preview.13, a community prerelease.** This documentation does not declare a stable 1.0 release or replace the published application.
-
-The server guide pins the source revision containing the deployed R84 integration. The source on `main` still has the older preview.8 runtime; use the pinned commands in the guide when installing a new supporter. [Release notes and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) · [Evidence and remaining work](docs/en/status.md).
-
-Supported sites still depend on available name records and files. External APIs/CDNs can be unavailable, and verified historical content may not represent the latest name target.
-
-## Documentation
-
-- **Use:** [Windows](docs/en/user.md) · [Network monitor](docs/connection-monitor.md)
-- **Support:** [Start here](docs/en/supporter.md) · [VPS](docs/en/vps.md) · [Raspberry Pi](docs/en/raspberry-pi.md) · [R84 indexes](docs/shared-index.md) · [Failover preparation](docs/en/resilience.md)
-- **Develop:** [Source and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Peer discovery](docs/en/shared-network.md)
-- **Project:** [Status](docs/en/status.md) · [Feedback](CONTRIBUTING.md) · [Privacy](docs/en/privacy.md) · [Security](SECURITY.md) · [Licence](LICENSE)
-
-ArNS Mesh is not an official AR.IO, Arweave or Solana distribution.
+ArNS Mesh is an independent community project, not an official AR.IO, Arweave or Solana distribution.

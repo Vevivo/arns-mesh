@@ -1,6 +1,6 @@
 # Connections and supporter discovery
 
-For preview.8, use a [connection code and managed network list](network-code.md) for easier setup. This page documents the still-supported JSON format used by operators and older clients.
+Use a [connection code and managed network list](network-code.md) for easier setup. This page documents the still-supported JSON format used by operators and older clients.
 
 ## What the current desktop supports
 
@@ -35,7 +35,7 @@ The filename is flexible; these guides use `mesh-connect.json` for the file a re
 | `rpcSources` | Compatible Solana JSON-RPC over numeric-IP HTTP, used for live ArNS/ANT observations. Obtain a permitted endpoint from its operator or run/manage that service separately. Installing this Mesh peer does not create an RPC. |
 | `arweavePeers` | Optional true raw Arweave HTTP services for metadata/chunks and location discovery. Obtain numeric IP and port from a node operator; 1984 here is only an example. Mesh and raw-node APIs are different. |
 
-The profile needs at least one RPC and at least one Mesh **or** raw Arweave source. A replication-only source set can omit raw nodes, but the raw discovery demonstrated in preview.7 requires working raw sources. Limits: 16 Mesh, 8 RPC, 16 raw addresses and an 8 KiB profile file. IPv4 `IP:port` and bracketed IPv6 `[address]:port` are accepted; domain names, URLs, paths, passwords and API-key parameters are not. Syntax acceptance does not demonstrate an end-to-end IPv6 deployment.
+The profile needs at least one RPC and at least one Mesh **or** raw Arweave source. A replication-only source set can omit raw nodes, but raw content discovery requires working raw sources. Limits: 16 Mesh, 8 RPC, 16 raw addresses and an 8 KiB profile file. IPv4 `IP:port` and bracketed IPv6 `[address]:port` are accepted; domain names, URLs, paths, passwords and API-key parameters are not. Syntax acceptance does not demonstrate an end-to-end IPv6 deployment.
 
 Do not replace a provider's hostname with an arbitrary IP and assume its TLS/API-key service will work. Ask for an endpoint compatible with this transport. Do not put the Mesh port in all three fields: the three roles require their respective services. When publishing a reader profile, use externally reachable destinations, not `0.0.0.0` or `127.0.0.1`; a LAN address is appropriate only for users able to reach that LAN.
 

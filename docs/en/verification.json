@@ -1,9 +1,9 @@
 {
-  "version": "0.5.0-preview.8",
-  "date": "2026-09-25",
-  "testedApplicationCommit": "8eb51685e4aef02b2eba1e42bedbdba8dbc370ce",
+  "version": "0.5.0",
+  "date": "2026-10-06",
+  "testedApplicationCommit": "0d82f621c7515b6e89fe0529cb0b6a8d6a03cd10",
   "nodeTests": {
-    "passed": 144,
+    "passed": 199,
     "failed": 0,
     "platforms": [
       "Linux",
@@ -11,31 +11,54 @@
     ],
     "node": "24.19.0"
   },
+  "workflow": "https://github.com/Vevivo/arns-mesh/actions/runs/37389695131",
   "windowsUI": {
-    "run": "https://github.com/Vevivo/arns-mesh/actions/runs/36108198567",
     "passed": true,
     "checks": [
-      "invalid-code",
-      "review-and-join",
-      "cached-peer-after-process-loss",
-      "live-vevivo",
-      "saved-open-no-requests",
-      "saved-restart-no-requests",
-      "included-invitation-auto-join"
+      "search",
+      "connection-monitor",
+      "late-supporter-discovery",
+      "original-signed-catalogue-after-seed-loss",
+      "saved-restart-zero-http",
+      "real-public-content-with-OS-firewall"
     ],
-    "directoryPeers": "controlled same-host separate processes",
-    "liveSources": "existing approved operator sources retained",
-    "packetCapture": false
+    "realOutageNames": [
+      "vevivo",
+      "bilolbabagate",
+      "bionica",
+      "ardrive-logo-2026"
+    ],
+    "firewallBlocks": [
+      "external-DNS",
+      "Solana-RPC",
+      "raw-Arweave"
+    ],
+    "sameMachineReplica": true
   },
-  "installer": "Profile install/update and code join/update in isolated directories; npm dependency-install double, actual locked install separate in CI",
+  "production": {
+    "version": "0.5.0",
+    "sourceCommit": "0d82f621c7515b6e89fe0529cb0b6a8d6a03cd10",
+    "updated": true,
+    "retainedIdentityAndR84": true,
+    "automaticNameAndContentPreparation": true,
+    "liveDesktopFollowup": "cubetwist rendered; one verified resource, zero missing resources, zero script errors",
+    "cacheOnlyMeshFollowup": true
+  },
+  "liveBroadScan": {
+    "registeredNames": 2899,
+    "targets": 13272,
+    "isolatedScanMs": 36552
+  },
   "pending": [
-    "independent physical-host content failover",
-    "Raspberry Pi hardware",
-    "general unknown-location coverage",
-    "full OS egress capture",
-    "production operator rollout"
+    "independent physical-host disaster acceptance",
+    "physical Raspberry Pi acceptance",
+    "universal content coverage",
+    "full ArDrive application compatibility"
   ],
-  "paidLicensing": false,
-  "desktopContentServing": false,
-  "evidence": "../network-join.md"
+  "evidence": [
+    "../validation/continuous-preparation-2026-10-06.md",
+    "../validation/upstream-outage-2026-10-06.md",
+    "../validation/windows-upstream-outage-2026-10-06.json"
+  ],
+  "desktopContentServing": false
 }

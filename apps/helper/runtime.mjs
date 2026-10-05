@@ -30,6 +30,10 @@ export function configureRuntime(coreRoot,dataDir,{applyDefaultPeers=true,role='
   const locationsFile=path.join(dataDir,role==='client'?'desktop-locations.json':'locations.json');
   if(!fs.existsSync(locationsFile))fs.writeFileSync(locationsFile,'{}');
   process.env.ARNS_LOCATIONS=locationsFile;
+  if(role==='index'&&process.env.ARNS_ONLINE_PREPARATION==='1'&&process.env.ARNS_UPSTREAM_FETCH!=='0'){
+    process.env.ARNS_PREPARED_LOCATIONS=path.join(dataDir,'prepared-locations.json');
+    process.env.ARNS_PREPARATION_INBOX=path.join(dataDir,'location-preparation-inbox');
+  }else delete process.env.ARNS_PREPARATION_INBOX;
   configureLocationCache(locationsFile,role==='client'?{maxEntries:2048,maxBytes:1024*1024}:null);
   configureTransferBudget(role);
   configureNetworkAudit(dataDir);

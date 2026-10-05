@@ -13,9 +13,11 @@ function list(values,max){
  }))];
 }
 const objects=values=>values.map(value=>{const at=value.lastIndexOf(':');return {host:value.slice(0,at).replace(/^\[|\]$/g,''),port:Number(value.slice(at+1))};});
+export function trustedWitnesses(values=[]){if(!Array.isArray(values)||values.length>16||values.some(x=>typeof x!=='string'||!/^([a-f0-9]{64})$/.test(x)))throw new Error('Invalid saved-name witness identities.');return [...new Set(values)];}
 export function readProfile(directory){
  const read=(name)=>{try{return JSON.parse(fs.readFileSync(path.join(directory,name),'utf8'));}catch(error){if(error.code==='ENOENT')return [];throw error;}};
- return {schema:profileSchema,directPeers:read('mesh-ip-peers.json'),rpcSources:read('solana-rpc-seeds.json').map(format),arweavePeers:read('arweave-peers.json').map(format)};
+ const witnesses=trustedWitnesses(read('trusted-peers.json'));
+ return {schema:profileSchema,directPeers:read('mesh-ip-peers.json'),rpcSources:read('solana-rpc-seeds.json').map(format),arweavePeers:read('arweave-peers.json').map(format),...(witnesses.length?{trustedPeers:witnesses}:{})};
 }
 export function mergeProfiles(current,incoming){
  const next=validateProfile(incoming);
@@ -23,12 +25,14 @@ export function mergeProfiles(current,incoming){
   directPeers:[...new Set([...list(current.directPeers||[],16),...next.directPeers])],
   rpcSources:[...new Set([...list(current.rpcSources||[],8),...next.rpcSources])],
   arweavePeers:[...new Set([...list(current.arweavePeers||[],16),...next.arweavePeers])],
+  ...((current.trustedPeers?.length||next.trustedPeers?.length)?{trustedPeers:trustedWitnesses([...(current.trustedPeers||[]),...(next.trustedPeers||[])])}:{}),
  });
 }
 export function validateProfile(value){
  if(!value||value.schema!==profileSchema)throw new Error('Unsupported connection profile.');
- if(Object.keys(value).some(k=>!['schema','directPeers','rpcSources','arweavePeers'].includes(k)))throw new Error('Unexpected profile fields. Profiles contain endpoint addresses only.');
+ if(Object.keys(value).some(k=>!['schema','directPeers','rpcSources','arweavePeers','trustedPeers'].includes(k)))throw new Error('Unexpected profile fields.');
  const p={schema:profileSchema,directPeers:list(value.directPeers,16),rpcSources:list(value.rpcSources,8),arweavePeers:list(value.arweavePeers||[],16)};
+ if(value.trustedPeers?.length)p.trustedPeers=trustedWitnesses(value.trustedPeers);else if(value.trustedPeers!==undefined)trustedWitnesses(value.trustedPeers);
  if(!p.rpcSources.length)throw new Error('At least one numeric-IP Solana RPC is required for live names.');
  if(!p.directPeers.length&&!p.arweavePeers.length)throw new Error('At least one Mesh peer or raw Arweave peer is required.');
  return p;
@@ -42,6 +46,7 @@ export function applyProfile(directory,value,{networkState}={}){
  const lock=path.join(directory,'connections.lock');
  try{fs.mkdirSync(lock);}catch(e){if(e.code==='EEXIST')throw new Error('Another connection update is in progress.');throw e;}
  const entries=[['mesh-ip-peers.json',p.directPeers],['solana-rpc-seeds.json',objects(p.rpcSources)],['arweave-peers.json',objects(p.arweavePeers)],['arweave-peer-seeds.json',objects(p.arweavePeers)],['hyper-bootstrap.json',[]]];
+ entries.push(['trusted-peers.json',p.trustedPeers||[]]);
  if(networkState!==undefined)entries.push(['network-membership.json',networkState]);
  let previous=[],written=0;const staged=[];
  try{

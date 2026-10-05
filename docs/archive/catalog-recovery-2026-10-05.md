@@ -1,3 +1,5 @@
+> Historical evidence. For the current release, see the [Mesh home page](../../README.md).
+
 # Provider queue recovery — 5 October 2026
 
 ## Scope

@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {verifyPeerEnvelope} from './peer-directory.mjs';
+import {validateSnapshot} from './name-snapshots.mjs';
+import {queryDirectPeer} from './direct-peer.mjs';
+
+// Preserve the original publisher's signature. Discovering a new address never
+// makes that peer a trusted name authority, even when it stores the right bytes.
+export class SnapshotRelay{
+ constructor({file,trusted,scope}){this.file=file;this.trusted=trusted;this.scope=scope;this.rows=new Map();this.cursor=0;this.networkId=null;this.lastError=null;try{if(fs.statSync(file).size<=1024*1024){const v=JSON.parse(fs.readFileSync(file));if(v.networkId===scope()?.id){this.networkId=v.networkId;for(const env of (v.records||[]).slice(0,512))try{this.put(env,false);}catch{}}}}catch{}}
+ context(){const id=this.scope()?.id||null;if(id!==this.networkId){this.networkId=id;this.rows.clear();}return id;}
+ put(env,persist=true){if(!this.context()||!this.trusted().includes(env?.witnessPeerId))throw new Error('untrusted_snapshot_relay');const raw=verifyPeerEnvelope(env),r=validateSnapshot(raw,raw.name),key=env.witnessPeerId+'|'+r.name+'|'+(raw.prepared===true);const old=this.rows.get(key);if(old){const p=JSON.parse(old.recordJson);if(r.slot<p.slot)throw new Error('snapshot_rollback_rejected');if(r.slot===p.slot&&(r.txId!==p.txId||r.antId!==p.antId))throw new Error('snapshot_conflict');}this.rows.delete(key);this.rows.set(key,env);while(this.rows.size>512)this.rows.delete(this.rows.keys().next().value);if(persist)this.save();return r;}
+ save(){let json;do{json=JSON.stringify({schema:'arns-mesh-snapshot-relay/v1',networkId:this.networkId,records:[...this.rows.values()]});if(Buffer.byteLength(json)<=1024*1024)break;this.rows.delete(this.rows.keys().next().value);}while(this.rows.size);fs.mkdirSync(path.dirname(this.file),{recursive:true});fs.writeFileSync(this.file+'.tmp',json,{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
+ reply(req){if(!this.context())return null;const allowed=Array.isArray(req.witnessPeerIds)?req.witnessPeerIds.slice(0,16):this.trusted();const rows=[...this.rows.values()].filter(env=>this.trusted().includes(env.witnessPeerId)&&allowed.includes(env.witnessPeerId)).filter(env=>{const r=JSON.parse(env.recordJson);return r.name===req.name&&(r.prepared===true)===(req.prepared===true);});rows.sort((a,b)=>JSON.parse(b.recordJson).slot-JSON.parse(a.recordJson).slot);if(rows.length){const top=JSON.parse(rows[0].recordJson);if(rows.some(env=>{const r=JSON.parse(env.recordJson);return r.slot===top.slot&&(r.txId!==top.txId||r.antId!==top.antId);}))return null;}return rows[0]||null;}
+ async sync({names,peers,signal}){if(!this.context()||!this.trusted().length||!names.length)return;let saved=0;try{for(let i=0;i<Math.min(4,names.length);i++){const name=names[(this.cursor++)%names.length];for(const prepared of [false,true])for(const peer of peers.slice(0,2)){signal?.throwIfAborted();try{const env=await queryDirectPeer(peer,{op:'snapshot',name,witnessPeerIds:this.trusted().slice(0,16),...(prepared?{prepared:true}:{})},{signal});if(env?.ok){const r=verifyPeerEnvelope(env);if(r.name!==name||(r.prepared===true)!==prepared)throw new Error('snapshot_name_or_version_mismatch');this.put(env,false);saved++;break;}}catch(e){if(signal?.aborted)throw e;this.lastError=String(e.message).slice(0,120);}}}}finally{if(saved)this.save();}}
+ status(){this.context();return {records:this.rows.size,limit:512,error:this.lastError};}
+}

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {decodeInvitation,networkId,networkRecordHash} from '../src/network-invitation.mjs';
+import {decodeInvitation,networkId,connectionRecordHash} from '../src/network-invitation.mjs';
 import {loadProfile} from '../apps/helper/network-profile.mjs';
 import {publishNetwork,mirrorNetwork} from '../apps/helper/network-publication.mjs';
 import {NetworkConnection,findNetwork} from '../apps/helper/network-connection.mjs';
@@ -23,13 +23,13 @@ export async function run(args){
   return publishNetwork({dataDir:path.resolve(need(o,'--data')),profile:loadProfile(need(o,'--profile')),name:need(o,'--name'),seeds:o['--seed'],days:o['--days']===undefined?14:Number(o['--days']),local:o['--local']===true});
  }
  if(command==='check-code'){if(rest.length!==1)throw new Error(usage);const invite=decodeInvitation(rest[0]);return {valid:true,networkId:networkId(invite.key),startingPeers:invite.seeds.length,local:invite.local};}
- if(command==='inspect'){if(rest.length!==1)throw new Error(usage);const invite=decodeInvitation(rest[0]),r=await findNetwork(invite);return {name:r.payload.name,networkId:networkId(invite.key),revision:r.payload.revision,expiresAt:r.payload.expiresAt,profile:r.payload.profile,local:invite.local};}
+ if(command==='inspect'){if(rest.length!==1)throw new Error(usage);const invite=decodeInvitation(rest[0]),r=await findNetwork(invite);return {name:r.payload.name,networkId:networkId(invite.key),revision:r.payload.revision,expiresAt:r.payload.expiresAt,profile:r.profile,local:invite.local};}
  if(['join','mirror'].includes(command)){
   const code=rest[0],o=options(rest.slice(1),['--data']),dataDir=path.resolve(need(o,'--data'));
-  if(command==='mirror'){const invitation=decodeInvitation(code),found=await findNetwork(invitation);mirrorNetwork(dataDir,invitation,found.envelope);return {mirrored:true,name:found.payload.name,revision:found.payload.revision};}
+  if(command==='mirror'){const invitation=decodeInvitation(code),found=await findNetwork(invitation);mirrorNetwork(dataDir,invitation,found.envelope,found.recovery);return {mirrored:true,name:found.payload.name,revision:found.payload.revision};}
   const connection=new NetworkConnection({dataDir});
   const preview=await connection.inspect(code);
-  await connection.join(code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope)});
+  await connection.join(code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:connectionRecordHash(preview.envelope,preview.recovery)});
   return {...connection.status(),message:'Connections saved. Start or restart the peer to use them.'};
  }
  if(command==='refresh'){const o=options(rest,['--data']);const connection=new NetworkConnection({dataDir:path.resolve(need(o,'--data'))});if(!connection.status().joined)throw new Error('No joined network.');await connection.refresh();return connection.status();}

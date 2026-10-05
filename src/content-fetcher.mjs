@@ -1,3 +1,5 @@
+import {awaitPreparedLocation} from './preparation-inbox.mjs';
+import {getSharedIndex,sharedLocation} from './shared-index.mjs';
 import {encodeL1Content} from './l1-content.mjs';
 import {verifyStoredContent} from './content-store.mjs';
 import {fetchDataItemDirect,fetchL1Direct,locateDataItem} from './arweave-direct.mjs';
@@ -18,16 +20,28 @@ function sourceError(error,depth=0){
  return detail;
 }
 
-export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),replicateLocation=false,meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||0))}={}){
+export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),replicateLocation=false,contentSources='all',meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||750))}={}){
+ if(!['all','mesh-only','local-only'].includes(contentSources))throw new Error('invalid_content_sources');
  if(!/^[A-Za-z0-9_-]{43}$/.test(dataId))throw new Error('invalid_data_id');
  const cached=contentStore?.get(dataId);
- if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
- const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId);
+ if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation&&contentSources==='all'?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {contentSource:'local',loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
+ if(contentSources!=='all'){
+  try{
+   if(contentSources==='local-only')throw new Error('content_not_saved');
+   const direct=await withTransferBudget(()=>client.content(dataId,{onProgress,signal,cacheOnly:true}),signal);
+   const result={contentSource:'mesh',loc:null,direct,storageKind:direct.storageKind||'ans104'};
+   try{if(contentStore)await contentStore.put(dataId,direct.storedBytes||direct.rawItem);}catch(error){result.cacheError=String(error.message);}
+   return result;
+  }catch(error){signal?.throwIfAborted();throw new Error('content_location_unavailable: '+error.message);}
+ }
+ const shared=getSharedIndex();
+ const sharedHint=sharedLocation(await shared?.find(dataId,{signal}));
+ const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId)||sharedHint;
  // Give the broader published index a short first opportunity. Launching 72
  // L1 probes and three older index lookups for every bundled asset caused
  // thousands of unnecessary requests during the real manifest test.
  let releasePreferred;
- let preferredPending=Number(Boolean(hint))+Number(Boolean(historical?.findOffsets));
+ let preferredPending=Number(Boolean(hint))+Number(Boolean(historical?.findOffsets)&&!sharedHint);
  const preferredFailure=()=>{if(--preferredPending<=0)releasePreferred();};
  const preferredFailed=new Promise(resolve=>{releasePreferred=resolve;});
  const waitForPreferred=s=>preferredPending<=0?Promise.resolve():new Promise((resolve,reject)=>{
@@ -83,25 +97,28 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
     if(hints.length)saveDiscoveredLocations(locationsFile,hints);
    }catch{/* A hint/cache failure cannot authorize bytes or invalidate a verified parent. */}
   }
-  return {loc:{record,transport},direct,storageKind:'ans104'};
+  return {contentSource:'arweave',loc:{record,transport},direct,storageKind:'ans104'};
  };
  const tasks=[
-  attempt('mesh-content',async s=>{const direct=await withTransferBudget(()=>client.content(dataId,{onProgress:progress,signal:s}),s);return {loc:null,direct,storageKind:direct.storageKind||'ans104'};}),
+  attempt('mesh-content',async s=>{const direct=await withTransferBudget(()=>client.content(dataId,{onProgress:progress,signal:s}),s);return {contentSource:'mesh',loc:null,direct,storageKind:direct.storageKind||'ans104'};}),
   attempt('mesh-index',async s=>{
    const candidates=await client.locateCandidates(dataId,{signal:s});
    return firstVerified(candidates.map(loc=>inner=>retrieve(loc.record,'mesh-index',inner)),{signal:s});
   })
  ];
- if(hint)tasks.push(attempt('local-index',async s=>{try{return await retrieve(hint,'local-index',s);}catch(error){preferredFailure();throw error;}}));
+ // Server-only file handoff: this process keeps its IP-only network policy.
+ if(process.env.ARNS_PREPARATION_INBOX)tasks.push(attempt('online-prepared-index',async s=>retrieve(await awaitPreparedLocation(dataId,{locationsFile,signal:s}),'online-prepared-index',s)));
+ if(hint)tasks.push(attempt('local-index',async s=>{try{return await retrieve(hint,sharedHint?'shared-local-index':'local-index',s);}catch(error){preferredFailure();throw error;}}));
  if(historical?.findOffsets)tasks.push(attempt('published-offset-index',async s=>{
   try{
+  if(sharedHint)await waitForPreferred(s);
   const hints=await historical.findOffsets(dataId,{onProgress:progress,signal:s});
   if(!hints.length)throw new Error('not_in_published_offset_index');
   return await firstVerified(hints.map(hint=>inner=>retrieve(hint,'published-offset-index',inner)),{signal:s,concurrency:2});
   }catch(error){preferredFailure();throw error;}
  }));
  if(historical)tasks.push(attempt('historical-index',async s=>{await waitForPreferred(s);const found=await historical.find(dataId,{onProgress:progress,signal:s});if(!found)throw new Error('not_in_published_index');return retrieve(found,'historical-index',s);}));
- tasks.push(attempt('arweave-l1',async s=>{await waitForPreferred(s);return {loc:null,direct:await withTransferBudget(()=>fetchL1Direct({dataId,maxBytes:32*1024*1024,onProgress:progress,signal:s}),s),storageKind:'l1'};}));
+ tasks.push(attempt('arweave-l1',async s=>{await waitForPreferred(s);return {contentSource:'arweave',loc:null,direct:await withTransferBudget(()=>fetchL1Direct({dataId,maxBytes:32*1024*1024,onProgress:progress,signal:s}),s),storageKind:'l1'};}));
  onProgress({stage:'location',status:'active',message:'Looking for content through peers and raw Arweave in parallel…'});
  try{
   const result=await firstVerified(tasks,{signal});

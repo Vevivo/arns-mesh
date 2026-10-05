@@ -2,8 +2,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {MeshPeer} from '../../apps/peer/embedded-peer.mjs';
-import {startDirectPeerServer} from '../../src/direct-peer.mjs';
-import {publishNetwork,readNetworkPublication,mirrorNetwork} from '../../apps/helper/network-publication.mjs';
+import {startDirectPeerServer,loadConfiguredPeers} from '../../src/direct-peer.mjs';
+import {publishNetwork,readNetworkPublication,readNetworkRecovery,mirrorNetwork,peerNetworkScope} from '../../apps/helper/network-publication.mjs';
+import {NetworkConnection} from '../../apps/helper/network-connection.mjs';
+import {networkId,connectionRecordHash} from '../../src/network-invitation.mjs';
+import {applyProfile} from '../../apps/helper/network-profile.mjs';
+import {PeerDiscovery} from '../../src/peer-discovery.mjs';
 import {fetchMeshContent} from '../../src/content-fetcher.mjs';
 import {createSwarmMeshClient} from '../../src/swarm-client.mjs';
 
@@ -11,12 +15,18 @@ const dataDir=path.resolve(process.argv[2]);fs.mkdirSync(dataDir,{recursive:true
 const locationsFile=path.join(dataDir,'locations.json');fs.writeFileSync(locationsFile,'{}');
 process.env.ARNS_MESH_DIRECT_ONLY='1';
 const peer=new MeshPeer({dataDir:path.join(dataDir,'peer'),locationsFile,allowRemoteFetch:false});await peer.start();
-const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0,networkAnnouncement:()=>readNetworkPublication(dataDir)});
+const network=new NetworkConnection({dataDir});
+const discovery=new PeerDiscovery({dataDir,scope:()=>peerNetworkScope(dataDir,network),peers:()=>loadConfiguredPeers(path.join(dataDir,'mesh-ip-peers.json')),identity:peer,listenPort:1});
+const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0,networkAnnouncement:()=>readNetworkPublication(dataDir),networkRecovery:()=>readNetworkRecovery(dataDir),discovery});discovery.listenPort=server.address.port;
 process.send?.({ready:true,address:'127.0.0.1:'+server.address.port,pid:process.pid});
 process.on('message',async message=>{
  try{
   let result;
-  if(message.action==='publish')result=publishNetwork({dataDir,profile:message.profile,name:message.name||'Acceptance Mesh',seeds:message.seeds,local:true});
+  if(message.action==='publish'){applyProfile(dataDir,message.profile);result=publishNetwork({dataDir,profile:message.profile,name:message.name||'Acceptance Mesh',seeds:message.seeds,local:true});}
+  else if(message.action==='enroll'){
+   const p=await network.inspect(message.code);await network.join(message.code,{expectedId:networkId(p.invitation.key),expectedRevision:p.payload.revision,expectedHash:connectionRecordHash(p.envelope,p.recovery)});
+   mirrorNetwork(dataDir,network.state.invitation,network.state.envelope,network.state.recovery);await discovery.sync();result=discovery.status();
+  }else if(message.action==='exchange'){await discovery.sync();result=discovery.status();}
   else if(message.action==='mirror'){
    const record=JSON.parse(fs.readFileSync(message.file));mirrorNetwork(dataDir,record.invitation,record.envelope);result={mirrored:true,hasAuthorityKey:fs.existsSync(path.join(dataDir,'network-authority.private.json'))};
   }else if(message.action==='put'){await peer.contentStore.put(message.dataId,Buffer.from(message.bytes,'base64'));result={stored:peer.contentStore.has(message.dataId)};}
@@ -28,5 +38,5 @@ process.on('message',async message=>{
   process.send?.({id:message.id,result});
  }catch(error){process.send?.({id:message.id,error:String(error.message)});}
 });
-async function stop(){await server.close();await peer.stop();process.exit(0);}
+async function stop(){discovery.close();await server.close();await peer.stop();process.exit(0);}
 process.on('SIGTERM',stop);process.on('SIGINT',stop);process.on('disconnect',stop);

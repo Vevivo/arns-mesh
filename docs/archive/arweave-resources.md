@@ -1,3 +1,5 @@
+> Historical evidence. For the current release, see the [Mesh home page](../../README.md).
+
 # Direct Arweave resources — preview.7
 
 Pages often spell immutable Arweave resources as `https://arweave.net/<id>`

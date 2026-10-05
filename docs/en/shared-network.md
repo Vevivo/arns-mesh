@@ -1,8 +1,8 @@
-# Shared supporter network — preview.13
+# Shared supporter network — 0.5.0
 
 [Türkçe](../tr/paylasilan-ag.md) · [Home](../../README.md) · [VPS / Pi setup](supporter.md)
 
-Preview.13 implements supporter announcements, address exchange and automatic routing to learned peers. The Windows preview.13 package is published as a prerelease; use the pinned current source in the supporter guide for server installation. It does not yet coordinate where independent replicas are placed or repair lost copies.
+0.5.0 implements supporter announcements, address exchange and automatic routing to learned peers. The Windows 0.5.0 package is published as a prerelease; use the pinned current source in the supporter guide for server installation. It does not yet coordinate where independent replicas are placed or repair lost copies.
 
 ## What happens when a supporter joins?
 
@@ -12,7 +12,7 @@ Preview.13 implements supporter announcements, address exchange and automatic ro
 4. Peers exchange bounded, individually signed advertisements. A browser already joined to the same network learns, independently probes and retains those addresses without a new code or profile import. Discovery runs on startup and roughly every minute plus processing time. Saved mode pauses it.
 5. Requests prefer routes that recently supplied valid content, using observed latency and failures. One source starts first; a second can start after 150 ms. At most two requests run at once. Failures reduce preference, and content identity/signatures are verified before a result is accepted. This is bounded source selection, not a measurement of every peer or its global load.
 
-Both the participating supporters and desktop need preview.13 or later code implementing this protocol. Older peers can still serve their previous operations but cannot exchange these announcements. Old desktop binaries do not upgrade themselves.
+Both the participating supporters and desktop need 0.5.0 or later code implementing this protocol. Older peers can still serve their previous operations but cannot exchange these announcements. Old desktop binaries do not upgrade themselves.
 
 ## Addresses are not name authority
 

@@ -30,3 +30,7 @@ ledger-discovery.json
 verified-peer-cache.json
 hyper-peer-cache.json
 .DS_Store
+search-published.json
+search-cache.json
+peer-directory.json
+snapshot-relay.json

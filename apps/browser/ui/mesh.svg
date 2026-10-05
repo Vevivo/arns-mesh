@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="#211e2d"/><path d="m10 32 7-17 14 0 7 17H10m7-17 7 17 7-17M10 32l14-8 14 8" fill="none" stroke="#c2adff" stroke-width="2"/><g fill="#8cddb3"><circle cx="17" cy="15" r="3"/><circle cx="31" cy="15" r="3"/><circle cx="10" cy="32" r="3"/><circle cx="24" cy="24" r="3"/><circle cx="38" cy="32" r="3"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="15" fill="#292335"/>
+  <path d="m24 10 12 7v14l-12 7-12-7V17Z" stroke="#bba5ed" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M24 10v14m-12 7 12-7 12 7" stroke="#bba5ed" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#e7ddff">
+    <circle cx="24" cy="10" r="2.7"/>
+    <circle cx="36" cy="17" r="2.7"/>
+    <circle cx="36" cy="31" r="2.7"/>
+    <circle cx="24" cy="38" r="2.7"/>
+    <circle cx="12" cy="31" r="2.7"/>
+    <circle cx="12" cy="17" r="2.7"/>
+  </g>
+  <circle cx="24" cy="24" r="2.7" fill="#9de2c5"/>
+</svg>

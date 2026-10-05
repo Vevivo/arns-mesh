@@ -10,6 +10,7 @@ import {sha256} from './common.mjs';
 import {loadDirectPeers,queryDirectPeer} from './direct-peer.mjs';
 import {validateSnapshot} from './name-snapshots.mjs';
 import {accountBudgetBytes} from './byte-budget.mjs';
+import {peerDirectory,peerAddress} from './peer-directory.mjs';
 
 function verifyEnvelope(env){
   if(!env?.ok) throw new Error(env?.error||'peer_query_failed');
@@ -91,12 +92,22 @@ async function runQuery({mode,topic,topics=[],peerKeys,request,semanticKey,quoru
 }
 async function runIpQuery(options,peers){
  const {request,semanticKey,quorum,collect,signal,excludeWitnesses=[]}=options,groups=new Map(),observations=[];
+ const directory=options.directory??peerDirectory(),ordered=directory?directory.rank(peers,request.dataId):peers;
+ const controller=new AbortController(),bounded=AbortSignal.any([controller.signal,AbortSignal.timeout(Math.max(options.timeoutMs||5000,10000)),...(signal?[signal]:[])]);
  return new Promise((resolve,reject)=>{
-  let pending=peers.length,done=false,timer;
-  const finish=()=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);const matches=[...groups.values()];if(collect&&matches.length)resolve(matches.map(g=>({...g,transport:'direct-ip',hintOnly:true})));else{const winner=matches.find(g=>g.providers.length>=quorum);if(winner)resolve({...winner,quorum,transport:'direct-ip'});else{const error=new Error('direct_peer_unavailable');error.observations=observations.slice(-16);reject(error);}}};
-  const cancel=()=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);reject(signal.reason||new Error('query_cancelled'));};
-  signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted){cancel();return;}
-  for(const peer of peers)queryDirectPeer(peer,request,{signal}).then(env=>{if(done)return;if(excludeWitnesses.includes(env.witnessPeerId))throw new Error('excluded_content_peer');const group=groupResponse(groups,observations,env,null,semanticKey);if(!collect&&group.providers.length>=quorum)finish();else if(collect&&!timer)timer=setTimeout(finish,150);}).catch(error=>{observations.push({address:peer.host+':'+peer.port,ok:false,error:String(error.message).slice(0,240)});}).finally(()=>{if(--pending===0)finish();});
+  let cursor=0,active=0,done=false,timer,hedge;
+  const cleanup=()=>{clearTimeout(timer);clearTimeout(hedge);bounded.removeEventListener('abort',cancel);controller.abort(new Error('peer_query_finished'));};
+  const finish=()=>{if(done)return;done=true;cleanup();const matches=[...groups.values()];if(collect&&matches.length)resolve(matches.map(g=>({...g,transport:'direct-ip',hintOnly:true})));else{const winner=matches.find(g=>g.providers.length>=quorum);if(winner)resolve({...winner,quorum,transport:'direct-ip'});else{const error=new Error('direct_peer_unavailable');error.observations=observations.slice(-16);reject(error);}}};
+  const cancel=()=>{if(done)return;if(!signal?.aborted){finish();return;}done=true;cleanup();reject(signal.reason||new Error('query_cancelled'));};
+  const launch=()=>{if(done||active>=2||cursor>=ordered.length)return;const peer=ordered[cursor++],address=peerAddress(peer),started=Date.now();active++;
+   queryDirectPeer(peer,request,{signal:bounded}).then(env=>{if(done)return;if(excludeWitnesses.includes(env.witnessPeerId))throw new Error('excluded_content_peer');const group=groupResponse(groups,observations,env,null,semanticKey);const provider=group.providers.find(p=>p.witnessPeerId===env.witnessPeerId);if(provider)provider.address=address;
+    if(request.op!=='content')directory?.success(address,Date.now()-started);
+    if(!collect&&group.providers.length>=quorum)finish();else if(collect&&!timer)timer=setTimeout(finish,150);
+   }).catch(error=>{if(done||bounded.aborted)return;if(error.message!=='excluded_content_peer')directory?.failure(address);observations.push({address,ok:false,error:String(error.message).slice(0,240)});}).finally(()=>{active--;if(done)return;launch();if(!active&&cursor>=ordered.length)finish();});
+  };
+  bounded.addEventListener('abort',cancel,{once:true});if(bounded.aborted){cancel();return;}
+  launch();if(collect||quorum>1)launch();else hedge=setTimeout(launch,150);
+  if(!ordered.length)finish();
  });
 }
 async function query(options){
@@ -113,11 +124,12 @@ export function createSwarmMeshClient({
   quorum=Number(process.env.MESH_QUORUM||2),
   proofQuorum=Number(process.env.PROOF_TRANSPORT_QUORUM||1),
   timeoutMs=Number(process.env.HYPER_QUERY_TIMEOUT||15000),
-  excludeWitnesses=[],directPeers,dhtEnabled=process.env.ARNS_MESH_DIRECT_ONLY!=='1',cacheOnly=false
+  excludeWitnesses=[],directPeers,dhtEnabled=process.env.ARNS_MESH_DIRECT_ONLY!=='1',cacheOnly=false,directory=peerDirectory()
 }={}){
   // Index workers must not count their own signed answer as a replica source.
   // Direct-only operation also supports networks where UDP is unavailable.
-  const ask=options=>query({...options,directPeers,dhtEnabled,excludeWitnesses:[...new Set([...excludeWitnesses,...(options.excludeWitnesses||[])])]});
+  const activeDirectory=()=>directory??peerDirectory();
+  const ask=options=>{const routes=activeDirectory();return query({...options,directory:routes,directPeers:directPeers&&routes?routes.rank([...directPeers,...routes.addresses()],options.request?.dataId):directPeers,dhtEnabled,excludeWitnesses:[...new Set([...excludeWitnesses,...(options.excludeWitnesses||[])])]});};
   let knownPeers=[];
   try {
     knownPeers=JSON.parse(fs.readFileSync(witnessPeerFile,'utf8')).map(x=>x.noisePublicKey).filter(Boolean);
@@ -138,10 +150,10 @@ export function createSwarmMeshClient({
       lastName=n;
       return r;
     },
-    async snapshot(name,{trustedPeers=[],signal}={}){
+    async snapshot(name,{trustedPeers=[],signal,prepared=false}={}){
       const n=String(name).toLowerCase();
-      const candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
-        semanticKey:(record,env)=>{if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');}});
+      const candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n,witnessPeerIds:trustedPeers.slice(0,16),...(prepared?{prepared:true}:{})},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
+        semanticKey:(record,env)=>{if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');if(prepared&&record.prepared!==true)throw new Error('prepared_snapshot_required');const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');}});
       candidates.sort((a,b)=>b.record.slot-a.record.slot);
       const winner=candidates[0];if(candidates.some(x=>x.record.slot===winner.record.slot&&(x.record.txId!==winner.record.txId||x.record.antId!==winner.record.antId)))throw new Error('snapshot_conflict');
       knownPeers=[...new Set([...knownPeers,...winner.providers.map(p=>p.noisePublicKey).filter(Boolean)])];return winner;
@@ -154,16 +166,16 @@ export function createSwarmMeshClient({
       });
     },
     async locate(dataId){return (await this.locateCandidates(dataId))[0];},
-    async content(dataId,{onProgress=()=>{},signal}={}){
+    async content(dataId,{onProgress=()=>{},signal,cacheOnly:requestCacheOnly=cacheOnly}={}){
       const excluded=[];let failure;
       for(let attempt=0;attempt<4;attempt++){
-      const providers=new Set();
+      const providers=new Set(),addresses=new Set(),started=Date.now();
       try{
       const parts=[];let offset=0,total=null,hash=null;
       do{
         signal?.throwIfAborted();
-        const r=await ask({mode:'topic',topics:[contentTopic(dataId),...(lastName?[swarmTopic('name',lastName)]:[])],peerKeys:knownPeers,request:{op:'content',dataId,offset,...(cacheOnly?{cacheOnly:true}:{})},quorum:1,timeoutMs:5000,bootstrapFile,signal,excludeWitnesses:excluded,semanticKey:x=>[x.dataId,x.offset,x.total,x.sha256].join('|')});
-        for(const p of r.providers)providers.add(p.witnessPeerId);
+        const r=await ask({mode:'topic',topics:[contentTopic(dataId),...(lastName?[swarmTopic('name',lastName)]:[])],peerKeys:knownPeers,request:{op:'content',dataId,offset,...(requestCacheOnly?{cacheOnly:true}:offset===0?{waitMs:8000}:{})},quorum:1,timeoutMs:offset===0&&!requestCacheOnly?30000:5000,bootstrapFile,signal,excludeWitnesses:excluded,semanticKey:x=>{if(x.dataId!==dataId||x.offset!==offset||!Number.isSafeInteger(x.total)||x.total<1||x.total>MAX_CONTENT_BYTES||typeof x.sha256!=='string'||!/^[a-f0-9]{64}$/.test(x.sha256)||typeof x.data!=='string'||Buffer.from(x.data,'base64').length!==Math.min(524288,x.total-offset))throw new Error('invalid_content_chunk');return [x.dataId,x.offset,x.total,x.sha256].join('|');}});
+        for(const p of r.providers){providers.add(p.witnessPeerId);if(p.address)addresses.add(p.address);}
         knownPeers=[...new Set([...knownPeers,...r.providers.map(p=>p.noisePublicKey).filter(Boolean)])];
         const c=r.record;
         if(c.dataId!==dataId||c.offset!==offset||!Number.isSafeInteger(c.total)||c.total<1||c.total>MAX_CONTENT_BYTES)throw new Error('invalid_content_chunk');
@@ -174,8 +186,9 @@ export function createSwarmMeshClient({
       }while(offset<total);
       const raw=Buffer.concat(parts,total);if(sha256(raw)!==hash)throw new Error('content_transfer_hash');
       onProgress({stage:'verify',status:'active',dataId});const verified=await verifyStoredContent(raw,dataId);onProgress({stage:'verify',status:'done',dataId});
+      for(const address of addresses)activeDirectory()?.success(address,Date.now()-started,dataId);
       return {...verified,peer:{host:'mesh-peer',port:0},rootTxId:verified.rootTxId||null,transport:'p2p-content'};
-      }catch(error){failure=error;signal?.throwIfAborted();if(!providers.size)throw error;excluded.push(...providers);}
+      }catch(error){failure=error;signal?.throwIfAborted();for(const address of addresses)activeDirectory()?.failure(address);if(!providers.size)throw error;excluded.push(...providers);}
       }
       throw failure;
     },

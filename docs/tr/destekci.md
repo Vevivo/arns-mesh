@@ -17,12 +17,12 @@ Doğrudan IP hizmeti için domain, nginx, TLS sertifikası, cüzdan veya tam Arw
 
 ## 1. Doğru destekçi kaynağını alın
 
-Yayımlanmış masaüstü preview.13'tür. Sonradan eklenen sunucu tarafı R84 entegrasyonu aşağıdaki kaynak sürümündedir. Sürüm seçme adımını atlayıp eski `main` kodunu kurmayın.
+Masaüstü ve destekçi için aynı 0.5.0 sürümünü kullanın. R84 entegrasyonu bu kaynağa dâhildir.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach 37d51c79614c389b515b43d4a3bd92f9bd5083d2
+git checkout --detach v0.5.0
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 read -r -p 'Tam mesh1 baglanti kodunu yapistirin: ' MESH_CODE
 bash scripts/install-peer.sh --network "$MESH_CODE"
@@ -56,7 +56,7 @@ MESH_ENV
 
 | Ayar | Anlamı |
 |---|---|
-| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 256 |
+| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 20.000 |
 | `ARNS_CACHE_MIB` | Otomatik içerik önbelleği bütçesi |
 | `ARNS_SAVED_MIB` | Saklanması seçilmiş içerik bütçesi |
 | `ARNS_NAMES_DAILY_MIB` | İsim hazırlığı için ayrı günlük bütçe |
@@ -85,7 +85,7 @@ Oturum kapandığında ve sunucu yeniden açıldığında da çalışması için
 sudo loginctl enable-linger "$(id -un)"
 ```
 
-Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 512 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
+Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 768 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
 
 ## 4. Dış erişimi ve keşfi doğrulayın
 
@@ -106,7 +106,7 @@ node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 
 Modem dışarı farklı port açıyorsa `peer.env` içine gerçek değerlerle `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` yazın. Ayar değişince yalnızca yeni destekçiyi yeniden başlatın. Bu ayar port açmaz. IPv6 biçimi `[ADDRESS]:PORT` şeklindedir.
 
-Ağa katılmış preview.13 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
+Ağa katılmış 0.5.0 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
 
 ## 5. Daha geniş konum kapsamı için R84 ekleyin
 
@@ -133,4 +133,6 @@ Günlükler: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Durdur
 
 Güncellemede bu destekçiyi durdurun; verisini ve başlatıcısını özel olarak yedekleyin; seçilen sürümü inceleyip kurucuyu yeniden çalıştırın. Geri dönüş için eşleşen eski uygulamayı ve veriyi koruyun. Kimlikleri ve imza anahtarlarını paylaşmayın; aynı kimliği farklı aktif sunuculara kopyalamayın.
 
-[Keşif ayrıntıları](paylasilan-ag.md) · [Durum ve sınırlar](durum.md) · [Eski preview.8 işletim rehberi](destekci-ayrintili.md)
+[Keşif ayrıntıları](paylasilan-ag.md) · [Durum ve sınırlar](durum.md) · [İşletim başvurusu](destekci-ayrintili.md)
+
+[Sürekli hazırlık ve daha güçlü sunucu ayarları](surekli-hazirlik.md).

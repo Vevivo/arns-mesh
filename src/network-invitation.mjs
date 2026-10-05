@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import net from 'node:net';
-import {validateProfile} from '../apps/helper/network-profile.mjs';
+import {validateProfile,trustedWitnesses} from '../apps/helper/network-profile.mjs';
 
 const PREFIX=Buffer.from('302a300506032b6570032100','hex');
 export const MAX_NETWORK_BYTES=24576;
@@ -71,3 +71,22 @@ export function verifyNetwork(envelope,invitation,{now=Date.now(),allowExpired=f
  return validatePayload(payload,{local:invite.local,now,allowExpired});
 }
 export const networkRecordHash=envelope=>crypto.createHash('sha256').update(envelope.recordJson).digest('hex');
+
+// An optional, separately signed extension keeps the v1 connection list readable
+// by preview.8. Its hash binds witnesses to one exact signed list and its expiry.
+export function signNetworkRecovery(envelope,trustedPeers,privateKey){
+ const recordJson=JSON.stringify({schema:'arns-mesh-network-recovery/v1',networkHash:networkRecordHash(envelope),trustedPeers:trustedWitnesses(trustedPeers)});
+ if(networkPublicKey(privateKey)!==envelope.key)fail('Recovery authority mismatch.');
+ return {recordJson,signature:crypto.sign(null,Buffer.from(recordJson),crypto.createPrivateKey(privateKey)).toString('base64url')};
+}
+export function verifyNetworkRecovery(recovery,envelope,invitation,options={}){
+ if(!recovery)return [];
+ verifyNetwork(envelope,invitation,options);fields(recovery,['recordJson','signature']);
+ if(typeof recovery.recordJson!=='string'||Buffer.byteLength(recovery.recordJson)>2048)fail('Invalid network recovery extension.');
+ if(!crypto.verify(null,Buffer.from(recovery.recordJson),keyObject(invitation.key),base64(recovery.signature,64)))fail('Invalid recovery authority signature.');
+ const record=JSON.parse(recovery.recordJson);fields(record,['schema','networkHash','trustedPeers']);
+ if(record.schema!=='arns-mesh-network-recovery/v1'||record.networkHash!==networkRecordHash(envelope))fail('Recovery extension does not match the signed list.');
+ return trustedWitnesses(record.trustedPeers);
+}
+export const connectionRecordHash=(envelope,recovery)=>recovery?crypto.createHash('sha256').update(networkRecordHash(envelope)).update(recovery.recordJson).digest('hex'):networkRecordHash(envelope);
+export const connectionProfile=(payload,trustedPeers=[])=>validateProfile({...payload.profile,...(trustedPeers.length?{trustedPeers}:{})});

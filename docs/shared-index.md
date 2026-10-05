@@ -16,7 +16,7 @@ Mesh does not automatically pay x402 requests or bypass publisher limits. [Offic
 
 ## Before you start
 
-- Complete the [supporter setup](en/supporter.md) at source commit `37d51c79614c389b515b43d4a3bd92f9bd5083d2`. Dependencies must be installed in that source checkout.
+- Complete the [supporter setup](en/supporter.md) at source commit `v0.5.0`. Dependencies must be installed in that source checkout.
 - Use Linux with systemd, a supported Node.js binary and administrator access for the separate updater account.
 - Leave at least **50 GiB free on an SSD** for indexes and refresh headroom, separately from site storage. The documented publication was about 21 GB; future offers can differ.
 - Run these instructions on a **new deployment**. The guards refuse existing tool/data/service paths. An existing deployment needs its own reviewed update procedure.
@@ -29,7 +29,7 @@ From the pinned source checkout, using the same Node version already selected fo
 ```bash
 (
   set -eu
-  test "$(git rev-parse HEAD)" = 37d51c79614c389b515b43d4a3bd92f9bd5083d2
+  test "$(git describe --tags --exact-match)" = v0.5.0
   test -d node_modules
   test ! -e /opt/arns-mesh-index-tools
   test ! -e /var/lib/arns-mesh-shared-index

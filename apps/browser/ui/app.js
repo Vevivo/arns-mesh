@@ -1,12 +1,12 @@
 const $=id=>document.getElementById(id),api=window.arnsMesh;
-const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel'];
+const panelIds=['panel','settings-panel','saved-panel','library-panel','menu-panel','monitor-panel'];
 let activePanel=null,lastState={},pendingUrl=null,libraryKind='history',savedKey='',previousFocus=null,uiError='';
 const busy=s=>s.loading||['resolving','content','loading','rendering'].includes(s.phase);
 const errorText=error=>String(error.message||error).replace(/^Error invoking remote method '[^']+':\s*(?:Error:\s*)?/,'');
 const report=error=>{uiError=errorText(error);$('message').textContent=uiError;};
 const run=fn=>Promise.resolve().then(fn).catch(report);
-function closePanel(){const wasOpen=activePanel;activePanel=null;for(const id of panelIds)$(id).classList.add('hidden');$('backdrop').classList.add('hidden');$('menu-button').setAttribute('aria-expanded','false');run(()=>api.panel(false));if(wasOpen)previousFocus?.focus();}
-function openPanel(id){if(!activePanel)previousFocus=document.activeElement;activePanel=id;for(const name of panelIds)$(name).classList.toggle('hidden',name!==id);$('backdrop').classList.remove('hidden');$('menu-button').setAttribute('aria-expanded',String(id==='menu-panel'));run(()=>api.panel(true));$(id).querySelector('button,input,select,summary')?.focus();}
+function closePanel(){const wasOpen=activePanel;if(wasOpen==='monitor-panel')run(()=>api.monitorVisible(false));$('monitor-button').setAttribute('aria-expanded','false');activePanel=null;for(const id of panelIds)$(id).classList.add('hidden');$('backdrop').classList.add('hidden');$('menu-button').setAttribute('aria-expanded','false');run(()=>api.panel(false));if(wasOpen)previousFocus?.focus();}
+function openPanel(id){if(activePanel==='monitor-panel'&&id!=='monitor-panel')run(()=>api.monitorVisible(false));$('monitor-button').setAttribute('aria-expanded',String(id==='monitor-panel'));if(id==='monitor-panel')run(()=>api.monitorVisible(true));if(!activePanel)previousFocus=document.activeElement;activePanel=id;for(const name of panelIds)$(name).classList.toggle('hidden',name!==id);$('backdrop').classList.remove('hidden');$('menu-button').setAttribute('aria-expanded',String(id==='menu-panel'));run(async()=>{await api.panel(true);if(activePanel===id)$(id).querySelector('button,input,select,summary')?.focus({preventScroll:true});});}
 function togglePanel(id){activePanel===id?closePanel():openPanel(id);}
 function submitAddress(){const value=$('address').value.trim();if(!value||pendingUrl===value)return;uiError='';pendingUrl=value;closePanel();run(()=>api.navigate(value)).finally(()=>{if(pendingUrl===value)pendingUrl=null;});$('address').blur();}
 $('nav').addEventListener('submit',event=>{event.preventDefault();submitAddress();});
@@ -20,7 +20,7 @@ $('bookmark').onclick=()=>run(()=>api.toggleBookmark());
 $('details').onclick=()=>togglePanel('panel');$('menu-details').onclick=()=>openPanel('panel');
 $('saved-button').onclick=()=>togglePanel('saved-panel');$('menu-saved').onclick=()=>openPanel('saved-panel');
 $('menu-button').onclick=()=>togglePanel('menu-panel');
-$('saved-toggle').onchange=()=>run(()=>api.setAccessPolicy($('saved-toggle').checked?'saved':'live'));
+$('saved-toggle').onchange=()=>run(()=>api.setAccessPolicy($('saved-toggle').checked?'saved':'auto'));
 for(const id of ['pin-site','save-current'])$(id).onclick=()=>{openPanel('saved-panel');run(()=>api.pinSite());};
 for(const [id,delta] of [['zoom-out',-1],['zoom-reset',0],['zoom-in',1]])$(id).onclick=()=>run(()=>api.zoom(delta));
 function settingsResult(text,error=false){$('settings-result').textContent=text;$('settings-result').classList.toggle('error',error);}
@@ -41,8 +41,8 @@ $('history-button').onclick=()=>showLibrary('history');$('bookmarks-button').onc
 $('clear-history').onclick=()=>run(async()=>{await api.clearHistory();await renderLibrary();});
 function empty(parent,text){const p=document.createElement('p');p.className='empty';p.textContent=text;parent.append(p);}
 api.onState(s=>{
- const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id;
- if(switched)uiError='';lastState=s;renderTabs(s);renderJourney(s);if(switched)$('address').value=s.url||'';
+ const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id,addressChanged=s.url!==lastState.url;
+ if(switched)uiError='';lastState=s;renderTabs(s);renderJourney(s);if(switched||addressChanged)$('address').value=s.url||'';
  if(s.command==='close-panel')closePanel();if(s.command==='history')showLibrary('history');if(s.command==='bookmarks')showLibrary('bookmarks');if(s.command==='settings')run(showSettings);
  if(s.focusAddress){closePanel();$('address').focus();$('address').select();}
  if(document.activeElement!==$('address'))$('address').value=s.url||'';
@@ -53,8 +53,8 @@ api.onState(s=>{
  $('saved-toggle').checked=s.accessPolicy==='saved';
  const setupNeeded=s.accessPolicy!=='saved'&&!s.connectionConfigured;
  $('message').textContent=uiError||(s.networkJoining?'Connecting to the included Mesh network…':setupNeeded&&s.phase!=='error'?'Connect to Mesh in Settings with a connection code.':s.message||'Enter an ArNS address.');$('indicator').className='indicator'+(loading?' busy':s.phase==='error'||setupNeeded||uiError?' error':s.phase==='partial'?' partial':s.phase==='loaded'?' loaded':'');
- $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':'P2P · Live';
- renderSaved(s);renderDetails(s);renderElapsed();if(activePanel==='settings-panel')renderNetwork(s.networkConnection);
+ $('mode-badge').textContent=s.accessPolicy==='saved'?'P2P · Saved · No RPC':setupNeeded?'Set up connections':s.meta?.recovery?'P2P · Retained version':'P2P · Automatic';
+ renderMonitor(s);renderSaved(s);renderDetails(s);renderElapsed();if(activePanel==='settings-panel')renderNetwork(s.networkConnection);
  if(s.libraryChanged&&activePanel==='library-panel')run(renderLibrary);
 });
 let journeyKey='';
@@ -97,7 +97,7 @@ function renderSaved(s){const state=s.savedSites||{},storage=state.storage||{},s
  $('save-status').textContent=current?`${current.name}: ${current.saved}/${current.total} files saved${current.failed?' · '+current.failed+' unavailable':''}`:'Saved versions may be out of date.';
  $('storage-usage').textContent=`${storage.files||0} files · ${((storage.bytes||0)/1048576).toFixed(1)} / ${Math.round((storage.maxBytes||0)/1048576)} MiB`;
  const key=JSON.stringify(sites);if(key===savedKey)return;savedKey=key;$('saved-list').replaceChildren();if(!sites.length)empty($('saved-list'),'No saved pages yet. Open a site in P2P mode, then save it here.');
- for(const row of sites){const box=document.createElement('div');box.className='saved-site';const label=document.createElement('p');label.textContent=`${row.name} · ${row.saved}/${row.total} files · ${row.status==='saving'?'Saving':row.status==='linked-resources-saved'?'Detected Arweave files saved':row.status==='manifest-saved'?'Manifest files saved':row.status==='document-saved'?'Main document only':'Incomplete copy'}`;const date=document.createElement('small');date.textContent='Name observed: '+new Date(row.observedAt).toLocaleString('en-US');box.append(label,date);if(row.scope==='linked-arweave'){const scope=document.createElement('small');scope.textContent='Detected static Arweave references only; dynamic URLs and external services are not included.';box.append(scope);}const open=document.createElement('button');open.className='secondary';open.textContent='Open saved version';open.disabled=row.status==='saving';open.onclick=()=>run(async()=>{closePanel();await api.openSaved(row.name);});const remove=document.createElement('button');remove.className='secondary';remove.textContent='Remove saved copy';remove.disabled=row.status==='saving';remove.onclick=()=>run(()=>api.unpinSite(row.name));box.append(open,remove);if(row.errors?.length){const error=document.createElement('p');error.className='hint';error.textContent=row.errors.slice(0,3).map(x=>x.error).join(' · ');box.append(error);}$('saved-list').append(box);}
+ for(const row of sites){const box=document.createElement('div');box.className='saved-site';const label=document.createElement('p');label.textContent=`${row.name} · ${row.saved}/${row.total} files${row.update?' · Update '+row.update.saved+'/'+row.update.total:''} · ${row.status==='saving'?'Saving':row.status==='linked-resources-saved'?'Detected Arweave files saved':row.status==='manifest-saved'?'Manifest files saved':row.status==='document-saved'?'Main document only':'Incomplete copy'}`;const date=document.createElement('small');date.textContent='Name observed: '+new Date(row.observedAt).toLocaleString('en-US');box.append(label,date);if(row.scope==='linked-arweave'){const scope=document.createElement('small');scope.textContent='Detected static Arweave references only; dynamic URLs and external services are not included.';box.append(scope);}const open=document.createElement('button');open.className='secondary';open.textContent='Open saved version';open.disabled=row.status==='saving';open.onclick=()=>run(async()=>{closePanel();await api.openSaved(row.name);});const remove=document.createElement('button');remove.className='secondary';remove.textContent='Remove saved copy';remove.disabled=row.status==='saving';remove.onclick=()=>run(()=>api.unpinSite(row.name));box.append(open,remove);if(row.errors?.length){const error=document.createElement('p');error.className='hint';error.textContent=row.errors.slice(0,3).map(x=>x.error).join(' · ');box.append(error);}$('saved-list').append(box);}
 }
 run(()=>api.ready());
 
@@ -118,7 +118,7 @@ $('new-tab').onclick=()=>{uiError='';closePanel();run(()=>api.newTab());};
 $('download-document').onclick=()=>{closePanel();run(()=>api.saveDocument());};
 
 $('import-profile').onclick=async()=>{settingsResult('');try{const mode=$('import-mode').value;const result=await api.importProfile(mode);if(!result.canceled){await showSettings();settingsResult((mode==='merge'?'Connections added.':'Connections replaced.')+' Check connections, then reload an ArNS page.');}}catch(e){settingsResult(errorText(e),true);}};
-$('export-profile').onclick=async()=>{settingsResult('');try{const result=await api.exportProfile();if(result.exported)settingsResult('Profile exported. It contains service addresses only. Share it with people allowed to use those sources.');}catch(e){settingsResult(errorText(e),true);}};
+$('export-profile').onclick=async()=>{settingsResult('');try{const result=await api.exportProfile();if(result.exported)settingsResult('Profile exported. It contains service addresses and public saved-name witness identities. Share it with people allowed to use those sources.');}catch(e){settingsResult(errorText(e),true);}};
 $('check-connections').onclick=async()=>{const expected=settingsProfile;$('check-connections').disabled=true;settingsResult('Checking configured sources…');try{const results=await api.checkConnections();if(settingsProfile!==expected)return;renderConnections(settingsProfile,results);settingsResult(`${results.filter(r=>r.status==='responded').length} of ${results.length} sources responded. This checks reachability, not site availability.`,!results.some(r=>r.status==='responded'));}catch(e){settingsResult(errorText(e),true);}finally{$('check-connections').disabled=false;}};
 
 function renderNetwork(state={}){
@@ -126,6 +126,7 @@ function renderNetwork(state={}){
  if(!state.joined)return;
  $('joined-network-name').textContent=state.name;
  $('joined-network-status').textContent=(state.refreshing?'Checking signed connection updates…':state.error?'Update unavailable. Last accepted addresses are retained. '+state.error:state.expired?'The connection list needs renewal. Last accepted addresses are retained.':`Connected to this network · List revision ${state.revision}`);
+ const peers=lastState.peerDiscovery;$('peer-discovery-status').textContent=lastState.accessPolicy==='saved'?'Peer discovery paused in Saved mode.':`${peers?.learned||0} learned peer addresses · Content is verified before use. These are saved routes, not a count of online users.`;
  $('refresh-network').disabled=state.refreshing||lastState.accessPolicy==='saved';
 }
 function renderAvailableNetworks(rows){
@@ -140,7 +141,7 @@ async function inspectNetwork(){
   const result=await api.inspectNetwork(code);if($('network-code').value.trim()!==code)return;
   networkTicket=result.ticket;$('network-preview-name').textContent=result.name;
   const p=result.profile;
-  $('network-preview-summary').textContent=`${p.directPeers.length} Mesh peers · ${p.rpcSources.length} name sources · ${p.arweavePeers.length} raw sources.`+(result.local?' This code allows local network addresses.':'');
+  $('network-preview-summary').textContent=`${p.directPeers.length} Mesh peers · ${p.rpcSources.length} name sources · ${p.arweavePeers.length} raw sources · ${p.trustedPeers?.length||0} trusted saved-name witnesses.`+(result.local?' This code allows local network addresses.':'');
   $('network-preview-details').textContent=`Network identity: ${result.id}\nRevision: ${result.revision}\nList valid until: ${new Date(result.expiresAt).toLocaleString()}\n\n`+JSON.stringify(p,null,2);
   $('network-preview').classList.remove('hidden');settingsResult('Signature matches the code. Review the network, then join.');
  }catch(error){settingsResult(errorText(error),true);}finally{$('inspect-network').disabled=false;}
@@ -152,3 +153,36 @@ $('join-network').onclick=async()=>{
 };
 $('refresh-network').onclick=async()=>{settingsResult('Checking for connection updates…');try{await api.refreshNetwork();await showSettings();settingsResult('Network connections checked.');}catch(error){settingsResult(errorText(error),true);}};
 $('stop-network-updates').onclick=async()=>{try{await api.stopNetworkUpdates();await showSettings();settingsResult('Automatic network updates stopped. Current addresses are kept.');}catch(error){settingsResult(errorText(error),true);}};
+
+$('monitor-button').onclick=()=>togglePanel('monitor-panel');
+$('monitor-check').onclick=()=>run(()=>api.checkConnections());
+const monitorLabels={responding:'Responding',requesting:'Requesting',unavailable:'Request failed',unknown:'Not checked',stale:'Out of date',unconfigured:'No sources',paused:'Paused'};
+const humanBytes=n=>{if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KiB';return (n/1048576).toFixed(1)+' MiB';};
+const observedTime=at=>at?'Observed '+new Date(at).toLocaleTimeString('en-GB'):'No observation yet';
+let monitorEvidenceKey='';
+function renderMonitor(s){
+ const m=s.connectionMonitor;if(!m)return;
+ for(const kind of ['mesh','rpc','arweave']){
+  const g=m.groups[kind],label=monitorLabels[g.status];
+  $(kind+'-dot').className='status-dot '+g.status;
+  $(kind+'-live').textContent=kind==='mesh'&&g.replied?`${g.replied}/${g.total} replied`:label;
+  $(kind+'-state').textContent=label;$(kind+'-state').className='route-state '+g.status;
+  $(kind+'-card').dataset.status=g.status;
+  $(kind+'-count').textContent=g.status==='paused'?'Skipped':g.total?`${g.replied} / ${g.total}`:'—';
+  $(kind+'-detail').textContent=g.status==='paused'?'Saved names · No live RPC checks':kind==='mesh'?'Endpoints with a recent reply · Known peers':kind==='rpc'?'Endpoints with a recent reply · Name sources':'Endpoints with a recent reply · Raw sources';
+  $(kind+'-time').textContent=observedTime(g.lastAt);
+ }
+ $('traffic-live').textContent=m.active?`${m.active} requests in progress`:`${humanBytes(m.bytes)} received`;
+ $('monitor-bytes').textContent=humanBytes(m.bytes);$('monitor-active').textContent=m.active;$('monitor-requests').textContent=m.requests;
+ $('monitor-transfer').textContent=m.active?'Requesting data from available sources…':m.bytes?'No requests in progress · Data received earlier this session':'No data received this session';
+ $('monitor-check').disabled=m.checking||m.saved;$('monitor-check').textContent=m.checking?'Checking…':'Check now';
+ $('monitor-cadence').textContent=m.saved?'Saved mode · Connection probes paused. Missing files may still be requested from Mesh or Arweave.':m.checking?'Checking configured sources · Traffic updates every second.':'Checks run every 60 seconds while this panel is open. Traffic updates every second.';
+ const meta=s.meta||{},source=meta.contentSource;
+ $('page-source').textContent=meta.contentSignatureVerified?({local:'From this device',mesh:'From a Mesh peer',arweave:'From raw Arweave'}[source]||'Verified document'):s.url?'Waiting for a verified document':'Open an ArNS page';
+ $('page-source-detail').textContent=s.url||'Its verified main document source will appear here.';
+ $('page-signature').textContent=meta.contentSignatureVerified?'✓ Main document signature verified':'No verified document loaded';
+ $('page-name-source').textContent=meta.recovery?'Retained name · '+new Date(meta.recovery.observedAt).toLocaleString():meta.verification?.nameStateChecked?'Name: RPC observation · No inclusion proof':'No live name observation';
+ const evidenceKey=JSON.stringify([m.events,m.groups]);if(evidenceKey===monitorEvidenceKey)return;monitorEvidenceKey=evidenceKey;
+ $('monitor-events').replaceChildren();for(const e of m.events.slice(0,5)){const row=document.createElement('p');row.className='monitor-event';row.textContent=new Date(e.at).toLocaleTimeString('en-GB')+' · '+({mesh:'Mesh',rpc:'Solana RPC',arweave:'Raw Arweave'}[e.kind])+' · '+(e.status==='reply'?'HTTP reply received':'Request failed')+' · '+humanBytes(e.bytes);$('monitor-events').append(row);}
+ $('monitor-endpoints').replaceChildren();for(const [kind,g] of Object.entries(m.groups))for(const e of g.entries){const row=document.createElement('p');row.className='monitor-event';row.textContent=({mesh:'Mesh',rpc:'RPC',arweave:'Arweave'}[kind])+' · '+e.address+' · '+({checked:'Protocol check passed',reply:'HTTP reply; availability not verified',failed:'Request or protocol check failed',stale:'Last observation expired',unknown:'Not checked'}[e.status])+(e.elapsedMs!==null?' · '+e.elapsedMs+' ms':'');$('monitor-endpoints').append(row);}
+}

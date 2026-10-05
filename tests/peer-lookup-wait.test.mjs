@@ -119,3 +119,16 @@ test('bounded replication requests retain signature verification and carry cache
  try{const r=await createSwarmMeshClient({directPeers:[{host:'127.0.0.1',port:server.address.port}],dhtEnabled:false,cacheOnly:true}).content(item.idB64Url);assert.equal(intent,true);assert.equal(r.payload.toString(),'replicated signed content');}
  finally{await server.close();}
 });
+
+test('reader waits beyond ten seconds for first content from an automatically preparing supporter',async t=>{
+ const peer=testPeer(t),key=crypto.generateKeyPairSync('rsa',{modulusLength:4096}).privateKey.export({format:'jwk'});
+ const item=signDataItem(key,{data:Buffer.from('late prepared content'),tags:[]});
+ let release;const ready=new Promise(r=>release=r),job=ready.then(()=>peer.contentStore.put(item.idB64Url,item.binary));
+ peer.historyLookups.set(item.idB64Url,job);
+ const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0}),timer=setTimeout(release,10500);
+ try{
+  const client=createSwarmMeshClient({directPeers:[{host:'127.0.0.1',port:server.address.port}],dhtEnabled:false});
+  const result=await client.content(item.idB64Url,{signal:AbortSignal.timeout(15000)});
+  assert.equal(result.payload.toString(),'late prepared content');
+ }finally{clearTimeout(timer);release();await job;await server.close();}
+});

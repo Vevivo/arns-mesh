@@ -2,7 +2,7 @@
 
 [English / komutların tamamı](../shared-index.md) · [Destekçi kurulumu](destekci.md)
 
-Bu özellik **sunucuda çalışır**. Masaüstü kullanıcısı büyük indeksi indirmez; preview.13'ü yeniden kurması gerekmez. Temel destekçi kurulumu da indeksi kendiliğinden indirmez.
+Bu özellik **sunucuda çalışır**. Masaüstü kullanıcısı büyük indeksi indirmez; 0.5.0'ü yeniden kurması gerekmez. Temel destekçi kurulumu da indeksi kendiliğinden indirmez.
 
 ## Ne sağlar?
 
