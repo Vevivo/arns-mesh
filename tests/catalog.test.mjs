@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {getAntRecordEncoder} from '@ar.io/solana-contracts/ant';
 import {MAINNET_PROGRAM_IDS,getAntRecordPDA} from '@ar.io/sdk';
-import {TargetCatalog} from '../src/target-catalog.mjs';
+import crypto from 'node:crypto';
+import {getArnsRecordEncoder} from '@ar.io/solana-contracts/arns';
+import {getArnsRecordPDA} from '@ar.io/sdk';
+import {TargetCatalog,decodeRegistry} from '../src/target-catalog.mjs';
 import {withByteBudget,accountBudgetBytes} from '../src/byte-budget.mjs';
 const mint='11111111111111111111111111111111';
 async function row(undername,target,options={}){
@@ -55,4 +58,16 @@ test('new name priority survives restart while existing names still refresh',asy
  catalog.state.pendingNames=['name99'];catalog.save();
  const resumed=new TargetCatalog({file,endpoint:catalog.endpoint,rpc});await resumed.step({mints:2});
  assert.ok(resumed.state.targets.name99);assert.ok(resumed.state.targets.name0);assert.equal(resumed.state.cursor,1);assert.equal(resumed.state.pendingNames.length,0);
+});
+
+test('reused PDA derivations never bypass account owner, name-hash or binding validation',async()=>{
+ const name='cached-derivation-fixture',version={major:1,minor:0,patch:0},[pda]=await getArnsRecordPDA(name);
+ const raw=Buffer.from(getArnsRecordEncoder().encode({name,nameHash:crypto.createHash('sha256').update(name).digest(),owner:mint,ant:mint,purchaseType:1,startTimestamp:1,endTimestamp:null,undernameLimit:10,purchasePrice:0,bump:255,version}));
+ const record={pubkey:String(pda),account:{owner:MAINNET_PROGRAM_IDS.arns,data:[raw.toString('base64'),'base64']}};
+ const decode=()=>decodeRegistry({context:{slot:100},value:[record]});
+ assert.equal((await decode()).records[0].name,name);
+ assert.equal((await decode()).records[0].name,name);
+ record.pubkey=mint;assert.equal((await decode()).quarantine[0].error,'pda_mismatch');
+ record.pubkey=String(pda);record.account.owner=mint;assert.equal((await decode()).quarantine[0].error,'owner_mismatch');
+ record.account.owner=MAINNET_PROGRAM_IDS.arns;raw[8]^=1;record.account.data[0]=raw.toString('base64');assert.equal((await decode()).quarantine[0].error,'name_hash_mismatch');
 });

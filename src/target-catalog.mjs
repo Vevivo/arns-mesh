@@ -10,13 +10,24 @@ const ARNS_DISC=Buffer.from([53,158,42,125,7,132,104,188]);
 const validId=id=>/^[A-Za-z0-9_-]{43}$/.test(id);
 const filter=bytes=>({memcmp:{offset:0,bytes:Buffer.from(bytes).toString('base64'),encoding:'base64'}});
 const sha=name=>crypto.createHash('sha256').update(name).digest();
+// PDA derivation is deterministic, not a name observation. Keep only derived
+// addresses; owner, raw name hash, lease and binding are rechecked every time.
+const registryPdas=new Map();
+async function registryPda(name){
+ if(registryPdas.has(name))return registryPdas.get(name);
+ const [pda]=await getArnsRecordPDA(name),value=String(pda);
+ if(registryPdas.size>=50000)registryPdas.delete(registryPdas.keys().next().value);
+ registryPdas.set(name,value);return value;
+}
 export async function decodeRegistry(response,{signal}={}){
  if(!Number.isSafeInteger(response?.context?.slot)||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_registry_response');
  const records=[],quarantine=[];
  for(const [index,row] of response.value.entries()){if(index%32===0){await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();}try{
   if(row.account.owner!==MAINNET_PROGRAM_IDS.arns)throw new Error('owner_mismatch');
   const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(ARNS_DISC))throw new Error('discriminator_mismatch');
-  const rec=deserializeArnsRecord(raw),[pda]=await getArnsRecordPDA(rec.name);
+  const rec=deserializeArnsRecord(raw);
+  if(!/^[a-z0-9-]{1,255}$/.test(rec.name))throw new Error('invalid_name');
+  const pda=await registryPda(rec.name);
   if(String(pda)!==row.pubkey)throw new Error('pda_mismatch');
   if(!sha(rec.name).equals(raw.subarray(8,40)))throw new Error('name_hash_mismatch');
   if(!/^[a-z0-9-]{1,255}$/.test(rec.name))throw new Error('invalid_name');
@@ -46,10 +57,10 @@ export class TargetCatalog {
   this.state.cursor%=Math.max(1,decoded.records.length);this.save();return decoded;
  }
  async step({signal,mints=1}={}){
-  if(Date.now()-this.state.registryAt>this.registryIntervalMs&&Date.now()-(this.state.registryAttemptAt||0)>5*60000){
-   this.state.registryAttemptAt=Date.now();
-   try{await this.refresh({signal});this.state.registryError=null;}
-   catch(error){this.state.registryError=String(error.message).slice(0,240);if(!this.state.registry.length||signal?.aborted){this.save();throw error;}}
+  if(Date.now()-this.state.registryAt>this.registryIntervalMs&&Date.now()-(this.state.registryAttemptAt||0)>(this.state.registryRetryMs||5*60000)){
+   this.state.registryAttemptAt=Date.now();const validatedBefore=registryPdas.size;
+   try{await this.refresh({signal});this.state.registryError=null;this.state.registryRetryMs=5*60000;}
+   catch(error){this.state.registryError=String(error.message).slice(0,240);this.state.registryRetryMs=error.message==='catalog_refresh_timeout'&&registryPdas.size>validatedBefore?60000:5*60000;if(!this.state.registry.length||signal?.aborted){this.save();throw error;}}
   }
   for(let i=0;i<Math.min(mints,this.state.registry.length);i++){
    const prioritized=(this.state.scanTurn||0)%2===0&&this.state.pendingNames?.length;
