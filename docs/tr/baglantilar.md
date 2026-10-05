@@ -48,7 +48,7 @@ Profil adres taşır; sunucu kimlik sertifikası, erişim anahtarı veya saklanm
 | `mesh-upstream.json` | Yeni destekçi sunucu | Veri/kayıt alabileceği mevcut faydalı kaynak peer’ler |
 | `mesh-connect.json` | Kullanıcılar veya yeni sunucudan yararlanacak diğer destekçiler | Yeni destekçinin dışarıdan erişilebilir adresi; isteğe göre başka bağımsız kaynaklar |
 
-İkisi de **aynı dosya biçimini** kullanır; isimleri programın davranışını değiştirmez. Kaynak profilini aynen paylaşmak yeni peer’i eklemez. Boş düğümü yalnız kendisine bağlamak içerik sağlamaz. Kullanıcı dosyasını üretip denemek için [destekçi rehberini](destekci.md#5-kullanıcılara-nasıl-vereceksin) izle. Kullanıcı masaüstünden içe aktarır; destekçi kaynak profilini kurulumda veya peer durmuşken `scripts/profile.mjs apply` ile uygular.
+İkisi de **aynı dosya biçimini** kullanır; isimleri programın davranışını değiştirmez. Kaynak profilini aynen paylaşmak yeni peer’i eklemez. Boş düğümü yalnız kendisine bağlamak içerik sağlamaz. Kullanıcı dosyasını üretip denemek için [destekçi rehberini](destekci-ayrintili.md#5-kullanıcılara-nasıl-vereceksin) izle. Kullanıcı masaüstünden içe aktarır; destekçi kaynak profilini kurulumda veya peer durmuşken `scripts/profile.mjs apply` ile uygular.
 
 Kesinti öncesi kullandığın profilleri sakla. IP/port veya kullanım izni değişirse işletmeci yeni dosya vermeli, kullanıcı yeniden aktarmalıdır. **Add** önceki adresleri korur; eskileri çıkarmak için **Replace** seçimini bilinçli yap. Birden fazla adres ancak bağımsız, erişilebilir ve faydalı veriye sahip kaynaklarsa yedeklilik sağlar; her arka plan RPC işlemi otomatik yedeğe geçmez.
 

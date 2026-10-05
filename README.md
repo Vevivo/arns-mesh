@@ -1,161 +1,79 @@
 # ArNS Mesh
 
-**A desktop browser for opening ArNS names through verified peer and raw Arweave content, without redirecting to a gateway domain.**
+**Open ArNS sites through reachable peers, even when ordinary domain and gateway access is disrupted.**
 
-The aim is continued access when ordinary domains, DNS or gateways are unavailable **but IP connectivity and reachable data sources still exist**. Enter `ar://name`; the app finds the target, retrieves the content and checks its identity and signature before displaying it. It cannot recover data that no reachable source holds.
+ArNS Mesh is an independent community project with a Windows browser and a separate Linux supporter service. Enter `ar://name`: Mesh finds the name's content, retrieves available files and verifies their identity and signatures before displaying the page. The runtime uses numeric-IP sources rather than redirecting the reader to a gateway domain.
 
-**Current public preview: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Download Windows x64](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Türkçe](README.tr.md)
+The goal is to share the work of keeping sites reachable. Supporters contribute storage, name observations and content-location records on a VPS or Raspberry Pi. If raw Arweave and Solana RPC become unreachable, previously retained name records and actual content copies can provide a recovery path. **Working connectivity to a useful copy is still required. An index is not the file itself.**
 
-This is an experimental, independent community project, not an official AR.IO, Arweave or Solana release. Live name resolution still depends on numeric-IP Solana RPC observations. Universal first discovery and independent-host failover remain unfinished.
+[Türkçe](README.tr.md) · [Use the browser](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Network design](docs/en/shared-network.md)
 
-## Start here
+## Choose your path
 
-| Your goal | What you need | Guide |
+| I want to… | What I need | Start here |
 |---|---|---|
-| Browse ArNS sites | Windows x64 app + operator connection code (or legacy profile) | [Desktop setup](#install-and-use-the-windows-app) |
-| Help readers access data | Reachable Linux VPS or Raspberry Pi + storage + upstream sources | [Supporter setup](#run-a-supporter-on-a-vps-or-raspberry-pi) |
-| Develop or build Mesh | Source + Node.js/npm/Git; Electron for desktop development | [Developer guide](docs/en/developer.md) |
+| Open ArNS sites | Windows x64 browser and a working network connection configuration | [Download and first start](docs/en/user.md) |
+| Help store and serve sites | Reachable Linux VPS or 64-bit Raspberry Pi, disk and bandwidth | [Supporter setup](docs/en/supporter.md) |
+| Report a problem or suggest an improvement | Version, failed step and a clear description | [Feedback](CONTRIBUTING.md) |
 
-Readers do **not** need their own server, indexer, Node.js installation, Chrome extension or wallet. Installing the desktop does **not** automatically make it a public serving peer. The Linux supporter is a separate program. One person can run both: the server supplies data and the desktop browses it. The operator gives readers a connection code; readers do not pass website files to each other. No payment or activation license is required.
+A supporter does not need to write code. One person can browse and operate a supporter. Ordinary desktop users do not need a server, wallet, Node.js or their own index. Installing the browser does not automatically share their storage.
 
-## What makes this approach useful?
+## Downloads and actual status
 
-- **Simple network joining:** paste one connection code, review the network and join. Signed source-list updates follow automatically in Live mode. An operator can prepare a download that includes the invitation. [How it works](docs/en/network-code.md).
-- **No gateway-domain redirect:** the running client uses configured numeric-IP sources. Failed retrieval does not silently fall back to an ordinary gateway.
-- **Verification on the reader's device:** content IDs, signatures and integrity are checked locally. This is separate from trusting the RPC observation of the name's current target.
-- **Content and location sharing:** supporters can retain verified bytes and records describing where Arweave items can be fetched. Useful copies on independent machines can reduce dependence on one operator.
-- **Arweave assets in existing pages:** supported immutable `https://arweave.net/<id>` and `/raw/<id>` resource URLs are handled inside the browser through Mesh/raw Arweave. That spelling in the original page does not mean a gateway connection is made. Arbitrary HTTPS sites and gateway APIs are not supported by this handler.
-- **Explicit saved copies:** saving follows manifests and detected static Arweave references. Saved mode reads retained, verified local files; incomplete copies remain labelled as incomplete.
+| Track | Available now | Download / source |
+|---|---|---|
+| **Published preview.8** | Desktop browsing, saved copies, reusable network invitations and signed source-list updates | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Release and checksums](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
+| **Test candidate preview.12** | Adds dated outage recovery, bounded site preparation, local topic search, connection monitoring and the compact Home/logo | [Windows candidate](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323968857) · [Source commit](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
+| **Planned shared network** | Automatic supporter announcements, peer exchange, measured source selection and coordinated content replicas | [Design and acceptance conditions](docs/en/shared-network.md) — not implemented yet |
 
-Mesh explores an additional access route during disruptions. It does not replace Arweave storage, implement a full Solana validator, or guarantee that every existing website remains fully functional.
+Status checked on **5 October 2026**. `main` still has the preview.8 runtime; preview.12 is an unmerged candidate. Actions downloads may require GitHub sign-in and expire; use the exact linked run while available. Neither ZIP above includes an operator invitation. A separately prepared **Connected ZIP** can join its included network automatically on a fresh installation; this packaging capability already exists, but these standard downloads are not Connected packages.
+
+## Use Mesh today
+
+1. Download a **Windows application ZIP**, not GitHub's **Source code (zip)**.
+2. Extract the whole folder and open `Mesh-Browser.exe`.
+3. With a Connected package, let the included network connect. With a standard package, obtain a complete `mesh1.` invitation from a trusted operator and use **Settings → Mesh connection code → Check code → Join this network**. [Ask for connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if needed; availability is not guaranteed.
+4. Enter an ArNS name in Mesh's address bar. The preview.12 Home search additionally searches a downloaded, limited catalogue by topic.
+5. Use **Save current page** to retain supported files. Check whether the save is complete. Bookmarks only remember addresses.
+
+The intended everyday experience is **download, open, browse without entering a code**. Codes currently provide network identity and initial addresses; they are not licenses, passwords or paid activation. [Full user guide](docs/en/user.md).
 
 ## How a name becomes a page
 
-1. **Find initial sources:** a connection code pins a network signing key and starting numeric-IP peers. They supply a signed source list. Legacy JSON profiles remain supported. This is an operator-maintained list, not a global automatic directory.
-2. **Resolve the name:** read ArNS/ANT account observations through an IP-based Solana RPC; check expected account ownership, address derivation and data format locally. This is not an independent account-inclusion proof.
-3. **Locate content:** use local/peer location records and available index/raw discovery routes. A location record says where to look; it is not the file itself or proof of valid bytes.
-4. **Fetch and verify:** obtain Mesh content or raw Arweave data and check the requested full ID, signature and integrity.
-5. **Open the page and supported assets:** render in an isolated session. On a related asset location miss, preview.7 can search a bounded range of native blocks near the known page location, then verify the downloaded asset.
-6. **Optionally save:** retain the dated name mapping and detected files. Later saved access does not claim to show the newest live version.
+1. **Find sources.** Use the included/imported configuration and previously accepted addresses. Current source-list membership is operator-managed.
+2. **Find the name's target.** When available, read Solana RPC observations over numeric IP and check the expected account structure. The candidate can use an accepted, dated local/provider observation after an availability failure.
+3. **Find the files.** Use retained content, Mesh peers and raw Arweave sources as available. Location records help find data; they do not contain that data.
+4. **Verify and display.** Check content identity and signatures, then open the page and supported assets. Historical name access is labelled; content verification alone does not prove the latest name mapping.
 
-[Architecture and trust](docs/en/architecture.md) · [Resource discovery and limits](docs/arweave-resources.md)
-
-## Preview.8 connection acceptance
-
-144 tests passed on Linux and Windows. In the actual Windows UI, code joining opened `vevivo`, the restarted reader learned updates after the first directory process stopped, and Saved opening/restart emitted no new application-audit requests. A fresh included-network configuration joined automatically. Directory replicas shared one host; live content sources remained available. [Exact run and limits](docs/network-join.md).
-
-## What preview.7 has actually demonstrated
-
-In real Windows tests with DNS, gateway HTTPS and DoH blocked by OS rules, four public main documents opened: `vevivo`, `internetfireplace`, `permahistory` and `kh-laboratory`. Internet Fireplace's missing font, video and audio were found through raw Arweave and signature-verified; video and audio played. **The existing Mesh source and IP-based RPC were available in this media test.**
-
-![Actual Windows outage test: Internet Fireplace inside ArNS Mesh](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.7/resource-dns-cut-internetfireplace.png)
-
-Actual test capture, not a live feed. 131 source tests passed on Linux and Windows. [Live run](https://github.com/Vevivo/arns-mesh/actions/runs/36088804178) · [Successful repeat](https://github.com/Vevivo/arns-mesh/actions/runs/36089374969) · [Build and exact artifact scope](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.7)
-
-Earlier tests blocked the original Mesh source and used local replicas plus remote raw nodes. The replicas were on one Windows machine; they do **not** establish independent-provider resilience. External CDN features in `permahistory` remained unavailable. [Outage evidence](docs/disaster-network.md)
-
-## Install and use the Windows app
-
-### Download, connect, browse
-
-1. Get the **Windows ZIP** from [Releases](https://github.com/Vevivo/arns-mesh/releases), not **Source code (zip)**. Only Windows x64 has a packaged desktop. This community preview is unsigned; see [download checks](docs/en/user.md).
-2. Extract the **whole** ZIP and open `Mesh-Browser.exe`. No separate Node.js or Chrome install is required.
-3. Ask an operator for their complete `mesh1.` **connection code**. Choose **Settings → Mesh connection code → Check code**, review the network, then **Join this network**. Joining replaces the current source list; export it first if you need a backup.
-4. Use **Check connections**, then enter a bare name or `ar://name` in **Mesh's own address bar**. An endpoint responding does not guarantee every page is available.
-5. Watch **Resolve name → Find sources → Locate content → Download → Verify → Open page**. **Page information** shows missing files and verification details.
-
-**The standard public ZIP has no operator network included.** A provider can make a **Connected** ZIP that joins its included network on a fresh first start. Existing configured sources are preserved. Otherwise you need a code or a working JSON file; the repository examples contain nonworking addresses.
-
-Already have `mesh-connect.json`? Use **Settings → Already have a connection file? → Import connection profile**. Imports add sources by default; replacement is explicit. A manual import/edit stops automatic network-list updates. If you do not know an operator, [request connection information](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); this is volunteer coordination, not instant service.
-
-A connection code is **reusable, not a single-use license or password**. It shares starting addresses and a public verification key, not website files. [Reader and operator instructions](docs/en/network-code.md).
-
-Use `+` for tabs and the star for bookmarks. **A bookmark does not save the page.** Choose **Save current page** and wait for the result; open that copy in **Saved** mode later. Dynamic URLs, third-party APIs and non-Arweave CDNs are outside complete-save guarantees.
-
-To update, close the old app, retain its folder and a user-data backup, then extract the new ZIP into a different folder. Settings normally live in `%APPDATA%\ArNS-Mesh-Browser`. [Full user guide and troubleshooting](docs/en/user.md)
-
-## The connection-profile file
-
-This small JSON is a **list of starting addresses**, not a website archive, wallet, login or access token.
-
-| Field | What the operator supplies |
-|---|---|
-| `directPeers` | Reachable Mesh supporter IP:port addresses |
-| `rpcSources` | Permitted numeric-IP Solana RPC services for live name observations |
-| `arweavePeers` | Optional raw Arweave node IP:port addresses for direct retrieval/discovery |
-
-At least one RPC and at least one Mesh **or** raw Arweave source are required. For the raw discovery path demonstrated in preview.7, working raw Arweave sources must be configured. Mesh, RPC and raw Arweave are **different services**; putting your Mesh port into all three fields does not create them.
-
-Profiles accept literal IP:port entries, not domains, HTTPS URLs, credentials or URL paths. Include only endpoints intended for recipients to use. The format has no private-access approval mechanism. **Export profile** exports addresses only; it does not start a server or export saved pages. [Profile format and sharing](docs/en/connections.md)
+The client does not silently switch to a gateway domain. External APIs, ordinary domain-based services and non-Arweave CDN dependencies can remain unavailable. Supported immutable Arweave resource URLs in a page can be routed internally through Mesh/raw content. [Technical explanation](docs/en/architecture.md).
 
 ## Why run a supporter?
 
-A supporter gives readers another place to find useful records and verified content. It can observe name/target changes, perform bounded raw indexing, copy content and location records from configured peers, and answer requests. Its connection to the desktop is straightforward: **users join a network whose signed list includes its reachable Mesh address, then the desktop requests data from it. Legacy profiles also work.**
+A useful supporter gives readers another reachable copy and shares indexing/storage work. It retains three different things: **dated name-to-content records**, **location hints**, and **verified content bytes**. With adequate preparation, another supporter can answer requests when the initial operator is unavailable.
 
-The operator maintains reachability, storage and upstream sources, monitors errors/quotas, backs up peer identity/data and publishes an accurate signed connection list and provides its invitation code. A developer can contribute code without operating a server; an operator can support the network without changing code. This repository has no automatic reward/payment mechanism.
+A new empty server is not a backup. Relevant copies must exist on separate machines before an outage, and surviving peers need sufficient disk, memory and upload capacity. The current software has configured-peer replication and bounded preparation in the candidate; it does not yet automatically assign replicas or balance every request across newly discovered peers.
 
-A running empty peer is not a complete backup. Useful records and bytes must actually accumulate, and temporary cached data can be evicted. Moving a single VPS to a single Pi still leaves one point of failure. Availability benefits require useful copies on independently reachable machines.
+[Install on a VPS or Raspberry Pi](docs/en/supporter.md). The quick path joins an existing network. Creating a separate network and distributing new codes is an advanced operator task, not a requirement for each supporter.
 
-## Run a supporter on a VPS or Raspberry Pi
+## The shared network we are building
 
-Both use the **headless Node.js peer**, not the Windows ZIP. No domain, nginx or TLS certificate is required by this direct-IP setup. It does not install a full Solana or Arweave node.
+- Readers open the app; default connection settings are supplied with the download.
+- A supporter installs the service; its reachable address is checked and automatically announced to existing peers.
+- Peers share bounded address/content-availability records. Readers retain alternate routes without manual profile updates.
+- Mesh chooses useful, responsive sources and switches when one fails. Only verified content is accepted; a newly discovered peer does not automatically become a trusted name authority.
+- Content copies are prepared across independent supporters within their chosen resource budgets.
 
-| Platform | Preparation |
-|---|---|
-| Ubuntu VPS | Separate ordinary user/project directory, Node.js 24 LTS + npm + Git, persistent disk, unused reachable TCP port |
-| Raspberry Pi | 64-bit Linux such as Raspberry Pi OS Lite, ARM64 Node.js + npm + Git, persistent storage, stable power/network, reachable IP route |
+**These automatic enrollment, exchange, selection and replica-placement steps are design work, not current release features.** Initial reachable peers, name trust, list expiration, abuse limits and independent-host outage testing remain explicit parts of the work. [Read the design](docs/en/shared-network.md).
 
-**Real Pi hardware acceptance is pending.** Behind a home router, port forwarding/public addressing may be needed. CGNAT can prevent inbound access; direct mode has no automatic NAT traversal/relay. A LAN address is not necessarily reachable by Internet users.
+## What has been tested?
 
-The [step-by-step VPS/Pi guide](docs/en/supporter.md) covers OS/runtime preparation, networking, background service, quotas, backup and updates. Use the published preview.8 source after preparing the host and placing a working **upstream** profile beside the new checkout:
+- **Preview.12 candidate:** 168 source tests passed on Linux and Windows; 10 real Windows UI checks passed from the extracted ZIP. These used controlled services and signed test documents. [Exact run](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203).
+- **Published preview.8:** network joining, signed list updates, included-network startup and saved reopening were exercised in Windows. Directory replicas shared one host. [Evidence](docs/network-join.md).
+- **Earlier preview.7:** four public main documents opened during a Windows DNS/gateway blocking experiment; supported media played. Existing Mesh and IP-based RPC remained available. [Evidence and limits](docs/arweave-resources.md).
+- **Still pending:** independent-provider loss with real replicas, the owner's two-PC acceptance and Raspberry Pi hardware validation. Automatic public peer discovery has not been demonstrated.
 
-```sh
-git clone --branch v0.5.0-preview.8 --depth 1 https://github.com/Vevivo/arns-mesh.git arns-mesh
-cd arns-mesh
-node scripts/profile.mjs check ../mesh-upstream.json
-bash scripts/install-peer.sh ../mesh-upstream.json
-"$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
-```
+Mesh is not an official AR.IO, Arweave or Solana distribution. There is no universal site-coverage, instant-update or unlimited-offline-access guarantee. Direct Mesh/RPC HTTP is not an anonymity or encrypted-transport service. [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md).
 
-Run as the intended ordinary user in a fresh project directory. These default paths assume no `MESH_INSTALL_ROOT`/`XDG_DATA_HOME` override. The upstream profile points to services **your peer can use**; an empty peer pointing only at itself does not acquire content. Installation downloads dependencies, so prepare before a disruption. The basic installer does not open ports or change existing services.
+## More information
 
-The default listener is **TCP 49741**. Permit that selected port in your provider/OS firewall or router as appropriate. In a second terminal run `node scripts/probe-peer.mjs 127.0.0.1:49741`, then repeat from another network using the public IP. A response is only the first check; [verify actual content and counters](docs/en/supporter.md#4-check-that-other-people-can-use-it) before describing it as useful redundancy.
-
-### Prepare the sources and give users a code
-
-After external access works, create a **reader profile** containing **your new public Mesh address** and permitted RPC/raw sources. These are nonworking documentation addresses; replace all of them:
-
-```sh
-node scripts/profile.mjs --peer 192.0.2.20:49741 --rpc 198.51.100.20:8899 --arweave 203.0.113.30:1984 --output ../mesh-connect.json
-node scripts/profile.mjs check ../mesh-connect.json
-```
-
-Repeat options for additional sources, then publish the signed network list from your peer's data directory:
-
-```sh
-node scripts/network.mjs publish --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --profile ../mesh-connect.json --name "My Mesh Network"
-```
-
-Give users the returned **code** and the Windows download link. The updated peer must actually be running and reachable. Legacy users can still receive `mesh-connect.json`. [Codes, mirrors, automatic updates and Connected downloads](docs/en/network-code.md). Do not send the whole server data directory or peer identity. The upstream file you received may list only other people's peers; sharing it unchanged would not add yours. [Operator-to-user handoff](docs/en/supporter.md#5-give-users-a-profile)
-
-## Limits and next work
-
-| Area | Current boundary |
-|---|---|
-| Live names | IP-based Solana RPC trust; no independent account-inclusion proof or guaranteed instant freshness |
-| Unknown content | General discovery is incomplete; some earlier catalogs used external Turbo/Goldsky preparation, whose provenance remains relevant |
-| Related-asset discovery | Known parent location required; anchor plus up to 64 preceding blocks/256 transactions per block, outer bundle headers, 3 minutes, 96 MiB reserved per scan and 256 MiB/day reader allowance |
-| Large files | 32 MiB signed-object limit; verified large-file streaming is unfinished |
-| Saved sites | Manifests and bounded detected static Arweave references, not every dynamic URL or external service |
-| Resilience | Signed operator lists and mirrored announcements; no automatic global peer membership/replication; independent-host failure acceptance and full packet capture remain pending |
-| Privacy | Direct IP is not an anonymity service; Mesh/RPC HTTP is unencrypted |
-
-Prepare the app and several usable sources before a disruption and save important pages. No design can retrieve a missing file from an unreachable network. [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md)
-
-## Developers and contributors
-
-[Download current source](https://github.com/Vevivo/arns-mesh/archive/refs/heads/main.zip) or clone the repository. Source archives are not ready-to-run desktop packages. Use the lockfile, isolated data and the [developer guide](docs/en/developer.md) for tests, Electron and packaging. This release is a standalone desktop; it does not install a Wayfinder Chrome extension or add a P2P toggle to another browser.
-
-Useful contributions include general location coverage, independent replication, name-update/RPC reliability, resource budgets, large-file verification and Windows/Pi outage evidence. Label measured results, fixtures and unfinished features separately.
-
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Apache-2.0](LICENSE) · [Attribution](NOTICE.txt)
+[Supporter setup](docs/en/supporter.md) · [Connection terms and advanced network operations](docs/en/network-code.md) · [Candidate recovery](docs/resilient-access.md) · [Topic search](docs/topic-search.md) · [Monitor indicators](docs/connection-monitor.md) · [Source development](docs/en/developer.md) · [Security](SECURITY.md) · [Apache-2.0](LICENSE) · [Attribution](NOTICE.txt)

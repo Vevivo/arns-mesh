@@ -2,14 +2,16 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
+This page distinguishes the published preview.8 baseline from the preview.12 candidate. Automatic supporter enrollment and replica placement are the [next design](shared-network.md), not current behavior. Use the [candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e) for the recovery paths below.
+
 ## Two runtime roles
 
 The **reader** resolves only requested names/content, uses bounded caches, has no public listener and does not continuously scan the ledger. The **supporter** exposes `/mesh/v1/query` on a selected numeric-IP TCP endpoint, observes target changes and performs bounded indexing/replication. A supporter is neither a full Solana validator/RPC nor a full Arweave node.
 
 | Stage | Current mechanism | What it does not establish |
 |---|---|---|
-| Bootstrap | Operator-supplied literal IP:port profile, multiple configured peers | Automatic public peer enrollment or NAT traversal |
-| Name → target | Solana RPC observation with owner/PDA/name and account decoding checks | Trustless account inclusion, independence of RPC operators, instantaneous latest state |
+| Bootstrap | Included/imported invitation with an authority key and IP starting peers, signed source-list updates and optional mirrors; legacy profiles | Automatic public peer enrollment, independent authority continuity or NAT traversal |
+| Name → target | Solana RPC observation with owner/PDA/name and decoding checks; candidate availability-only fallback to dated local/trusted-provider observations | Trustless account inclusion, independence of RPC operators, instantaneous latest state |
 | Target → location | Local/peer hints, sparse historical published indexes, bounded raw-ledger discovery on supporters; reader-demand discovery near a known parent location | Complete or current location coverage |
 | Location → bytes | Mesh chunks or raw Arweave transactions/chunks via approved IP routes | Availability if no reachable copy exists |
 | Bytes → content | Protocol-specific identity/signature/integrity checks before use | Freshness of the name mapping |
@@ -28,18 +30,19 @@ Direct Mesh/RPC HTTP is not encrypted. Content checks detect invalid data; they 
 
 Preview.7 also lets a reader search for a missing linked item near the already-known parent page location: the anchor and up to 64 earlier blocks, up to 256 transaction IDs per block, outer bundle headers only. A scan has a three-minute deadline and a 96 MiB response budget; the reader reserves at most 256 MiB/day for this work. It still verifies the full requested item before use. This is demand-driven recovery, not universal first-root discovery or continuous ledger scanning. See [resource behavior and measured media results](../arweave-resources.md).
 
-The target catalog observes names and ANT records automatically rather than embedding a list of successful site names. It refreshes the registry on an approximately six-hour schedule and processes a bounded number of ANT records per pass (default 16). Target changes reset relevant queued work. Refresh/content work currently shares a daily catalog budget (64 MiB default); quota exhaustion, RPC limitations and backlogs can delay both. The server currently selects the first configured RPC for the catalog. More RPC addresses do **not** imply this worker automatically fails over among all of them.
+The catalog observes registry/ANT records under quotas. Published preview.8 schedules roughly six-hour registry refreshes with incremental work. The candidate attempts registry refresh around every 15 minutes and incremental ANT work around once a minute plus processing time; a sweep can still take hours. Budgets, RPC errors and queues delay updates. The catalog selects the first configured RPC; more addresses do not imply automatic failover for every worker. [Candidate preparation and timing](../resilient-access.md).
+
 
 ## Outage cases
 
 - **Empty reader, warm peer:** can work if name observations and verified bytes are available. This is not proof of first discovery.
 - **Empty reader, unknown location:** must obtain a location from a useful peer/index/raw discovery route. General success remains incomplete.
-- **Saved local content:** explicit saved mode uses the selected copy’s dated retained name observation and verified local bytes. Saving follows manifests and bounded static Arweave references in HTML/CSS/JS/JSON; dynamic dependencies can remain absent. A missing saved file fails locally instead of triggering network recovery. It does not assert latest chain state.
+- **Saved content:** retained versions use their own dated name bindings and verified bytes. In the candidate, missing content can still be requested from Mesh/raw sources; Saved suspends live name checks and monitor probes, not all networking. A complete retained fixture opened after restart with zero application HTTP requests. Dynamic dependencies can remain absent; a dated binding is not latest chain state.
 - **One peer lost:** another independent peer needs the relevant bytes/hints. One-host multi-process tests do not prove resilience against a provider outage.
-- **No live RPC:** fresh name observation may fail. A Raspberry Pi Mesh supporter does not solve the Solana RPC availability/trust issue by itself.
+- **No live RPC:** live freshness is unavailable. The candidate can use an accepted dated binding from local storage or an explicitly trusted reachable provider. If raw Arweave is unavailable too, verified copies must already exist locally/on Mesh. A newly discovered peer is not automatically a trusted name witness; independent-host outage acceptance is still pending.
 
 ## Resource bounds
 
 Readers have 256 MiB automatic content, a separate 512 MiB saved-content budget, a 16 MiB response cache, two content transfers and a 32 MiB signed-item limit. This is not a total RAM/disk cap: Chromium, page scripts, dependencies, logs and metadata consume additional resources. Large verified streaming is not complete. Supporter scan quotas limit accounted work, not total serving traffic or index growth.
 
-GitHub/npm and the official Electron download are build/distribution dependencies. Preinstalled runtime operation does not require these sites. Receiving a profile before an outage is still necessary; a private operator's endpoints are deliberately not embedded in the public package.
+GitHub/npm and the official Electron download are build/distribution dependencies. Preinstalled runtime operation does not require these sites. A fresh installation needs initial connection information and a reachable peer; an included invitation, imported code or profile can supply it. The standard public packages contain no operator endpoints. Only the authority can renew the present signed list, so a long authority outage still affects fresh joins; see [network-list expiry](network-code.md#updates-expiration-and-outages).

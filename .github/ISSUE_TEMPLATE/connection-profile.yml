@@ -1,5 +1,5 @@
-name: Request a Mesh connection code
-description: Ask the maintainer or a volunteer supporter about access to a live peer and RPC.
+name: Connection and supporter setup help
+description: Get help connecting a reader or joining the current supporter network.
 title: "Mesh connection request"
 body:
   - type: markdown
@@ -9,12 +9,14 @@ body:
         Ask an operator for a reusable mesh1 connection code (preview.8+) or a legacy JSON profile.
         The standard public ZIP contains no provider invitation. This request does not guarantee service.
         Codes carry network identity and starting addresses; no payment or activation license is required.
-        There is no automatic global supporter directory.
+        Automatic supporter announcements and peer exchange are planned, not available yet.
+        To support the existing network, follow docs/en/supporter.md; you do not need to create your own network.
+        Sharing an address here is not automatic admission or proof of redundancy.
   - type: input
     id: version
     attributes:
       label: Desktop version
-      placeholder: 0.5.0-preview.8
+      placeholder: 0.5.0-preview.12 (candidate) or 0.5.0-preview.8 (published)
     validations:
       required: true
   - type: dropdown

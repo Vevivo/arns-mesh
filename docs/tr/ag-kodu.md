@@ -4,6 +4,19 @@
 
 Bu yol **preview.8 ve üzerindeki** masaüstü ve peer içindir. Eski peer'ler içerik sunmaya devam edebilir; bağlantı listesi yayımlamak için güncellenmeleri gerekir. Yazılım güncellemesi çalışan sunucunu kendiliğinden değiştirmez.
 
+## Hangisine ihtiyacım var?
+
+| Bilgi | Anlamı |
+|---|---|
+| Peer adresi (`IP:port`) | Bir destekçinin erişilebilir servis adresi |
+| Ağ daveti (`mesh1.…`) | Ağa katılmak için açık ağ anahtarı ve başlangıç adresleri |
+| Bağlantı profili (`mesh-connect.json`) | Eski/elle kullanılan kaynak ayarı; site dosyası değildir |
+
+**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılır, bugün için erişilebilir adresinizi ağ yöneticisine ekletirsiniz. Yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. Otomatik duyuru [planlanıyor](paylasilan-ag.md).
+
+Aşağıdaki bölümler bugünkü bağlantı mekanizmasını ve gelişmiş sağlayıcı işlemlerini anlatır. Hedef üründe kod gelişmiş/kurtarma yolu olarak kalabilir; normal kullanıcı hazırlanmış bağlantılı indirmeyle başlayacaktır. Bugünkü standart ZIP'lerde bağlantı ayarı hâlâ gerekir.
+
+
 ## Kullanıcı ne yapar?
 
 1. Windows masaüstü ZIP'ini indirir, tamamını çıkarır ve `Mesh-Browser.exe` dosyasını açar.
@@ -71,7 +84,7 @@ Liste kopyalamak site dosyalarını kopyalamaz. İçerik/katalog çoğaltması a
 
 Kullanıcı listesi değişince aynı veri diziniyle `publish` komutunu yeniden çalıştır. Anahtar korunur, sürüm numarası artar. Kodda anahtar ve başlangıç adresleri aynıysa kod da aynı kalır. Başlangıç adreslerini değiştirirsen ilk kurulumlar için yeni kod dağıt; bütün eski başlangıç adresleri erişilemezken yeni kullanıcı kendiliğinden ilk kaynağı bulamaz.
 
-Masaüstü Live modunda açılışta ve yaklaşık 15 dakikada bir güncelleme arar. İmzası değiştirilmiş, süresi geçmiş, eski sürümlü veya aynı sürümde çelişen listeleri kabul etmez. Kaynaklara erişemediğinde son kabul ettiği adresleri silmez. **Saved** modunda bu sorguları yapmaz; kayıtlı dosyaları yerelden açar.
+Masaüstü Saved dışında (preview.8 Live, adayda Automatic) açılışta ve yaklaşık 15 dakikada bir güncelleme arar. İmzası değiştirilmiş, süresi geçmiş, eski sürümlü veya aynı sürümde çelişen listeleri kabul etmez. Kaynaklara erişemediğinde son kabul ettiği adresleri silmez. **Saved** modunda liste sorgusu yapmaz. Tam kayıtlı dosyalar yerelden açılabilir; adayda eksik içerik Mesh/ham kaynaklardan istenebilir. Bu bütün ağı kapatma modu değildir.
 
 Bir yayın varsayılan 14 gün geçerlidir. Yetkili anahtarın bulunduğu çalışan peer, başlangıçta ve altı saatte bir kontrol eder; üç gün veya daha az kalınca listeyi yeniler. Mirror tek başına süreyi uzatamaz. Süre dolması önceden kaydedilmiş adresleri veya dosyaları silmez; yeni katılım ve yeni liste kabulü için geçerli yayın gerekir. Bu **abonelik süresi değildir**.
 

@@ -1,40 +1,40 @@
-# Önizleme durumu ve doğrulama sınırları
+# Durum ve test kanıtları
 
-**Yayımlanmış preview.8**, imzalı bağlantı kodu, saklanan/güncellenen kaynak listesi ve kodu paket içinde verme yolunu ekler. [Kullanım ve sınırlar](ag-kodu.md). [Windows kabul akışı](../../.github/workflows/network-join.yml) aynı makinedeki kontrollü liste peer’lerini kullanır; bağımsız cihaz kaybı veya ücretli lisans kanıtı değildir. Aşağıdaki eski kesinti ölçümleri preview.7’ye aittir.
+[English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-**0.5.0-preview.7** kaynak sürümü, Arweave dosya adreslerini gateway’e bağlanmadan doğrulanmış veri yoluna alır; sabit bağlantıları kopyalama ve saklamaya ekler. Sayfanın bilinen konumundan başlayan sınırlı ham blok taraması, daha önce bulunamayan video/ses/font dosyalarını keşfetti. [131 test ve gerçek Windows ölçümü](../arweave-resources.md) geçti: DNS/gateway engeli altında video ve ses oynadı. Bu deneyde mevcut Mesh sunucusu ve IP üzerinden RPC açıktı.
+**5 Ekim 2026** tarihinde kontrol edildi. `main` çalışma kodu ve son yayımlanmış sürüm: **preview.8**. Test edilmiş geliştirme adayı: **preview.12**, kaynak [cbd55a7](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e), [henüz birleştirilmemiş PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Belgelerin yayımlanması aday kodu veya yeni uygulama paketini yayımlamaz.
 
-Yayımlanan paketler ve taslak durumu [sürümler sayfasındadır](https://github.com/Vevivo/arns-mesh/releases). Önceki **0.5.0-preview.6** ayrı bir ölçülmüş pakettir. 25 Eylül 2026 DNS/gateway kesinti ölçümleri ve destekçi konum çoğaltma değişikliği [deney kaydında](../disaster-network.md) açıklanır. Özel uçlar çıkarıldı; bağlantı profili aktarımı ve ayrı destekçi kurulumu eklendi. Çalışan üretim sunucusu otomatik güncellenmez.
+## Mevcut, aday ve planlanan
 
-| Konu | Kanıtın kapsamı |
+| Özellik | Durum |
 |---|---|
-| Çekirdek testleri | İmza/kimlik, konum, manifest, bütçe, iptal, katalog ve aynı cihazda iki peer denemeleri. Kesin commit sonucu GitHub Actions'ta. |
-| Masaüstü kabuğu | Electron API test çiftleriyle sekme, IPC ve profil aktarımı; gerçek çizilmiş sayfa testi değil. |
-| Destekçi kurucusu | Ayrı geçici dizinde kurulum/güncelleme; kimlik, veri ve profil korunması. Bağımlılık indirme bu duman testinde taklit edilir, CI'da gerçek `npm ci` ayrıca çalışır. |
-| Windows paketi | Yayımlanmış ZIP özeti doğrulandı; gerçek masaüstünde dört ArNS ana belgesi ağ engeli altında açıldı. Harici varlıklar nedeniyle eksik sayfalar var. |
-| Önceki canlı veri deneyi | Boş Linux okuyucu, dolu peer'den gerçek HTML doğruladı; saklanan kopya ayrı modda açıldı. Özel kayıtlar repoda yok; bütün isimleri bağımsız bulma kanıtı değil. |
-| Gerçek Windows / Raspberry Pi | Windows sayfa deneyi yapıldı; tam kurulum, güncelleme/kaldırma, SmartScreen ve Pi donanım kabulü bekliyor. |
-| Ağ kesintisi | Windows Firewall ile izinli IP uçları dışındaki erişim, DNS, IPv6 ve UDP engellendi. DNS, gateway ve DoH olumlu/olumsuz kontrolleri geçti; tam paket kaydı yapılmadı. |
-| Bağımsız sunucu kaybı | Tek cihazdaki iki süreç testi var; farklı cihaz/sağlayıcı testi tamamlanmadı. |
-| Bilinmeyen konum | Genel keşif tamamlanmadı. Bazı eski kataloglar Turbo/Goldsky hazırlığına dayanıyordu; bunlar repoda değil. |
+| ArNS gezintisi ve doğrulanmış Mesh/ham dosyalar | Yayımlandı; kapsam eksik |
+| Ağ daveti ve imzalı kaynak güncellemeleri | Yayımlanmış preview.8 |
+| İçinde ağ bulunan paketin otomatik katılımı | Paketleme seçeneği var; standart ZIP'lerde davet yok |
+| Tarihli isimle kurtarma, yeni sürümü ayrı hazırlama | Preview.12 adayı; preview.9'da eklendi |
+| Yerel konu araması ve bağlantı izleme | Preview.12 adayı; katalog kapsamı ve adres sayıları sınırlı |
+| Sade ana ekran ve Mesh pencere simgesi | Preview.12 adayı |
+| Yeni destekçinin kendini duyurması, otomatik adres paylaşımı | Planlandı; mevcut katılım düğmesi yok |
+| İçerik başına ölçülen kaynak seçimi, otomatik kopya yerleştirme/tamamlama | Planlandı |
+| Masaüstünden dosya sunma | Yok; okuyucu genel dinleyici açmaz |
+| Tam Arweave/CDB64 kopyası, bütün isimlere erişim | Sağlanmıyor |
+| Gerçek Pi testi, bağımsız sağlayıcı kaybı | Bekliyor |
 
-Canlı isim çözümünde IP üzerinden Solana RPC yanıtına güven sürer. İçerik imzası ismin en güncel kaydını kanıtlamaz. Kayıt taraması yaklaşık altı saat arayla planlanır, ANT hedefleri artımlı okunur. Katalog şu an ilk yapılandırılmış RPC'yi seçer; listeye çok RPC yazmak bu işte otomatik geçiş garantisi sağlamaz.
+## Kanıtlar
 
-Katalog varsayılan 64 MiB/gün yanıt bütçesini isim ve içerik işleri birlikte kullanır; kota dolunca güncellemeler gecikebilir. İsim değiştiğinde anında son veriyi göstermek garanti değildir. `Saved` son bilinen kayıt/kopyadır. Bir VPS'i tek Pi'ye taşımak tek nokta bağımlılığını kaldırmaz.
+| Sürüm | Ölçüm | Sınır |
+|---|---|---|
+| Preview.12 | [37259769203](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203): Linux/Windows'ta 168 kaynak testi, gerçek ZIP'ten 10 Windows arayüz kontrolü | İmzalı test belgeleri ve kontrollü yerel servisler; bağımsız altyapı veya yeni ağ seviyesinde kesinti testi değil |
+| Preview.8 | [Bağlantı kabulü](../network-join.md): katılım, ilk liste süreci kaybından sonra güncelleme, hazır ağla başlangıç, kayıtlı yeniden açılış | Liste süreçleri aynı makinede, canlı kaynaklar erişilebilirdi |
+| Preview.7 | [Kaynak/kesinti kanıtı](../arweave-resources.md): Windows DNS/gateway kısıtları altında dört gerçek ana belge ve desteklenen medya | Mevcut Mesh ve IP tabanlı RPC erişilebilirdi |
+| Önceki kopya deneyi | [Ayrıntılı kesinti raporu](../disaster-network.md) | Aynı makinedeki kopyalar ve erişilebilir uzak ham kaynaklar bağımsız sağlayıcı kaybı kanıtı değildir |
 
-Çalıştırılabilir kontrol:
+[Aday ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323968857) · [Arayüz kanıtı](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323719745). Actions dosyaları 14 gün tutulur; kalıcı sürüm dosyası değildir ve GitHub oturumu gerekebilir.
 
-```sh
-npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-npm run check:public
-npm test
-bash scripts/test-install.sh
-```
+## Ortak ağı hazır saymadan önce
 
-Tam kabul; temiz profil, kayıt kaynağından farklı örnekler, undername/değişen hedef/manifest, bütün yerel varlıklar, bozuk veri, iptal, bağımsız peer kaybı, gerçek Windows/Pi kaynak ölçümü ve süreçlerin tam ağ kaydını gerektirir. Yeşil CI bu kabulün yerine geçmez. Ayrıntılı deney ayrımı ve engel kaydı [English status](../en/status.md), mimari ve kaynak üretimi [architecture](../en/architecture.md) içinde.
+[Kararlaştırılan tasarım ve kabul koşulları](paylasilan-ag.md) izlenir. Gerçek bağımsız cihazlarda hazırlanan kopyalarla; eski kullanıcının yeni peer'i öğrenmesi, ilk sağlayıcının kapanması ve RPC/ham Arweave'in birlikte kesilmesi denenir. Eksik/eski/hatalı kayıt, duyuru bombardımanı, kapasite sınırı ve süresi dolan listeler ölçülür. Kesintiden önce hangi sürümün hangi peer'de olduğu kaydedilir; boş sunucu yedek değildir.
 
-## Masaüstü arayüz deneyi
+Sahibin iki PC testi cihazlar kullanılabilir olana kadar ertelendi. İki tarayıcı kurulumu iki veri sunan peer oluşturmaz. Tam ağ paketi yakalama ve gerçek Pi performansı bekliyor. Uygulama HTTP kaydı ve “yanıt veriyor” göstergelerinin kapsamı daha dardır.
 
-`qa/desktop/user-journey.cjs` paketlenmiş Windows uygulamasını açar; yerel sağ tık ve dosya menülerini, profil içe/dışa aktarımını, hata gösterimini ve yeniden başlatmayı kullanır. HTML/CSS/JS/resim, geri/ileri ve yenileme için gerçek imzalı dosyalardan oluşan kontrollü bir saklanmış sayfa kullanır. Bu deneydeki `mesh-qa` ismi sentetiktir; canlı ArNS kaydı veya yeni içerik keşfi kanıtı değildir. Deney verileri dağıtıma girmez. Tam koşu, ekran kaydı ve sınırlar sürümün kabul kaydında belirtilir.
-
-Yeni tasarım tek adres alanı ve tek Settings girişi kullanır. İlerleme şeridi gerçek motor olaylarını gösterir; Open page, ana belgenin yüklemesi tamamlanınca işaretlenir. Yerel fontlar ve alt kısımdaki resmî ar.io logosu için CDN çağrısı yoktur. Bağımsız topluluk projesi kimliği korunur.
+Yayımlanmış sürüm, aday, test düzeneği ve gerçek ağ kanıtları ayrı tutulur. Yeşil kaynak testi felaket hazırlığı veya genel kapsam kanıtı değildir. [İşleyiş](../en/architecture.md) · [Adayda kurtarma](dayanikli-erisim.md).
