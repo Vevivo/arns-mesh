@@ -1,63 +1,69 @@
-# ArNS Mesh kullanımı
+# Windows'ta Mesh kullanımı
 
-[English](../en/user.md) · [Ana sayfa ve indirmeler](../../README.tr.md)
+[English](../en/user.md) · [Ana sayfa](../../README.tr.md)
 
-Windows x64 uygulama ZIP'i gerekir. Sunucu, cüzdan, Node.js veya indeks kurmanız gerekmez. Veriyi sağlayan ayrı servisi destekçiler çalıştırır.
+Windows uygulaması ve çalışan bir ağ daveti yeterlidir. VPS, cüzdan, Node.js veya büyük sunucu indeksi kurmanız gerekmez.
 
-## 1. İndir ve aç
+## 1. İndirin
 
-[Ana sayfadaki sürüm tablosundan](../../README.tr.md#indirme-ve-gerçek-durum) seçin. Yayımlanmış preview.8 ve test adayı preview.12 farklı paketlerdir. GitHub Actions dosyaları süre sonunda silinebilir ve oturum açmanızı isteyebilir. **Source code (zip)** yerine uygulama ZIP'ini indirin.
+**[Preview.13 Windows x64 uygulama ZIP'ini](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip)** indirin. GitHub'daki **Source code** arşivleri geliştiriciler içindir.
 
-**Bütün dosyaları** kalıcı bir klasöre çıkarıp `Mesh-Browser.exe` dosyasını açın. EXE diğer dosyalarla aynı klasörde kalsın. Masaüstüne koymak için EXE'ye Windows kısayolu oluşturun; yalnız EXE'yi klasöründen taşımayın. Önizleme imzasızdır. Uyarıyı aşmak için güvenlik yazılımını kapatmayın veya yönetici çalıştırmayın; engellenirse uyarı ayrıntısını bildirin.
+ZIP'in tamamını kalıcı bir klasöre çıkarın. İçindeki `Mesh-Browser.exe` dosyasını açın. Diğer dosyaları yanında bırakın; masaüstünde simge istiyorsanız kısayol oluşturun.
 
-Sağlama toplamını kontrol etmek isterseniz PowerShell'de `Get-FileHash -Algorithm SHA256 -LiteralPath 'indirilen-dosyanin-yolu.zip'` çalıştırıp tamamını o paketin değeriyle karşılaştırın. Sağlama toplamı yayıncı imzası değildir.
+Bu, imzasız bir topluluk ön sürümüdür. Windows engellerse [sürüm ve dosya doğrulama bilgilerini](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) kontrol edip uyarıyı bildirin. Güvenlik yazılımını kapatarak engeli aşmayın.
 
-## 2. Bir kez bağlan
+## 2. Bir kez bağlanın
 
-| Paket | İlk bağlantı |
+Güvendiğiniz ağ işletmecisinden `mesh1.` ile başlayan kodun tamamını alın.
+
+**Settings → Mesh connection code → Check code → Join this network**
+
+Katılmadan önce gösterilen ağı kontrol edin. Kod tekrar kullanılabilir bir davettir; şifre veya ücretli lisans değildir. Kodunuz yoksa [bağlantı yardımı isteyebilirsiniz](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); hizmet gönüllü işletmecilerin erişilebilirliğine bağlıdır.
+
+Önceden ayarlanmış kurulum kayıtlı bağlantısını kullanır. Ayrı sağlanan Connected paket bir davet içerebilir; yukarıdaki standart ZIP içermez. Eski bağlantı dosyası **Settings → Already have a connection file?** bölümünden alınabilir.
+
+## 3. Bir ArNS sitesi açın
+
+**Üst adres çubuğuna** `ar://vevivo` veya ziyaret etmek istediğiniz başka bir ArNS ismini yazın. Örnek adresin her zaman açılacağı garanti edilmez.
+
+Alt isimlerde tam kayıtlı yazımı kullanın: örneğin `altisim_isim`. Ana sayfadaki arama kutusu sınırlı bir konu kataloğunu arar; adres çubuğundan ayrıdır.
+
+Mesh ismi çözer, dosyaları bulur, doğrular ve sayfayı açar. **Page information**, eksik kaynakları ve tarihli isim kaydının kullanılıp kullanılmadığını gösterir. Domain üzerinden çalışan haricî API ve CDN'ler erişilemez kalabilir.
+
+## Bilgisayarınızda tutulan veriler
+
+Büyük paylaşılan indeks ve destekçi arşivleri **sunucuda** tutulur. Gezinmek için bunları indirmeniz gerekmez; tarayıcı diskinizi otomatik olarak diğer kullanıcılara sunmaz.
+
+Ancak preview.13; uygulama ayarlarını, gezinme durumunu, isim kayıtlarını ve sınırlı içerik önbelleğini `%APPDATA%\ArNS-Mesh-Browser` altında tutar. **Save current page** ek dosyalar saklar. Bilerek sayfa kopyası kaydetmek istemiyorsanız bu işlemi kullanmayın; normal önbellekleme yine devam eder.
+
+Bu sürümde desteklenen bir sıfır kalıcı depolama modu yoktur. Arşiv işinin destekçilerde yapılması, mevcut tarayıcıyı disksiz yapmaz.
+
+## Erişim kesilirse
+
+**Automatic** modu ulaşılabilir canlı kaynakları kullanır; gerektiğinde kabul edilmiş tarihli bilgiye dönebilir. RPC ve ham Arweave erişilemiyorsa gerekli isim kaydı ve dosyalar yerelde veya ulaşılabilir bir destekçide önceden bulunmalıdır.
+
+**Saved** modu işletim sistemi düzeyinde ağı kapatmaz; eksik dosyalar istenebilir. Yer imi adresi hatırlar, siteyi kaydetmez.
+
+Ağa katıldıktan sonra ek destekçiler otomatik öğrenilebilir. Bu, her sitenin başka bir kopyası olduğunu garanti etmez. [Destekçilerde devralma hazırlığı](dayaniklilik.md).
+
+## Bir şey açılmadığında
+
+| Görülen durum | Anlamı / yapılacak kontrol |
 |---|---|
-| Ayrı hazırlanmış **Connected ZIP** | Temiz kurulumda sağlayıcının eklediği ağ doğrulanır ve katılım denenir |
-| Standart GitHub sürüm/adayı | Güvendiğiniz sağlayıcıdan tam `mesh1.` davetini alıp **Settings → Mesh connection code → Check code** yolunda inceleyin; **Join this network** seçin |
-| Önceden ayarlanmış kurulum | Uygulama normalde saklanan bağlantı ayarını kullanır |
+| İlk açılışta bağlantı ayarı isteniyor | Gerçek işletmeci davetini girin |
+| Mesh kaynağı yanıt veriyor ama sayfa açılmıyor | Yanıt vermesi, istenen dosyayı içerdiğini göstermez |
+| İsim çözülmüş, içerik konumu bulunamamış | Hedef biliniyor, depolama konumu bulunamıyor |
+| Bazı resimler veya özellikler eksik | Page information içinde eksik dosya ve haricî bağımlılıkları kontrol edin |
+| İstek sayacı artıyor | Başarısız olanlar dâhil HTTP isteklerini sayar |
+| “In progress 0” | O anda ölçülen bir HTTP isteği yürümüyor |
+| İkinci PC Mesh sayısını artırmıyor | Masaüstü kurulumları okuyucudur, destekçi sunucu değildir |
 
-Katılım kaynak listesini değiştirir; eski ayarı tutmak için önce **Export profile** kullanın. Eski `mesh-connect.json` dosyası **Settings → Already have a connection file?** bölümünden aktarılabilir. Elle kaynak düzenlemek veya profil aktarmak yönetilen liste güncellemelerini durdurur.
+**İki bilgisayarın trafik sayıları neden farklı?** HTTP sayaçları her uygulamanın kendi açılışından itibaren ölçülür. Aynı destekçiye bağlı olsalar da açılan sayfalar, açık kalma süresi, önbellek ve yeniden denemeler farklıdır. Ölçüm tek sunucudan gelen veriyi değil, izlenen Mesh, RPC ve ham Arweave HTTP trafiğini kapsar. Bağlantı yoklamaları hariçtir. Alınan veri sayacı, diskte saklanan veri miktarı değildir.
 
-Kod tekrar kullanılabilen ağ bilgisidir; şifre, lisans veya ödeme değildir. Standart indirmelerde bugün hazır davet yoktur. Gerekirse [bağlantı yardımı isteyin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); bu gönüllü koordinasyonudur, hizmet garantisi değildir.
+Mevcut imzalı veri nesnesi sınırı 32 MiB'dir. [Göstergelerin açıklaması](baglanti-izleme.md).
 
-Kararlaştırılan hedef, kod girmeden açılan varsayılan indirmedir. Yeni destekçiyi otomatik keşfetme hâlâ [planlanan özelliktir](paylasilan-ag.md); bugünkü Connected paketleme bunu sağlamaz.
+## Uygulamayı güncelleyin
 
-## 3. Site aç veya konu ara
+Mesh'i kapatın. Yeni uygulama ZIP'ini ayrı bir klasöre çıkarıp çalıştırın. AppData ayarları normalde korunur. Yer imleri ve kaydedilmiş verileri korumak istiyorsanız özel yedek alın. Otomatik uygulama güncelleyicisi yoktur.
 
-**Üst adres çubuğuna** `ar://vevivo` gibi bir isim yazın. Alt isimlerde gerçekten kayıtlı biçimi kullanın; örneğin `undername_name`. Yol, sorgu ve parça eklenebilir. Ctrl+L adres çubuğunu seçer; sağ tık Yapıştır ve Ctrl+V çalışır.
-
-Preview.12 **Home** alanı ayrıca konu araması yapar. Kaynaklar erişilebilirken **Refresh catalogue** ile sınırlı kataloğu indirin; kelimeler cihazınızda aranır. Sonuç bulunması bütün dosyaların hazır olduğunu göstermez. Bu özellik preview.8'de yoktur. [Arama ayrıntıları](konu-aramasi.md).
-
-Aşamalar **Resolve name → Find sources → Locate content → Download → Verify → Open page** olarak ilerler; zamanlayıcı değil gerçek işlemler izlenir. Eksik dosya, doğrulama ve tarihli isim kaydı için **Page information** kullanın. Harici API'ler ve Arweave dışı CDN dosyaları kullanılamayabilir.
-
-## 4. Önemli siteleri sakla
-
-Yıldız, adresi yer imine ekler. **Save current page**, desteklenen doğrulanmış dosyaları sınırlar içinde saklar. Sonucu bekleyip eksikleri kontrol edin; ana belgenin kaydedilmesi bütün dinamik sitenin arşivlendiğini kanıtlamaz.
-
-Preview.12 **Automatic** modu, erişilebiliyorsa canlı kaynağı kullanır; erişim hatasında kabul edilmiş tarihli sürüme dönebilir. **Saved** tutulan isim bilgisini kullanır, canlı isim kontrolünü/izleme sorgularını durdurur. Eksik içerik Mesh/ham kaynaklardan istenebilir; Saved bütün ağı kapatan düğme değildir. Tam saklanmış kopya yeniden açılırken uygulama HTTP kaydında sıfır yeni istek test edildi. Preview.8'in eski Live/Saved davranışı ayrıdır. [Adayda kurtarma kapsamı](dayanikli-erisim.md).
-
-Adayın **Network monitor** ekranı cihazınızın Mesh/RPC/ham veri gözlemlerini, trafiğini ve doğrulanmış ana belgenin kaynağını gösterir. Peer sayısı dünyadaki Mesh kullanıcı sayısı değildir. “Not checked” çevrimdışı demek değildir; yanıt gelmesi bütün sitelerin mevcut olduğunu kanıtlamaz. [Göstergelerin anlamı](baglanti-izleme.md).
-
-## Sık karşılaşılan durumlar
-
-| Durum | Kontrol |
-|---|---|
-| İlk açılışta ayarlar geliyor | Standart paket gerçek ağ daveti/profil ister |
-| Peer yanıt veriyor ama site açılmıyor | Gerekli isim kaydı, konum veya dosyalar onda bulunmayabilir |
-| RPC erişilemez | Güncel isim alınamayabilir; adayda kurtarma kabul edilmiş tarihli kayıt ister |
-| Ham Arweave de erişilemez | Gerçek dosyalar yerelde veya erişilebilir Mesh peer'lerinde önceden bulunmalıdır |
-| İmza/kimlik uyuşmazlığı | Veri reddedildi; doğrulamayı kapatmayın |
-| Görseller/API eksik | Page information inceleyin; dış servis, konum veya dosya sınırı neden olabilir |
-| Önceden açılan sayfa kayboldu | Geçici önbellek silinebilir; açıkça kaydedip tamlığını kontrol edin |
-
-Bugünkü imzalı nesne sınırı 32 MiB'dir. Hiçbir sürüm bütün isimleri, anında güncelliği veya erişilebilir kopyasız çalışmayı garanti etmez. Geri bildirimde sürümü ve başarısız aşamayı yazın; özel adresleri, geçmişi ve yolları ayıklayın.
-
-## Güncelleme ve yedek
-
-Uygulamayı kapatın, `%APPDATA%\ArNS-Mesh-Browser` dizinini özel olarak yedekleyin, yeni ZIP'i ayrı klasöre çıkarın. Geri dönüş için eşleşen eski program/veri yedeğini tutun. Otomatik uygulama güncelleyicisi yoktur. Masaüstü güncellemesi sunucuyu güncellemez.
-
-Çıkarılan program klasörünü silmek kullanıcı verisini korur. AppData dizinini ancak ayarları, geçmişi, yer imlerini ve kayıtlı içeriği silmek istiyorsanız ayrıca kaldırın. Chrome eklentisi kurulmaz. [Gizlilik](gizlilik.md) · [Geri bildirim](../../CONTRIBUTING.md).
+Program klasörünü silmek AppData'yı silmez. Mesh çalışırken AppData'yı silmeyin. [Gizlilik](gizlilik.md) · [Sorun bildirme](../../CONTRIBUTING.md).

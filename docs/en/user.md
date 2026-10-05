@@ -1,63 +1,69 @@
-# Use ArNS Mesh
+# Use Mesh on Windows
 
-[Türkçe](../tr/kullanici.md) · [Home and downloads](../../README.md)
+[Türkçe](../tr/kullanici.md) · [Home](../../README.md)
 
-You need the Windows x64 application ZIP. You do not need a server, wallet, Node.js or an indexer. Supporters run the separate service that supplies useful data.
+You only need the Windows application and a working connection invitation. You do not need a VPS, wallet, Node.js or the large server index.
 
-## 1. Download and open
+## 1. Download
 
-Choose a package from the [download/status table](../../README.md#downloads-and-actual-status). Published preview.8 and test candidate preview.12 are different builds. GitHub Actions artifacts can expire and may require sign-in. Download the application ZIP, not **Source code (zip)**.
+Use the **[preview.13 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip)**. GitHub's **Source code** archives are for developers.
 
-Extract **all** files into a permanent folder and start `Mesh-Browser.exe`. Keep the executable with the other files. To put it on the desktop, create a Windows shortcut to the executable; do not move just the EXE out of its folder. The preview is unsigned. Do not disable security tools or run it as administrator to bypass a warning; report the warning details if blocked.
+Extract the entire ZIP into a folder you want to keep. Open `Mesh-Browser.exe` inside it. Keep the other files beside the EXE; create a shortcut if you want a desktop icon.
 
-If checking a supplied checksum in PowerShell, run `Get-FileHash -Algorithm SHA256 -LiteralPath 'path-to-downloaded.zip'` and compare the whole value with the checksum shipped for that exact package. A checksum is not a publisher signature.
+This is an unsigned community preview. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) and report the warning. Do not disable security tools to bypass it.
 
 ## 2. Connect once
 
-| Package | First connection |
+Obtain the complete code beginning `mesh1.` from a trusted network operator.
+
+**Settings → Mesh connection code → Check code → Join this network**
+
+Review the network shown before joining. The code is a reusable invitation, not a password or paid licence. [Request connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if you do not have one; availability depends on volunteer operators.
+
+An existing configured installation reuses its settings. A separately supplied Connected package can include an invitation; the standard public ZIP above does not. A legacy connection file can be imported under **Settings → Already have a connection file?**.
+
+## 3. Open an ArNS website
+
+Type `ar://vevivo`, or another ArNS name you want to visit, into the **top address bar**. The example is not an availability guarantee.
+
+For an undername, use its full registered spelling, such as `undername_name`. The Home search box searches a limited topic catalogue; it is separate from the address bar.
+
+Mesh resolves the name, finds the files, verifies them and opens the page. **Page information** explains missing resources and whether a dated name record was used. Domain-based external APIs and CDNs may remain unavailable.
+
+## Storage on your computer
+
+The large shared index and supporter archives belong on the **server**. You do not download them to browse, and the browser does not automatically serve your disk to other users.
+
+However, preview.13 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
+
+There is currently no supported zero-persistent-storage mode. Moving archive work to supporters does not make the existing browser diskless.
+
+## What happens during a disruption?
+
+In **Automatic** mode, Mesh uses available live sources and can recover using accepted dated information. If RPC and raw Arweave are unavailable, the required name record and files must already be available locally or on a reachable supporter.
+
+**Saved** mode is not an operating-system network-off switch: missing files may still be requested. A bookmark remembers an address; it does not save a site.
+
+Later reachable supporters can be learned automatically after joining. That does not guarantee every site has another copy. [How supporter failover is prepared](resilience.md).
+
+## When something does not open
+
+| What you see | What to check |
 |---|---|
-| A separately prepared **Connected ZIP** | On a fresh install, Mesh validates and joins the network included by that operator |
-| The standard GitHub release/candidate ZIP | Obtain a full `mesh1.` invitation from a trusted operator; paste into **Settings → Mesh connection code → Check code**, review, then **Join this network** |
-| Existing configured installation | The app normally reuses its saved connection settings |
+| Connection setup on first launch | Enter a real operator invitation |
+| Responding Mesh source, but no page | A response does not prove the requested files exist |
+| Name resolved, location missing | The target is known but its storage location is not |
+| Some images or features missing | Inspect Page information for missing files or external dependencies |
+| Increasing request count | It counts HTTP requests, including unsuccessful ones |
+| “In progress 0” | No measured HTTP request is running at that instant |
+| A second PC does not increase Mesh count | Desktop installations are readers, not supporter servers |
 
-Joining replaces the source list; use **Export profile** first if you want to keep the old one. A legacy `mesh-connect.json` can still be imported under **Settings → Already have a connection file?**. Manual edits/imports stop managed source-list updates.
+**Why do two computers show different traffic?** The HTTP counters belong to each application session. Different browsing, time open, cached files and retries produce different totals even when both readers use the same supporter. The count includes measured Mesh, RPC and raw Arweave traffic, not only transfers from one server. Connection probes are excluded. Received bytes are not a measure of disk storage.
 
-The code is reusable network information, not a password, license or payment. Standard downloads currently contain no invitation. [Request connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if needed; this is volunteer coordination, not guaranteed service.
+The current signed-item size limit is 32 MiB. [Monitor details](../connection-monitor.md).
 
-The agreed product direction is a default download that opens without code entry. Automatic new-supporter discovery is still [planned](shared-network.md); today's connected packaging does not implement it.
+## Update the application
 
-## 3. Open a site or search
+Close Mesh. Extract the new application ZIP into a separate folder and run it. Existing AppData settings normally carry over. Keep a private backup if you need to preserve bookmarks or saved data. There is no automatic application updater.
 
-Enter a name such as `ar://vevivo` in **Mesh's top address bar**. Use the actual registered spelling for undernames, for example `undername_name`. Paths, queries and fragments are supported. Ctrl+L focuses the address bar; right-click Paste and Ctrl+V work.
-
-The preview.12 **Home** field is a separate topic search. Choose **Refresh catalogue** while sources are available, then search the bounded downloaded catalogue locally. A search result does not guarantee all files are available. This feature is absent from preview.8. [Search details](../topic-search.md).
-
-The progress row follows **Resolve name → Find sources → Locate content → Download → Verify → Open page**. It reflects actual work, not a timer. Use **Page information** for missing files, content verification and the dated name observation. Third-party APIs and non-Arweave CDN files may remain unavailable.
-
-## 4. Save what matters
-
-The star bookmarks an address. **Save current page** retains supported verified files within limits. Wait for its result and inspect missing files; saving a main document is not proof that the entire dynamic site was archived.
-
-Preview.12 **Automatic** access uses live sources where available and can fall back to an accepted historical version on availability failures. **Saved** access uses retained name information and suspends live name checks/monitor probes. Missing content can still be requested from Mesh/raw sources; Saved is not a system-wide network-off switch. A complete retained copy was tested across restart with zero new application HTTP requests. Preview.8 has its older Live/Saved behavior. [Candidate recovery scope](../resilient-access.md).
-
-The candidate's **Network monitor** shows this device's Mesh/RPC/raw observations, traffic and verified main-document source. Its peer count is not a worldwide Mesh user count. “Not checked” is not “offline”; a reply does not establish that every site is available. [Indicator meanings](../connection-monitor.md).
-
-## Common questions
-
-| Situation | What to check |
-|---|---|
-| Settings opens on first launch | A standard package needs a real invitation/profile |
-| A peer responds but a site fails | That peer may not have the required name record, location or bytes |
-| RPC is unreachable | Current names may be unavailable; candidate recovery needs an accepted dated observation |
-| Raw Arweave is unreachable too | The required content must already exist locally or on reachable Mesh peers |
-| Signature or identity mismatch | Data was rejected; keep verification enabled |
-| Some images/APIs are missing | Check Page information; external services, missing locations or file limits can explain it |
-| A previously opened page disappeared | A temporary cache can be evicted; use an explicit saved copy and check completeness |
-
-The current signed-object limit is 32 MiB. No version guarantees all names, instant latest updates or access without a reachable copy. Send the version and failed stage in feedback; redact private addresses, browsing history and paths from diagnostics.
-
-## Update and backup
-
-Close the app, keep a private backup of `%APPDATA%\ArNS-Mesh-Browser`, and extract the new ZIP into a different folder. Keep the matching old app/data backup for rollback. There is no automatic application updater. A desktop update does not update a supporter server.
-
-Removing the extracted program folder preserves user data. Delete the AppData directory separately only if you intend to erase settings, history, bookmarks and saved content. No Chrome extension is installed. [Privacy](privacy.md) · [Feedback](../../CONTRIBUTING.md).
+Deleting the program folder does not delete AppData. Do not erase AppData while Mesh is running. [Privacy](privacy.md) · [Report a problem](../../CONTRIBUTING.md).

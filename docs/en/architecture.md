@@ -2,7 +2,7 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
-This page distinguishes the published preview.8 baseline from the preview.12 candidate. Automatic supporter enrollment and replica placement are the [next design](shared-network.md), not current behavior. Use the [candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e) for the recovery paths below.
+Windows preview.13 is a published prerelease. For the later server additions, use the pinned source revision in the [supporter guide](supporter.md); the runtime development history is in [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Automatic supporter announcements/address exchange are implemented; coordinated replica placement is still pending. See [shared-network behavior](shared-network.md).
 
 ## Two runtime roles
 
@@ -10,7 +10,7 @@ The **reader** resolves only requested names/content, uses bounded caches, has n
 
 | Stage | Current mechanism | What it does not establish |
 |---|---|---|
-| Bootstrap | Included/imported invitation with an authority key and IP starting peers, signed source-list updates and optional mirrors; legacy profiles | Automatic public peer enrollment, independent authority continuity or NAT traversal |
+| Bootstrap | Included/imported invitation with an authority key and IP starting peers, signed source-list updates and optional mirrors; legacy profiles | An open public peer directory, independent authority continuity or NAT traversal |
 | Name → target | Solana RPC observation with owner/PDA/name and decoding checks; candidate availability-only fallback to dated local/trusted-provider observations | Trustless account inclusion, independence of RPC operators, instantaneous latest state |
 | Target → location | Local/peer hints, sparse historical published indexes, bounded raw-ledger discovery on supporters; reader-demand discovery near a known parent location | Complete or current location coverage |
 | Location → bytes | Mesh chunks or raw Arweave transactions/chunks via approved IP routes | Availability if no reachable copy exists |

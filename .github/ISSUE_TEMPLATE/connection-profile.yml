@@ -9,14 +9,14 @@ body:
         Ask an operator for a reusable mesh1 connection code (preview.8+) or a legacy JSON profile.
         The standard public ZIP contains no provider invitation. This request does not guarantee service.
         Codes carry network identity and starting addresses; no payment or activation license is required.
-        Automatic supporter announcements and peer exchange are planned, not available yet.
+        Preview.13 supports automatic discovery of reachable supporters after joining. Content replication remains bounded; an empty server is not a backup.
         To support the existing network, follow docs/en/supporter.md; you do not need to create your own network.
         Sharing an address here is not automatic admission or proof of redundancy.
   - type: input
     id: version
     attributes:
       label: Desktop version
-      placeholder: 0.5.0-preview.12 (candidate) or 0.5.0-preview.8 (published)
+      placeholder: 0.5.0-preview.13
     validations:
       required: true
   - type: dropdown

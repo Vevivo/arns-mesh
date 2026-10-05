@@ -1,3 +1,33 @@
+# Shared-index supporter update — 5 October 2026
+
+Adds verified AR.IO r84 CDB64 band preparation and disk-only lookup through the existing Mesh protocol. Current preview.13 readers can use a configured updated supporter without a new Windows ZIP. The online updater is separate from the DNS/gateway-blocked browsing process. Index coverage and website storage remain distinct. See [setup, quotas and limits](../shared-index.md).
+
+# Supporter queue recovery — 5 October 2026
+
+Server source update after the published preview.13 Windows ZIP. Separates name-sync and content quotas, persists bounded live-reader demand, gives current roots their own scheduling lane and scans recent native blocks without waiting for historical catch-up. Newly registered/rebound names receive priority while existing names continue refreshing. Preparation pins cached verified files. Local monitoring now distinguishes quota pauses.
+
+These changes address stalled work, not universal discovery. Static indexes and this node's partial raw index can still miss a recent data item. No gateway fallback or name-proof downgrade is introduced. See [configuration and limits](../resilient-access.md) and [measured recovery evidence](../catalog-recovery-2026-10-05.md).
+
+# ArNS Mesh 0.5.0-preview.13 — published Windows prerelease
+
+Supporters sign and announce reachable numeric-IP endpoints. Peers verify identity by callback and exchange bounded advertisements. Joined desktops automatically learn/persist alternatives, prefer measured valid-content routes and switch after source failure. Discovery does not grant name authority: mirrors retain original trusted publishers' signed name observations.
+
+Saved mode pauses discovery. Participating desktops and peers must upgrade. Initial contact, reachable ports and prepared content are still required. Automatic independent replica placement/repair, a NAT relay and universal coverage are not added. [Behavior and test boundaries](shared-network.md).
+
+# ArNS Mesh 0.5.0-preview.12 — candidate
+
+Home pairs a new, symmetric Mesh node mark with a compact, neutral ArNS Mesh wordmark above the centered search field. The running desktop window uses the same mark instead of the default Electron icon. The promotional hero, introductory paragraphs and long usage guide remain removed. Catalogue details stay available on demand, and search results keep their dated availability labels.
+
+Adds a desktop connection strip and monitor: separately dated Mesh/RPC/raw observations, bounded panel-only protocol checks, verified main-document origin, session traffic and Saved-mode probe suspension. Endpoint counts are local observations, not global Mesh users. [Indicator semantics and test scope](../connection-monitor.md).
+
+The candidate also adds a Home topic search with signed, bounded provider catalogues, local keyword queries and dated availability labels. Supporter peers can mirror the original signed catalogue; readers retain it across restart and outages. The address bar keeps direct ArNS navigation. See [search scope, trust and budgets](../topic-search.md).
+
+Automatic access now treats RPC and raw Arweave availability independently. It can use dated local or explicitly trusted provider observations when live name sources are unavailable, and a previously prepared version when the newest target cannot be fetched. Historical access remains labelled and content signatures are checked. Verification failures and explicit proof requirements are not treated as permission to downgrade name trust.
+
+Providers can retain rechecked catalog name observations, prepare bounded site copies, and keep the previous complete version while an update is incomplete. Transfers, parsed location shards, raw chunks and proof caches have tighter resource limits. Optional local-only monitoring shows preparation, queue errors and actual resources. Signed recovery witness extensions preserve the legacy connection-list format.
+
+See [configuration and precise limits](../resilient-access.md). Source tests cover the four upstream combinations with local HTTP fixtures, atomic version replacement, signed recovery trust, restart and expired lists. This candidate has not completed the owner's two-PC test, a new Windows OS-level outage acceptance or independent-provider failover. Desktop serving and a full replicated Arweave/CDB64 index are not added. Keep the published preview.8 package available while testing.
+
 # ArNS Mesh 0.5.0-preview.8
 
 Readers can now join an operator's network using a reusable connection code. The settings screen checks the signed list, shows its identity and sources, and asks the reader to join. An operator can also build a Connected ZIP with one invitation included for automatic joining on a fresh start. Existing configured sources are preserved.

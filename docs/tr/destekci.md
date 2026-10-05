@@ -1,131 +1,136 @@
-# VPS veya Raspberry Pi ile Mesh'e destek ol
+# Mesh destekçisi çalıştırın
 
-[English](../en/supporter.md) · [Ana sayfa](../../README.tr.md) · [Ağ tasarımı](paylasilan-ag.md)
+[English](../en/supporter.md) · [Ana sayfa](../../README.tr.md) · [VPS hazırlığı](vps.md) · [Raspberry Pi hazırlığı](raspberry-pi.md)
 
-Destekçi yararlı veriyi saklar ve başka cihazların isteklerini yanıtlar. Yazılım geliştirmeniz gerekmez. Linux servisini sunucunuzda/Pi'de çalıştırın; gezinti için ayrıca Windows tarayıcısını kullanabilirsiniz.
+Destekçi, sunucusundan **isim kayıtları, içerik konumları ve doğrulanmış dosyalar** sunar. Bu rehber mevcut ağa katılmak içindir. Okuyucular Windows uygulamalarını kullanır; sunucuya Windows tarayıcısı kurulmaz.
 
-**Bu rehber test edilmiş preview.12 kaynak adayını kurar.** Sınırlı site hazırlığı ve tarihli kurtarma kayıtlarını içerir. Yayımlanmış sürüm veya planlanan otomatik katılım ağı değildir. Yayımlanmış preview.8/profil yolu ve ayrıntılı yönetim için [gelişmiş işlemlere](destekci-ayrintili.md) bakın.
+Yeni bir klasör ve normal Linux kullanıcı hesabı kullanın. Bunlar yeni destekçi kurulum adımlarıdır; mevcut çalışan kurulumun üzerine uygulanacak güncelleme talimatı değildir.
 
-## 1. Gerekenler
+## Başlamadan önce
 
-| VPS | Raspberry Pi |
-|---|---|
-| Linux sunucu ve normal kullanıcı hesabı | Pi 4/5 gibi 64 bit Linux çalıştırabilen cihaz |
-| Kalıcı disk, yeterli boş RAM ve yükleme kapasitesi | Raspberry Pi OS Lite 64 bit, güvenilir güç/internet ve kalıcı depolama |
-| Erişilebilir genel IP ve boş TCP portu | Dışarıdan Pi'ye erişim; ev modeminde port yönlendirme gerekebilir |
+1. [Linux VPS](vps.md) veya [64 bit Raspberry Pi](raspberry-pi.md) hazırlayın.
+2. Git, npm ve Node.js 24 LTS kurun. Kaynak 22.12+ kabul eder; CI 24.19.0 kullanır. [Sistemdeki Node'u değiştirmeden kurulum (EN)](../en/node-setup.md).
+3. İşletmeciden mevcut ağın tam `mesh1.` davetini alın.
+4. İnternetten erişilebilen sayısal IP ve boş TCP portu seçin. Bu rehber **49741** kullanır.
 
-[Node.js 24 LTS](https://nodejs.org/en/download), npm ve Git gerekir. Adayın CI testleri Node 24.19.0 kullandı; bu test temeli, en yeni yama iddiası değildir. Çekirdek Node 22.12+ kabul eder. Kontrol edin:
+Doğrudan IP hizmeti için domain, nginx, TLS sertifikası, cüzdan veya tam Arweave/Solana düğümü gerekmez. İlk indirmeler ve R84 hazırlığı dış hizmetler kullanır.
 
-```sh
-node --version
-npm --version
-git --version
-uname -m
-```
+## 1. Doğru destekçi kaynağını alın
 
-Eksikler için [ayrıntılı kurulumdaki Node adımlarını](destekci-ayrintili.md) ve [resmî Pi rehberini](https://www.raspberrypi.com/documentation/computers/getting-started.html) izleyin. `aarch64` Pi için Linux ARM64 Node, `x86_64` VPS için Linux x64 seçilir. Gerçek Pi donanım/performans testi bekliyor; ölçülmüş minimum donanım şartı yoktur. İşletim sistemi, paketler, günlükler ve indeksler içerik kotasına ek alan kullanır.
+Yayımlanmış masaüstü preview.13'tür. Sonradan eklenen sunucu tarafı R84 entegrasyonu aşağıdaki kaynak sürümündedir. Sürüm seçme adımını atlayıp eski `main` kodunu kurmayın.
 
-Doğrudan IP dinleyicisi domain, nginx veya TLS sertifikası gerektirmez; tam Arweave/Solana düğümü kurmaz. Bugünkü doğrudan modda otomatik NAT aşma veya relay yoktur. CGNAT arkasındaki Pi çalışsa bile internetten erişilemeyebilir.
-
-## 2. Adayı indir ve mevcut ağa katıl
-
-Güvendiğiniz sağlayıcıdan tam `mesh1.` **ağ davetini** alın. Bu, yeni peer'in ilk kaynakları bulmasını sağlar; sizin yeni peer adresiniz veya lisans değildir. Yoksa [bağlantı yardımı isteyin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml). Repoda hazır çalışan adres veya davet bulunmaz.
-
-Yeni bir dizinde, servisin sahibi olacak normal kullanıcıyla çalıştırın:
-
-```sh
+```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e
+git checkout --detach 37d51c79614c389b515b43d4a3bd92f9bd5083d2
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-bash scripts/install-peer.sh --network 'TAM_MESH1_KODUNU_BURAYA_YAPISTIR'
+read -r -p 'Tam mesh1 baglanti kodunu yapistirin: ' MESH_CODE
+bash scripts/install-peer.sh --network "$MESH_CODE"
+unset MESH_CODE
 ```
 
-Tırnak içindeki yer tutucuyu **gerçek davetin tamamıyla** değiştirin. Checkout, [bu çalışmada](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203) test edilen kaynağı sabitler. Kesintiden önce kurun; GitHub/npm indirme bağımlılıklarıdır. Başka projenin veri dizinine kurmayın. Kurucu kendi sürüm dizinini oluşturur, güncellemede mevcut Mesh verisini/ayarlarını korur; port açmaz veya diğer servisleri değiştirmez.
+Bir komut hata verirse devam etmeyin. Kurucu daveti denetler, sabitlenmiş bağımlılıkları sürümlü klasöre kurar ve yeni destekçi kimliği oluşturur. Mevcut bağlantı dosyaları korunur. Henüz arka plan hizmeti veya güvenlik duvarı kuralı oluşturmaz.
 
-Varsayılan konum: `~/.local/share/ArNS-Mesh-Supporter`. Önce terminalde başlatın:
+Varsayılan kurulum: `~/.local/share/ArNS-Mesh-Supporter`. Örnekler özel `MESH_INSTALL_ROOT` veya `XDG_DATA_HOME` kullanılmadığını varsayar.
 
-```sh
-"$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
-```
+## 2. Katkı sınırlarınızı belirleyin
 
-Terminal açık kalsın. Düzenli durum çıktısı gelir; Ctrl+C ile durdurulur. Bu, peer başlatır; tam arşiv oluşturmaz. Boş peer'in veri edinmesi için davetin ulaştırdığı kaynaklar çalışmalıdır.
+İlk çalıştırmadan önce `peer.env` oluşturun. Bu örnek mevcut dosyanın üzerine yazmayı reddeder:
 
-## 3. Diğer cihazlar sana ulaşabiliyor mu?
-
-İkinci terminalde, kaynak dizininden:
-
-```sh
-node scripts/probe-peer.mjs 127.0.0.1:49741
-```
-
-Beklenen çıktı: `Mesh endpoint responded`. Bu yalnız erişimi kontrol eder, sitelerin varlığını değil. Ardından aynı komutu **başka bir ağdan**, `127.0.0.1:49741` yerine sunucunuzun gerçek genel `IP:port` adresini yazarak çalıştırın.
-
-**Peer adresiniz** bu erişilebilir IP ve porttur. `0.0.0.0` dinleme ayarıdır; `127.0.0.1` okuyucunun kendi bilgisayarını gösterir. Pi'nin özel yerel adresi yalnız ona ulaşan ağlarda kullanılabilir. Mevcut sağlayıcı/sunucu/modem kurallarınızda yalnız seçtiğiniz TCP portuna izin verin; varsayılan **49741**. [Ayrıntılı erişim adımları](destekci-ayrintili.md).
-
-**Bugünkü katılım adımı:** paylaşmayı amaçladığınız bu genel peer adresini mevcut ağ yöneticisine verin. Yönetici kontrol edip imzalı kaynak listesine ekler ve yeniden yayımlar. Ağa katılmış tarayıcılar Saved dışındaki modda listeyi otomatik öğrenir; normal liste güncellemesinde yeni kod gerekmez. `--network` kurulumu kaynakları öğrenir, yeni adresinizi duyurmaz. Otomatik kendini duyurma [planlanıyor](paylasilan-ag.md); mevcut bir düğme değildir.
-
-Her destekçinin ayrı ağ kurup kullanıcılara yeni davet dağıtması gerekmez.
-
-## 4. Yararlı kopyalar hazırla ve arka planda çalıştır
-
-Terminal kontrolünden sonra Ctrl+C ile durdurun. Kurulu ana dizinde **kendi** `peer.env` dosyanızı oluşturun veya mevcut ayarları koruyarak düzenleyin. Bu aday için küçük bir başlangıç örneği:
-
-```sh
+```bash
+MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
 (
   set -o noclobber
-  cat > "$HOME/.local/share/ArNS-Mesh-Supporter/peer.env" <<'MESH_ENV'
+  cat > "$MESH_ROOT/peer.env" <<'MESH_ENV'
 MESH_LISTEN=0.0.0.0:49741
 ARNS_PREPARE_ENABLED=1
-ARNS_PREPARE_MAX_SITES=16
+ARNS_PREPARE_MAX_SITES=32
 ARNS_CACHE_MIB=256
 ARNS_SAVED_MIB=1024
+ARNS_NAMES_DAILY_MIB=64
+ARNS_CATALOG_DAILY_MIB=256
 ARNS_INDEX_DAILY_MIB=64
-ARNS_CATALOG_DAILY_MIB=64
 MESH_ENV
 )
 ```
 
-Komut `~/.local/share/ArNS-Mesh-Supporter/peer.env` dosyasını oluşturur; mevcut dosyanın üstüne yazmaz. Zaten varsa aynı dosyayı metin düzenleyicinizle düzenleyin. Arka plan servisi bunu okur; terminalden başlatıcıyı tek başına çalıştırmak bu dosyayı okumaz. Bunlar örnek içerik/iş kotalarıdır; toplam disk, trafik veya RAM sınırı değildir. Kaynağınıza göre seçin. Kurucu katalog işini zaten etkinleştirir. Hazırlık, kaynaklar çalışırken desteklenen site dosyalarını sınırlı biçimde kopyalayıp korur; eksik yeni sürüm, önceki tam sürümün yerini almaz. [Aday ayarlarının anlamı](dayanikli-erisim.md).
+| Ayar | Anlamı |
+|---|---|
+| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 256 |
+| `ARNS_CACHE_MIB` | Otomatik içerik önbelleği bütçesi |
+| `ARNS_SAVED_MIB` | Saklanması seçilmiş içerik bütçesi |
+| `ARNS_NAMES_DAILY_MIB` | İsim hazırlığı için ayrı günlük bütçe |
+| `ARNS_CATALOG_DAILY_MIB` | İçerik hazırlığının ölçülen günlük yanıt verisi bütçesi |
+| `ARNS_INDEX_DAILY_MIB` | Ham Arweave keşif bütçesi; R84 güncelleyicisinin bütçesi **değildir** |
 
-Ayrı kullanıcı servisini kurun:
+Bunlar örneklerdir; kapasite garantisi veya toplam trafik sınırı değildir. Bağımlılıklar, indeksler, günlükler ve dışarı sunulan içerik trafiği ek kaynak tüketir. İçerik bütçesi dolduğunda yeni dosya hazırlığı durabilir; isimler ayrı bütçeyle devam eder. Sınırı artırmak eksik dosyaları veya bağımsız kopyaları kendiliğinden oluşturmaz.
 
-```sh
+Kalıcı katkı için hangi isimleri tutmak istediğinizi seçip dosyalarını kontrol edin. [İsim hazırlığı ve devralma](dayaniklilik.md).
+
+## 3. Arka plan hizmetini başlatın
+
+Kaynak klasöründen, aynı normal kullanıcıyla:
+
+```bash
 bash scripts/install-user-service.sh
 systemctl --user status arns-mesh-supporter --no-pager
 journalctl --user -u arns-mesh-supporter -n 30 --no-pager
 ```
 
-Aynı kaynak dizininde ve hesapta çalıştırın. Mevcut servis dosyasının üstüne yazmaz; servis zaten kuruluysa `peer.env` düzenlendikten sonra yalnız `arns-mesh-supporter` yeniden başlatılır. Çıkıştan/yeniden açılıştan sonra çalışması için yönetici `sudo loginctl enable-linger KULLANICI_ADI` komutunu gerçek hesap adıyla çalıştırabilir. Adımlar varsayılan yolları varsayar; özel kurulum yollarını değiştirdiyseniz aynılarını kullanın.
+Kurucu `peer.env` dosyasını okuyan **kullanıcı hizmetini** etkinleştirir ve başlatır. Mevcut hizmet dosyasını değiştirmeyi reddeder. Aynı anda başka terminalden `Start-Peer.sh` çalıştırmayın.
 
-Servis, cgroup desteği varsa CPU'yu %25 ve belleği 512 MiB ile sınırlar; başlatıcı Node heap'ini 384 MiB yapar. Bunlar ölçülmüş kapasite garantisi değildir. Kullanıcıya dosya sunma trafiği günlük indeks/katalog kotalarını aşabilir; yüklemeyi de izleyin.
+Oturum kapandığında ve sunucu yeniden açıldığında da çalışması için yönetici bu hesapta lingering açabilir:
 
-Peer ilk durum kaydını ürettikten sonra:
+```bash
+sudo loginctl enable-linger "$(id -un)"
+```
 
-```sh
+Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 512 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
+
+## 4. Dış erişimi ve keşfi doğrulayın
+
+Destekçinin kaynak klasöründe:
+
+```bash
+node scripts/probe-peer.mjs 127.0.0.1:49741
 node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
+```
+
+Ardından **başka bir ağdan**, `YOUR_PUBLIC_IP` yerine gerçek sayısal adresinizi yazarak deneyin:
+
+```bash
+node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
+```
+
+“Mesh endpoint responded” yalnızca erişimi gösterir. İşletmeci raporunda duyurulan adresi ve duyuruyu kabul eden destekçiyi kontrol edin. Keşif için yaklaşık bir dakika ve işlem süresi tanıyın.
+
+Modem dışarı farklı port açıyorsa `peer.env` içine gerçek değerlerle `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` yazın. Ayar değişince yalnızca yeni destekçiyi yeniden başlatın. Bu ayar port açmaz. IPv6 biçimi `[ADDRESS]:PORT` şeklindedir.
+
+Ağa katılmış preview.13 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
+
+## 5. Daha geniş konum kapsamı için R84 ekleyin
+
+[Paylaşılan indeks kurulumunu](paylasilan-indeks.md) izleyin. Bu ayrı, isteğe bağlı bir süreçtir; ayrı disk ve indirme bütçesiyle tamamen sunucuda çalışır. Temel kurucu büyük indeksi veya yenileme zamanlayıcısını **kurmaz**.
+
+Destekçi tam indeks olmadan sakladığı içeriklerle katkı sağlayabilir. Yalnızca konum indeksi tutmak, site yedeği olmak değildir.
+
+## 6. Gerçekten katkı verdiğini görün
+
+En az bir durum döngüsünden sonra:
+
+```bash
+node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --json
 du -sh "$HOME/.local/share/ArNS-Mesh-Supporter/data"
 ```
 
-Tutulan isim kayıtlarına, hazır sürümlere, eksik dosyalara ve hatalara bakın. Sitenin listede olması bütün dosyalarının bulunduğunu göstermez. Kopya sunan peer kendi kabul edilmiş isim gözlemlerine ihtiyaç duyar; başka peer'in iddiasını kopyalamak onu otomatik güvenilir yapmaz.
+Desteklemek istediğiniz isimleri, `savedSites.sites` listesini, eksik dosyaları, isim gözlem tarihlerini ve `snapshotRelay.records` değerini kontrol edin. “Hazır” kaydı sadece ana belgeyi kapsıyor olabilir; `scope` alanını okuyun. Birçok isim aynı dosyaya işaret edebilir.
 
-## 5. Katkının gerçekten işe yaradığını kontrol et
+Ayrı okuyucuyla hazırlanmış bir ismi bu destekçiden alın. Ardından [bağımsız devralma işlemini](dayaniklilik.md) uygulayın. Hizmetin çalışması, yüksek indeks sayısı veya açık port, diğer sunucunun yerini alabildiğini kanıtlamaz.
 
-Ayrı okuyucuda sizin peer'inizi içeren test ayarıyla hazırlanmış siteyi açın, veri kaynağını inceleyin. Sunucudaki `contentBytesServed`, `catalog.meshReplicated`, `catalog.locationsReplicated` ve hazırlık durumuna bakın. Yanıt veren port veya artan istek sayısı tek başına yeterli değildir.
+## Günlük işletim
 
-RPC'siz kurtarma için ağ yöneticisi peer'in açık kurtarma kimliğini adayın güvenilen kaynaklarına açıkça eklemelidir. Adres tek başına isim kaydına güven yetkisi vermez. [Kurtarma ayarlarına](dayanikli-erisim.md) bakın. Özel peer kimliğini veya ağ imza anahtarını göndermeyin.
+Günlükler: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Durdurma: `systemctl --user stop arns-mesh-supporter`. Başlatma: `systemctl --user start arns-mesh-supporter`.
 
-Yedeklilik iddiasından önce ayrı test okuyucuları/peer'leriyle önce ilk kaynağı, ardından RPC/ham Arweave'i erişilemez yaparak deneyin. Bağımsız kalan cihazlarda tarihli isim kaydı, ona karşılık gelen doğrulanmış dosyalar ve yeterli yükleme kapasitesi gerekir. Bu test için başka servisleri kesmeyin. Bağımsız fiziksel sunucu ve Pi kabulü hâlâ bekliyor.
+Güncellemede bu destekçiyi durdurun; verisini ve başlatıcısını özel olarak yedekleyin; seçilen sürümü inceleyip kurucuyu yeniden çalıştırın. Geri dönüş için eşleşen eski uygulamayı ve veriyi koruyun. Kimlikleri ve imza anahtarlarını paylaşmayın; aynı kimliği farklı aktif sunuculara kopyalamayın.
 
-## Adres, kod ve yedek aynı şey değildir
-
-| Bilgi | Görevi |
-|---|---|
-| Ağ daveti (`mesh1.…`) | Mevcut ağa katılıp imzalı ilk kaynakları öğrenmek |
-| Genel peer adresiniz (`IP:port`) | Diğer cihazların servisinize ulaşması |
-| İmzalı ağ listesi kopyası | Bağlantı bilgilerinin başka kopyasını sunmak; siteleri kopyalamaz |
-| İçerik/isim verileri | Kaynaklar kesildiğinde hazırlanmış sürümleri gerçekten sunmak |
-
-İsteğe bağlı olarak [ağ listesini de kopyalayıp sunun](ag-kodu.md). Eski okuyucu kabul ettiği listedeki adresleri deneyebilir; yeni okuyucu erişilebilir bir başlangıç adresi bilmelidir. Liste kopyası süresi dolan yetkili kaydı yenileyemez.
-
-Güncellemede peer'i durdurun, `data` ve başlatıcıyı özel olarak yedekleyin, incelenmiş kaynak sürümünü seçin, kurucuyu yeniden çalıştırıp başlatın. Mevcut bağlantılar korunur. Geri dönüş için eşleşen eski program/veri yedeğini tutun. Aynı özel kimliği farklı cihazlara kopyalayıp bağımsız peer saymayın. [Güncelleme, yedek, geri dönüş ve kaldırma](destekci-ayrintili.md).
+[Keşif ayrıntıları](paylasilan-ag.md) · [Durum ve sınırlar](durum.md) · [Eski preview.8 işletim rehberi](destekci-ayrintili.md)

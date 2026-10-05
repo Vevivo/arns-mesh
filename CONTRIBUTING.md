@@ -6,7 +6,7 @@ You can help without writing code.
 
 Run the separate supporter service on a reachable VPS or Raspberry Pi: [English setup](docs/en/supporter.md) · [Türkçe kurulum](docs/tr/destekci.md). Useful contributions include verified file copies, dated name observations, location records and signed network-list mirrors. Measure actual content availability; an empty or unreachable peer does not provide redundancy.
 
-Current enrollment uses an operator-managed list. Automatic announcements, peer exchange and coordinated replicas are [planned](docs/en/shared-network.md), not enabled by opening an issue or installing the browser.
+Initial joining uses an operator-managed signed list. Preview.13 supports automatic announcements and peer exchange after joining; automatic independent replica placement and repair remain unfinished. See [implemented behavior](docs/en/shared-network.md) and [failover preparation](docs/en/resilience.md). Opening an issue or installing a browser does not create a serving replica.
 
 ## Give feedback
 

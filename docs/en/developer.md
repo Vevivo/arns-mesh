@@ -1,19 +1,25 @@
-# Developer notes
+# Develop ArNS Mesh
 
-For storage/index support you do not need to change code: use [Supporter setup](supporter.md). The [shared-network design](shared-network.md) records planned automatic enrollment and replication; those features are not implemented.
+[Türkçe](../tr/gelistirici.md) · [Home](../../README.md) · [Run a supporter without developing](supporter.md)
 
-`main` has the published preview.8 runtime. For the tested preview.12 code use commit `cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e` from [PR #9](https://github.com/Vevivo/arns-mesh/pull/9), in a separate checkout/data directory. Follow current PR status before selecting a contribution base. The advanced packaging section below can create a Connected ZIP using the [network invitation option](network-code.md#prepare-an-included-network-download).
+## Choose the right source
 
+| Purpose | Revision |
+|---|---|
+| Published Windows preview.13 binary | `94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b` |
+| Supporter with R84 integration and documented preparation fixes | `37d51c79614c389b515b43d4a3bd92f9bd5083d2` on `feat/resilient-access` |
+| Default branch | `main` still contains the preview.8 runtime; its documentation describes the published preview.13 path |
 
-Connection-code protocol, operator tools and included-network packaging: [network guide](network-code.md). The signed-list tests cover tampering, rollback, cancellation and separate-process seed loss; the Windows workflow drives the real packaged UI. Desktop content serving and paid access are not implemented.
+A server-side change does not replace the Windows ZIP. The guide's pinned supporter revision includes later documentation; it is not the source provenance of the already published desktop binary.
 
-[Supporter deployment](supporter.md) is the server installation guide. This page concerns source development and packaging.
+For runtime work, start from the relevant tested revision in a **separate checkout and data directory**. Check the current [development PR](https://github.com/Vevivo/arns-mesh/pull/9) before choosing a contribution base. Documentation-only updates can target `main` without merging runtime work.
 
-## Reproduce
+## Reproduce the supporter source checks
 
-Use Node.js 24 LTS (CI pins 24.19.0), npm and Git. Clone the repository into a new development directory and enter it, or extract the [preview.8 source ZIP](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.8.zip). The source ZIP is not the runnable desktop ZIP. Use `main` for contributions and the `v0.5.0-preview.8` tag for the released source baseline. Do not update dependencies implicitly: use the committed lockfile.
-
-```sh
+```bash
+git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-development
+cd arns-mesh-development
+git checkout --detach 37d51c79614c389b515b43d4a3bd92f9bd5083d2
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 npm run check:public
 npm test
@@ -21,45 +27,65 @@ node scripts/doctor.mjs examples/network-profile.example.json
 bash scripts/test-install.sh
 ```
 
-The last command is POSIX-only and tests install/update preservation with an npm test double. CI separately installs dependencies for real on Linux and Windows. The example profile passes structural validation but contains nonworking addresses.
+Use Node.js 24 LTS; the CI baseline is 24.19.0. The last command is POSIX-only. Its installer test uses an npm test double; CI also installs real dependencies. The example profile contains nonworking documentation addresses. No production data is required.
 
-## Layout
+## Architecture
 
-| Directory | Responsibility |
+```mermaid
+flowchart TD
+    Reader[Windows reader] --> Names[Live observation or accepted dated name record]
+    Names --> Target[Content ID]
+    Target --> Locations[Mesh and local shared-index locations]
+    Target --> Copies[Retained local or Mesh files]
+    Locations --> Raw[Reachable raw Arweave storage]
+    Raw --> Verify[Verify content ID and signature]
+    Copies --> Verify
+    Verify --> Page[Page and supported resources]
+    Update[Separate HTTPS index updater] --> Disk[Signed bands on supporter disk]
+    Disk --> Locations
+```
+
+Location hints do not establish name authority and are not content bytes. Content signature verification does not prove the latest name mapping. A new peer can supply independently verifiable bytes without being trusted to rename content.
+
+## Source map
+
+Paths below refer to the pinned supporter revision.
+
+| Area | Entry points |
 |---|---|
-| `apps/browser` | Electron shell, tabs, `ar:` handler, English UI and trusted IPC |
-| `apps/helper` | Shared core adapter, connection profile/runtime and bounded response cache; no separate desktop helper install |
-| `apps/peer` | Headless supporter and signed Mesh responses |
-| `src` | Name observations, content verification, manifest traversal, indices, budgets and transport |
-| `resources` | Public index descriptions and empty deployment defaults |
-| `tests` | Unit/integration fixtures; shell doubles are explicitly labelled |
-| `scripts` | Profile generation, installer, reachability probe, privacy check and Windows build |
+| Desktop UI and storage | `apps/browser` |
+| Profile, invitation and runtime wiring | `apps/helper` |
+| Headless service | `apps/peer/main.mjs`, `apps/peer/embedded-peer.mjs` |
+| Public direct-IP protocol | `src/direct-peer.mjs` |
+| Discovery and original-name relay | `src/peer-discovery.mjs`, `src/peer-directory.mjs`, `src/snapshot-relay.mjs` |
+| Content identity and storage | `src/content-store.mjs`, `src/ans104.mjs` |
+| Background preparation and budgets | `src/catalog-worker.mjs`, `src/site-pinner.mjs` |
+| R84 publication and updater | `src/index-publication.mjs`, `scripts/configure-shared-index.mjs`, `scripts/sync-shared-index.mjs` |
+| Local operator status | `src/operator-status.mjs`, `scripts/operator.mjs` |
 
-Some legacy bridge code remains because verified L1 response regression tests use it. It is not a Chrome extension deliverable or required runtime browser. Historical location metadata includes public upstream identifiers; it is not a private operator catalog or a complete index.
+The updater is an explicit online preparation boundary. Never import or spawn it inside the locked-down reader/peer process. Keep source/data separation and transport restrictions intact.
 
-## Run a development desktop
+## Desktop and packaging
 
-The repository's runtime lockfile excludes Electron itself. Obtain the pinned official Electron 44.4.3 runtime for your OS. Use that executable to open this repository directory; `npm start` requires an `electron` executable already on PATH. Avoid installing a different Electron version into the project just to make that command work. Use `ARNS_MESH_USER_DATA` to select an isolated test data directory and import a profile. Never reuse a production data directory for unreviewed changes.
+The lockfile excludes Electron itself. Use the project's pinned runtime; do not add a different Electron dependency just to launch it. For a development desktop, select an isolated directory with `ARNS_MESH_USER_DATA`.
 
-## Package Windows
+The existing packaging scripts download the pinned official Electron runtime and build a new ZIP on an isolated build host:
 
-On a clean build machine with locked dependencies installed:
-
-```sh
+```bash
 python scripts/download-electron.py --out ../electron-runtime
 python scripts/package-windows.py --runtime ../electron-runtime --out dist
 ```
 
-The downloader verifies the official Electron 44.4.3 Windows x64 archive against SHA-256 `790a355b684d5c7cc8dc3cdd8c4cca7c4b2d054685427c7554a956879a82e70b`. Dependencies and runtime licenses are retained. Never package an operator's live `data` directory, copy their configured application wholesale, or commit the resulting binary ZIP to Git history.
+Building the later supporter revision is not a reproduction of the published preview.13 ZIP. To reproduce that source baseline, use the desktop commit from the table and retain the package/UI evidence separately.
 
-CI checks source on Linux/Windows, then builds a Windows artifact and prepares a **draft prerelease** if that version has no existing release. It does not replace an existing release or change repository visibility. GUI/content acceptance is a separate gate. Workflow files require appropriate GitHub App workflow permissions; a denied upload must be resolved through normal app settings.
+A Connected package can include a deliberately prepared network invitation; standard public packages do not. [Network and packaging operations](network-code.md).
 
-## Changes worth contributing
+## Preserve the evidence boundary
 
-- Decouple name freshness scheduling from content-download budgets.
-- Build independently sourced missing locations with explicit provenance and cost accounting.
-- Improve catalog RPC failover, peer enrollment and replication without hiding trust/bootstrap dependencies.
-- Verify complete browser egress restrictions, real Windows installation and ARM64/Pi hardware.
-- Stream and verify large items without uncontrolled memory use.
+- Source tests, same-host process tests, real Windows UI checks, cached-object reads and independently isolated outage tests are different evidence.
+- “Ready” site records are scoped; an HTML entry point is not a fully archived dynamic application.
+- Ordinary browser use currently writes local data. There is no diskless mode.
+- Independent replica placement/repair and real multi-provider/Pi acceptance remain open work. Do not mark them complete based on discovery tests.
+- Use `npm run check:public` and inspect staged files before publishing. Do not commit runtime profiles, identities, invitations, logs or archives.
 
-For any network experiment record observed error, demonstrated cause versus hypothesis, alternatives, chosen experiment, measured result and next action. Preserve evidence privately if it contains operational details; publish a redacted reproducible account. Label simulated fixtures, code-only claims and real-network results separately.
+[Architecture detail](architecture.md) · [Peer protocol](shared-network.md) · [R84 operations](../shared-index.md) · [Current evidence](status.md) · [Contribution guidance](../../CONTRIBUTING.md).
