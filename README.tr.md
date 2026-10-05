@@ -8,6 +8,10 @@ Amaç, erişimi sürdürme yükünü paylaşmaktır. Destekçiler VPS veya Raspb
 
 [English](README.md) · [Tarayıcıyı kullan](docs/tr/kullanici.md) · [Destekçi kur](docs/tr/destekci.md) · [Ağın tasarımı](docs/tr/paylasilan-ag.md)
 
+## Güncel destekçi geliştirmesi
+
+Destekçiler, imzalı AR.IO r84 indekslerini indirip içerik konumlarını yerel diskten Mesh kullanıcılarına sunabilir. Bu, dosyanın yerini bulmayı geliştirir; ArNS isim çözümünün veya site dosyalarını saklamanın yerine geçmez. Mevcut preview.13 kullanıcıları güncellenmiş destekçiden yararlanabilir. [Kurulum ve sınırlar](docs/shared-index.md).
+
 ## Nereden başlamalıyım?
 
 | Amacım | Gerekenler | Rehber |
@@ -23,10 +27,10 @@ Destekçinin kod yazması gerekmez. Aynı kişi hem tarayıcıyı kullanabilir h
 | Sürüm | Şu an sunulan | İndirme / kaynak |
 |---|---|---|
 | **Yayımlanmış preview.8** | ArNS gezintisi, kayıtlı kopyalar, tekrar kullanılabilir ağ daveti ve imzalı kaynak listesi güncellemeleri | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Sürüm ve sağlama toplamları](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
-| **Preview.13 test adayı** | Önceki kurtarma/arama özellikleri + otomatik destekçi duyurusu, adres paylaşımı ve doğrulanmış kaynağa geçiş | [Windows test ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425) · [Kaynak](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
+| **Yayımlanan preview.13 ön sürümü** | Önceki kurtarma/arama özellikleri + otomatik destekçi duyurusu, adres paylaşımı ve doğrulanmış kaynağa geçiş | [Windows ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip) · [Kaynak](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
 | **Sonraki iş** | Bağımsız içerik kopyalarını otomatik yerleştirme ve eksikleri tamamlama | [Uygulananlar ve sınırlar](docs/tr/paylasilan-ag.md) |
 
-Durum **5 Ekim 2026** tarihinde kontrol edildi. `main` hâlâ preview.8 çalışma kodunu içerir; preview.13 henüz birleştirilmemiş adaydır. Actions dosyaları GitHub oturumu gerektirebilir ve süre sonunda silinir. Standart ZIP'te de sağlayıcı daveti yoktur. Ayrı hazırlanmış bir **Connected ZIP**, temiz kurulumda içindeki ağa otomatik katılabilir; bu paketleme desteği vardır, fakat bu indirmeler Connected paket değildir.
+Durum **5 Ekim 2026** tarihinde kontrol edildi. `main` hâlâ preview.8 çalışma kodunu içerir; Test edilmiş preview.13 Windows ZIP kalıcı yayın bağlantısında bulunur. Güncel destekçi kodu `feat/resilient-access` dalındadır; yayımlanan ZIP değiştirilmemiştir. Standart ZIP'te de sağlayıcı daveti yoktur. Ayrı hazırlanmış bir **Connected ZIP**, temiz kurulumda içindeki ağa otomatik katılabilir; bu paketleme desteği vardır, fakat bu indirmeler Connected paket değildir.
 
 ## Bugün nasıl kullanılır?
 

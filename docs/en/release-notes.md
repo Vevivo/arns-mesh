@@ -1,3 +1,7 @@
+# Shared-index supporter update — 5 October 2026
+
+Adds verified AR.IO r84 CDB64 band preparation and disk-only lookup through the existing Mesh protocol. Current preview.13 readers can use a configured updated supporter without a new Windows ZIP. The online updater is separate from the DNS/gateway-blocked browsing process. Index coverage and website storage remain distinct. See [setup, quotas and limits](../shared-index.md).
+
 # Supporter queue recovery — 5 October 2026
 
 Server source update after the published preview.13 Windows ZIP. Separates name-sync and content quotas, persists bounded live-reader demand, gives current roots their own scheduling lane and scans recent native blocks without waiting for historical catch-up. Newly registered/rebound names receive priority while existing names continue refreshing. Preparation pins cached verified files. Local monitoring now distinguishes quota pauses.

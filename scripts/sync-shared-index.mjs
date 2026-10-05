@@ -45,7 +45,7 @@ export async function syncSharedIndex({dir,origin,maxDiskBytes=50*GiB,maxDownloa
   const used=await fs.promises.statfs(dir);if(Number(used.bavail)*Number(used.bsize)<GiB)throw new Error('index_disk_headroom');
   const status=(extra={})=>atomicJson(statusFile,{at:new Date().toISOString(),origin,publisher:doc.publisher,sequence:doc.sequence,issuedAt:doc.issuedAt,expiresAt:doc.expiresAt,installedBands:state.bands.length,offeredBands:bands.length,receivedBytesThisRun:received,downloadBytesToday:meter.bytes,diskBytes,...extra});
   let lastRequest=0;const pace=async()=>{const now=Date.now(),at=Math.max(now,lastRequest+220);lastRequest=at;if(at>now)await new Promise(r=>setTimeout(r,at-now));};
-  async function download(f){
+  async function downloadOnce(f){
    const dest=path.join(dir,'blobs',f.sha256),partial=dest+'.part';
    if(await fileMatches(dest,f))return dest;
    if(fs.existsSync(dest)){diskBytes-=fs.statSync(dest).size;fs.unlinkSync(dest);}
@@ -60,18 +60,40 @@ export async function syncSharedIndex({dir,origin,maxDiskBytes=50*GiB,maxDownloa
    if(r.headers.get('content-encoding')&&r.headers.get('content-encoding')!=='identity'){await r.body.cancel();throw new Error('index_compressed_response');}
    if(offset&&r.status===200){diskBytes-=offset;offset=0;fs.truncateSync(partial,0);}
    if(offset&&(!r.headers.get('content-range')?.startsWith(`bytes ${offset}-`)||r.status!==206)){await r.body.cancel();throw new Error('index_bad_resume');}
-   const out=await fs.promises.open(partial,offset?'a':'w');let count=offset;
-   try{for await(const chunk of r.body){if(count+chunk.length>f.size)throw new Error('index_oversize_response');if(meter.bytes+chunk.length>maxDownloadBytes)throw new Error('index_daily_download_budget');await out.write(chunk);count+=chunk.length;meter.bytes+=chunk.length;received+=chunk.length;diskBytes+=chunk.length;}}finally{await out.close();atomicJson(meterFile,meter);}
+   const out=await fs.promises.open(partial,offset?'a':'w');let count=offset,lastMeterSave=meter.bytes;
+   try{for await(const chunk of r.body){if(count+chunk.length>f.size)throw new Error('index_oversize_response');if(meter.bytes+chunk.length>maxDownloadBytes)throw new Error('index_daily_download_budget');count+=chunk.length;meter.bytes+=chunk.length;received+=chunk.length;diskBytes+=chunk.length;await out.write(chunk);if(meter.bytes-lastMeterSave>=4*1024*1024){atomicJson(meterFile,meter);lastMeterSave=meter.bytes;}}}finally{await out.close();atomicJson(meterFile,meter);}
    if(!await fileMatches(partial,f))throw new Error('index_file_digest_or_size');fs.renameSync(partial,dest);return dest;
+  }
+  let reservedBytes=0;
+  async function download(f){
+   if(diskBytes+reservedBytes+f.size>maxDiskBytes)throw new Error('index_disk_budget');
+   reservedBytes+=f.size;
+   try{for(let attempt=0;;attempt++)try{return await downloadOnce(f);}catch(error){
+    if(attempt>=2||!/^(index_http_50[0234]|fetch failed|terminated|The operation was aborted)/.test(error.message))throw error;
+    status({phase:'retrying',file:f.name,error:error.message,attempt:attempt+1});await new Promise(r=>setTimeout(r,2000*(attempt+1)));
+   }}finally{reservedBytes-=f.size;}
   }
   let installedThisRun=0;
   for(const band of bands){
    if(installedThisRun>=maxBands)break;
    const same=state.bands.find(b=>b.bandId===band.id&&b.publication===verified.sha);if(same)continue;
+   const previous=state.bands.find(b=>b.bandId===band.id);
+   if(previous){
+    const previousDoc=readJson(path.join(dir,'publications',previous.publication+'.json'));
+    verifyPublication(previousDoc,trust);
+    const previousBand=previousDoc.indexes.find(i=>i.name==='root-tx-index')?.bands.find(b=>b.id===band.id);
+    if(previousBand&&canonicalize(previousBand.files)===canonicalize(band.files)&&band.files.every(f=>{try{return fs.statSync(path.join(dir,'blobs',f.sha256)).size===f.size;}catch{return false;}})){
+     previous.publication=verified.sha;atomicJson(stateFile,state);continue;
+    }
+   }
    const mf=band.files.find(f=>f.name==='manifest.json');if(!mf||mf.size>4*1024*1024)throw new Error('shared_manifest_missing');
    status({phase:'downloading',band:band.id});const manifest=JSON.parse(fs.readFileSync(await download(mf),'utf8'));const parts=validateBandManifest(manifest,band);
-   // Sequential streaming keeps RAM/CPU bounded on small supporters; files resume.
-   for(let i=0;i<parts.length;i++){const f=parts[i],file=await download(f);validateCdb(fs.readFileSync(file),f.prefix);if(i%16===0)status({phase:'downloading',band:band.id,partitions:i+1,totalPartitions:parts.length});}
+   // Two streaming downloads overlap I/O; validation remains bounded and serial.
+   for(let i=0;i<parts.length;i+=2){
+    const completed=await Promise.allSettled(parts.slice(i,i+2).map(async f=>{const file=await download(f);validateCdb(fs.readFileSync(file),f.prefix);}));
+    const failed=completed.find(x=>x.status==='rejected');if(failed)throw failed.reason;
+    if(i%16===0)status({phase:'downloading',band:band.id,partitions:Math.min(i+2,parts.length),totalPartitions:parts.length});
+   }
    const now=new Date().toISOString();
    // Retain old generations until their replacement is completely validated.
    const replaces=new Set([band.id,...(Array.isArray(band.metadata?.supersedes)?band.metadata.supersedes:[band.metadata?.supersedes]).filter(x=>typeof x==='string')]);
@@ -83,7 +105,7 @@ export async function syncSharedIndex({dir,origin,maxDiskBytes=50*GiB,maxDownloa
    for(const name of fs.readdirSync(path.join(dir,'blobs'))){const file=path.join(dir,'blobs',name);if(hashPattern.test(name)&&!keep.has(name)&&Date.now()-fs.statSync(file).mtimeMs>3600000)fs.unlinkSync(file);}
   }
   status({phase:'idle',error:null});return {installedBands:state.bands.length,receivedBytes:received};
- }catch(error){const old=readJson(statusFile,{});atomicJson(statusFile,{...old,at:new Date().toISOString(),phase:'paused',receivedBytesThisRun:received,error:String(error.message)});throw error;}finally{fs.closeSync(fd);fs.unlinkSync(lock);}
+ }catch(error){const old=readJson(statusFile,{});atomicJson(statusFile,{...old,at:new Date().toISOString(),phase:'paused',receivedBytesThisRun:received,downloadBytesToday:readJson(path.join(dir,'download-meter.json'),{}).bytes||0,error:String(error.message)});throw error;}finally{fs.closeSync(fd);fs.unlinkSync(lock);}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const dir=process.env.ARNS_SHARED_INDEX_DIR,origin=process.env.ARNS_INDEX_PUBLISHER_URL;

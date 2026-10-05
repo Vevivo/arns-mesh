@@ -57,3 +57,14 @@ test('disk lookup refuses a tampered signed manifest and does not trust a replac
  for(const [hash,bytes] of f.files)fs.writeFileSync(path.join(dir,'blobs',hash),bytes);
  const mf=f.doc.indexes[0].bands[0].files.find(x=>x.name==='manifest.json');fs.writeFileSync(path.join(dir,'blobs',mf.sha256),'{}');const reader=new SharedIndex(dir);assert.equal(await reader.find(f.id),null);assert.match(reader.status().lastError,/manifest_digest/);
 });
+test('Mesh peer serves a signed location directly from installed index with upstream disabled',async t=>{
+ const {MeshPeer}=await import('../apps/peer/embedded-peer.mjs');
+ const {startDirectPeerServer,queryDirectPeer}=await import('../src/direct-peer.mjs');
+ const {verifyRecord,peerIdFromPublicKey}=await import('../src/common.mjs');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-index-wire-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));const f=fixture();fs.mkdirSync(path.join(dir,'blobs'));fs.mkdirSync(path.join(dir,'publications'));atomicJson(path.join(dir,'trust.json'),trust);
+ const sha=verifyPublication(f.doc,trust).sha;atomicJson(path.join(dir,'publications',sha+'.json'),f.doc);atomicJson(path.join(dir,'installed.json'),{schema:'arns-shared-index/v1',bands:[{bandId:'tip',publication:sha}]});for(const [hash,bytes] of f.files)fs.writeFileSync(path.join(dir,'blobs',hash),bytes);
+ const old=process.env.ARNS_SHARED_INDEX_DIR;process.env.ARNS_SHARED_INDEX_DIR=dir;t.after(()=>{if(old===undefined)delete process.env.ARNS_SHARED_INDEX_DIR;else process.env.ARNS_SHARED_INDEX_DIR=old;});
+ const peer=new MeshPeer({dataDir:path.join(dir,'peer'),locationsFile:path.join(dir,'locations.json'),allowRemoteFetch:false});peer.identity={privateKeyPem:pair.privateKey.export({format:'pem',type:'pkcs8'}),publicKeyPem:pair.publicKey.export({format:'pem',type:'spki'})};peer.witnessPeerId=peerIdFromPublicKey(peer.identity.publicKeyPem);peer._warmLocation=()=>{throw new Error('must_not_fetch');};
+ const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0});t.after(()=>server.close());
+ const reply=await queryDirectPeer({host:'127.0.0.1',port:server.address.port},{op:'location',dataId:f.id,cacheOnly:true});assert.equal(reply.ok,true);assert.ok(verifyRecord(reply.recordJson,reply.signature,reply.witnessPublicKeyPem));assert.equal(JSON.parse(reply.recordJson).rootTxId,f.root);assert.equal(JSON.parse(reply.recordJson).rootOffset,2**40);assert.equal(peer.historyLookups.size,0);
+});

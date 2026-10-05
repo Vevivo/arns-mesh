@@ -8,6 +8,10 @@ The goal is to share the work of keeping sites reachable. Supporters contribute 
 
 [Türkçe](README.tr.md) · [Use the browser](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Network design](docs/en/shared-network.md)
 
+## Current supporter update
+
+Supporters can now import signed AR.IO r84 indexes and answer content-location requests from local disk. This improves the content discovery step; it does not replace ArNS resolution or store the websites themselves. Existing preview.13 readers can use an updated supporter. [Setup and limits](docs/shared-index.md).
+
 ## Choose your path
 
 | I want to… | What I need | Start here |
@@ -23,10 +27,10 @@ A supporter does not need to write code. One person can browse and operate a sup
 | Track | Available now | Download / source |
 |---|---|---|
 | **Published preview.8** | Desktop browsing, saved copies, reusable network invitations and signed source-list updates | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Release and checksums](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
-| **Preview.13 test candidate** | Earlier recovery/search features + automatic supporter announcements, peer exchange and verified-source switching | [Windows test ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233/artifacts/11327184425) · [Source](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
+| **Published preview.13 prerelease** | Earlier recovery/search features + automatic supporter announcements, peer exchange and verified-source switching | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip) · [Source](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
 | **Next work** | Automatic placement and repair of independent content replicas | [Implemented behavior and limits](docs/en/shared-network.md) |
 
-Status checked on **5 October 2026**. `main` still has the preview.8 runtime; preview.13 is an unmerged candidate. Actions downloads may require GitHub sign-in and expire; use the exact linked run while available. Neither standard ZIP includes an operator invitation. A separately prepared **Connected ZIP** can join its included network automatically on a fresh installation; this packaging capability already exists, but these standard downloads are not Connected packages.
+Status checked on **5 October 2026**. `main` still has the preview.8 runtime; the tested preview.13 Windows ZIP is published as a prerelease. New supporter source is on `feat/resilient-access`; the published ZIP has not been replaced. Use the permanent release link above. Neither standard ZIP includes an operator invitation. A separately prepared **Connected ZIP** can join its included network automatically on a fresh installation; this packaging capability already exists, but these standard downloads are not Connected packages.
 
 ## Use Mesh today
 
