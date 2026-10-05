@@ -67,6 +67,7 @@ export class MeshPeer {
     const now=Date.now();this.historyStarts=this.historyStarts.filter(t=>now-t<60000);
     if(this.historyStarts.length>=12||this.historyLookups.size>=2)return;
     this.historyStarts.push(now);
+    try{this.onContentDemand?.(dataId);}catch(error){this.lastDemandError=String(error.message).slice(0,200);}
     const known=this.locationIndex.get(dataId),directPeers=loadDirectPeers();if(!known&&!resolver&&!directPeers.length)return;
     // One bounded replication hop. A downstream cache-only request cannot
     // start or await another warm lookup, preventing cycles between empty peers.

@@ -36,6 +36,9 @@ export class TargetCatalog {
  async refresh({signal}={}){
   const response=await this.rpc(this.endpoint,'getProgramAccounts',[MAINNET_PROGRAM_IDS.arns,{encoding:'base64',commitment:'finalized',withContext:true,minContextSlot:this.state.slot,filters:[filter(ARNS_DISC)]}],{signal,timeout:20000});
   const decoded=await decodeRegistry(response,{signal});if(decoded.slot<this.state.slot)throw new Error('catalog_slot_rollback');
+  const previous=new Map(this.state.registry.map(r=>[r.name,r.mint])),currentNames=new Set(decoded.records.map(r=>r.name));
+  const changed=decoded.records.filter(r=>previous.get(r.name)!==r.mint).map(r=>r.name);
+  this.state.pendingNames=[...new Set([...changed,...(this.state.pendingNames||[])])].filter(name=>currentNames.has(name)).slice(0,50000);
   this.state.registry=decoded.records;this.state.quarantine=decoded.quarantine;this.state.slot=decoded.slot;this.state.registryAt=Date.now();
   const current=new Map(decoded.records.map(r=>[r.name,r.mint]));
   // Removed/rebound names cannot remain current-looking entries in the catalog.
@@ -49,7 +52,10 @@ export class TargetCatalog {
    catch(error){this.state.registryError=String(error.message).slice(0,240);if(!this.state.registry.length||signal?.aborted){this.save();throw error;}}
   }
   for(let i=0;i<Math.min(mints,this.state.registry.length);i++){
-   const record=this.state.registry[this.state.cursor];
+   const prioritized=(this.state.scanTurn||0)%2===0&&this.state.pendingNames?.length;
+   const record=prioritized?this.state.registry.find(r=>r.name===this.state.pendingNames[0]):this.state.registry[this.state.cursor];
+   this.state.scanTurn=(this.state.scanTurn||0)+1;
+   if(!record){this.state.pendingNames.shift();continue;}
    try{
     let bindingSlot=this.state.slot;
     // A historical name snapshot needs its own current registry observation;
@@ -83,7 +89,7 @@ export class TargetCatalog {
     this.state.targets={...retained,...targets};
     if(this.snapshotStore)this.snapshotStore.putMany(Object.entries(targets).map(([name,row])=>({schema:'arns-mesh-name-snapshot/v1',name,txId:row.dataId,antId:row.mint,slot:Math.min(bindingSlot,row.slot),observedAt:new Date(row.observedAt).toISOString(),ttlSeconds:row.ttlSeconds})),{kind:'local-rpc'});
    }catch(e){this.state.errors.push({name:record.name,error:String(e.message).slice(0,240),at:Date.now()});this.state.errors=this.state.errors.slice(-32);if(signal?.aborted)throw e;}
-   finally{this.state.cursor=(this.state.cursor+1)%this.state.registry.length;this.save();}
+   finally{if(prioritized)this.state.pendingNames.shift();else this.state.cursor=(this.state.cursor+1)%this.state.registry.length;this.save();}
   }
   return this.status();
  }
@@ -118,5 +124,5 @@ export class TargetCatalog {
   if(Buffer.byteLength(JSON.stringify(next))>this.maxBytes)throw new Error('catalog_disk_budget');
   this.state=next;this.save();return this.status();
  }
- status(){return {registeredNames:this.state.registry.length,observedTargets:Object.keys(this.state.targets).length,cursor:this.state.cursor,registrySlot:this.state.slot,registryAt:this.state.registryAt,registryError:this.state.registryError||null,registryIntervalMs:this.registryIntervalMs,retainedNames:this.snapshotStore?.names().length||0,targetScanAt:this.state.targetScanAt||null,targetScanSlot:this.state.targetScanSlot||null,quarantined:this.state.quarantine.length,recentErrors:this.state.errors,complete:false,trust:'RPC observation; no account inclusion proof'};}
+ status(){return {registeredNames:this.state.registry.length,observedTargets:Object.keys(this.state.targets).length,cursor:this.state.cursor,pendingNames:this.state.pendingNames?.length||0,registrySlot:this.state.slot,registryAt:this.state.registryAt,registryError:this.state.registryError||null,registryIntervalMs:this.registryIntervalMs,retainedNames:this.snapshotStore?.names().length||0,targetScanAt:this.state.targetScanAt||null,targetScanSlot:this.state.targetScanSlot||null,quarantined:this.state.quarantine.length,recentErrors:this.state.errors,complete:false,trust:'RPC observation; no account inclusion proof'};}
 }

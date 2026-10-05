@@ -70,6 +70,7 @@ void mirrorSnapshots();const relayTimer=setInterval(()=>void mirrorSnapshots(),6
 let catalog=null;
 const makeCatalog=endpoint=>new CatalogWorker({dataDir,peer,endpoint,snapshotStore:runtime.snapshots,pinner:process.env.ARNS_PREPARE_ENABLED==='1'?pinner:null,maxPreparedSites:Number(process.env.ARNS_PREPARE_MAX_SITES||32),jobsPerPass:8,mintsPerPass:8});
 if(upstream&&process.env.ARNS_CATALOG_ENABLED==='1'){const seed=JSON.parse(fs.readFileSync(process.env.SOLANA_RPC_SEEDS))[0];catalog=makeCatalog('http://'+(seed.host.includes(':')?'['+seed.host+']':seed.host)+':'+seed.port);catalog.start();}
+peer.onContentDemand=id=>catalog?.enqueueDemand(id);
 // A background update changes the live profile. Recreate the catalog after its
 // current pass stops if its RPC endpoint changed; keep persisted queues.
 let catalogEndpoint=catalog?.catalog.endpoint;

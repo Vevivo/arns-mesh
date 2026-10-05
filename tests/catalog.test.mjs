@@ -46,3 +46,13 @@ test('program-wide ANT observation follows all registered targets and rejects ro
  assert.equal(catalog.state.targets.one.dataId,'C'.repeat(43));assert.equal(catalog.state.targets.docs_one,undefined);
  assert.equal(new TargetCatalog({file:catalog.file}).state.targetScanSlot,202);
 });
+
+test('new name priority survives restart while existing names still refresh',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'catalog-priority-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const file=path.join(dir,'catalog.json'),rpc=async(_endpoint,method)=>method==='getAccountInfo'?{context:{slot:99},value:null}:{context:{slot:100},value:[await row('@','A'.repeat(43))]};
+ const catalog=new TargetCatalog({file,endpoint:'http://127.0.0.1:1',rpc});
+ catalog.state.registry=Array.from({length:100},(_,i)=>({name:'name'+i,mint}));catalog.state.registryAt=Date.now();catalog.state.slot=99;
+ catalog.state.pendingNames=['name99'];catalog.save();
+ const resumed=new TargetCatalog({file,endpoint:catalog.endpoint,rpc});await resumed.step({mints:2});
+ assert.ok(resumed.state.targets.name99);assert.ok(resumed.state.targets.name0);assert.equal(resumed.state.cursor,1);assert.equal(resumed.state.pendingNames.length,0);
+});

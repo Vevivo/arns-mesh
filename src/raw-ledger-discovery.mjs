@@ -12,7 +12,7 @@ const valid=id=>/^[A-Za-z0-9_-]{43}$/.test(id);
 const decode=s=>Buffer.from(String(s||''),'base64url').toString('utf8');
 const atomic=(file,data)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(data));fs.renameSync(file+'.tmp',file);};
 const read=(file,fallback)=>{try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch{return fallback;}};
-const lanes=['retry','history','live'];
+const lanes=['retry','history','live','recent'];
 
 // A local, resumable source of *hints*. It never asserts ledger inclusion or
 // full history coverage. Failed transactions/bundles remain in the retry queue.
@@ -36,15 +36,17 @@ export class RawLedgerDiscovery extends EventEmitter{
   // Each lane keeps its own cursor. A busy tip or a slow bundle must not
   // permanently starve historical discovery, even across process restarts.
   this.state.activeBlocks??={history:this.state.activeBlock||null,live:null};
+  this.state.activeBlocks.recent??=null;this.state.recentQueue??=[];
   delete this.state.activeBlock;
   this.state.schedulerVersion=1;
   if(!lanes.includes(this.state.nextLane))this.state.nextLane='retry';
   this.state.laneAttempts??={retry:0,history:0,live:0};
+  this.state.laneAttempts.recent??=0;
   this.state.retries=this.state.retries.slice(0,4096);this.state.queue=this.state.queue.slice(0,512);
   this.sessionBytes=0;this.bundleChunks=new ChunkCache(4*1024*1024);this.current={phase:'idle',bytesThisPass:0,requestsThisPass:0,activeHeight:null};
   this.index=new LocationIndex(locationsFile);
  }
- status(){const {retries,queue,activeBlocks,...s}=this.state;const activeBlock=activeBlocks[this.current.lane];const frame=activeBlock?.work?.cursor?.frames?.at(-1);return {...s,laneAttempts:{...s.laneAttempts},...this.current,retryCount:retries.length,pendingBundleScans:retries.filter(x=>x.error==='nested_scan_pending').length,queuedBlocks:queue.length,pendingTailBlocks:Math.max(0,(this.state.observedTip??this.state.tip??0)-(this.state.tip??0)),historyActiveHeight:activeBlocks.history?.height??null,liveActiveHeight:activeBlocks.live?.height??null,activeTransaction:activeBlock?.position||0,activeBlockTransactions:activeBlock?.txIds?.length||0,activeBundleDepth:frame?.path.length||0,activeBundleItem:frame?.next??null,activeBundleItems:frame?.total??null,allHistoryCovered:false,byteBudgetPerPass:this.budgetBytes,sessionBytes:this.sessionBytes,dailyBudgetBytes:this.dailyBudgetBytes};}
+ status(){const {retries,queue,recentQueue,activeBlocks,...s}=this.state;const activeBlock=activeBlocks[this.current.lane];const frame=activeBlock?.work?.cursor?.frames?.at(-1);return {...s,laneAttempts:{...s.laneAttempts},...this.current,retryCount:retries.length,pendingBundleScans:retries.filter(x=>x.error==='nested_scan_pending').length,queuedBlocks:queue.length,recentQueuedBlocks:recentQueue.length,recentActiveHeight:activeBlocks.recent?.height??null,pendingTailBlocks:Math.max(0,(this.state.observedTip??this.state.tip??0)-(this.state.tip??0)),historyActiveHeight:activeBlocks.history?.height??null,liveActiveHeight:activeBlocks.live?.height??null,activeTransaction:activeBlock?.position||0,activeBlockTransactions:activeBlock?.txIds?.length||0,activeBundleDepth:frame?.path.length||0,activeBundleItem:frame?.next??null,activeBundleItems:frame?.total??null,allHistoryCovered:false,byteBudgetPerPass:this.budgetBytes,sessionBytes:this.sessionBytes,dailyBudgetBytes:this.dailyBudgetBytes};}
  save(){atomic(this.stateFile,this.state);this.emit('progress',this.status());}
  accountBytes(n){this.current.bytesThisPass+=n;this.state.quotaBytes+=n;if(this.current.bytesThisPass>=this.budgetBytes||this.state.quotaBytes>=this.dailyBudgetBytes)this.abort.abort(new Error('index_budget_reached'));}
  async getPeers(signal=this.abort?.signal){signal?.throwIfAborted();if(this.peers.length&&Date.now()-this.peersAt<120000)return this.peers;this.peers=await discoverArweavePeers(read(this.peersFile,[]),{maxPeers:8,expand:true,signal});this.peersAt=Date.now();if(!this.peers.length)throw new Error('no_raw_arweave_peers');return this.peers;}
@@ -106,7 +108,7 @@ export class RawLedgerDiscovery extends EventEmitter{
   const start=lanes.indexOf(this.state.nextLane);
   for(let i=0;i<lanes.length;i++){
    const lane=lanes[(start+i)%lanes.length];
-   const available=lane==='retry'?this.state.retries.length:lane==='live'?(this.state.activeBlocks.live||this.state.queue.length):(this.state.activeBlocks.history||this.state.historyCursor>=0);
+   const available=lane==='retry'?this.state.retries.length:lane==='live'?(this.state.activeBlocks.live||this.state.queue.length):lane==='recent'?(this.state.activeBlocks.recent||this.state.recentQueue.length):(this.state.activeBlocks.history||this.state.historyCursor>=0);
    if(!available)continue;
    this.state.nextLane=lanes[(start+i+1)%lanes.length];
    this.current.lane=lane;this.state.laneAttempts[lane]++;return lane;
@@ -127,12 +129,12 @@ export class RawLedgerDiscovery extends EventEmitter{
    return;
   }
   if(!this.state.activeBlocks[lane]){
-   const height=lane==='live'?this.state.queue[0]:this.state.historyCursor;
+   const height=lane==='live'?this.state.queue[0]:lane==='recent'?this.state.recentQueue[0]:this.state.historyCursor;
    this.current.activeHeight=height;
    const block=await this.json('/block/height/'+height,{summarizeBlock:true});
    if(Number(block.height)!==height||!Array.isArray(block.txs)||block.txs.length>100000||block.txs.some(x=>!valid(x)))throw new Error('invalid_block_metadata');
    this.state.activeBlocks[lane]={height,txIds:block.txs,position:0,hadErrors:false};this.state.blocksVisited++;
-   if(lane==='live')this.state.queue.shift();else this.state.historyCursor-=this.partition.count;
+   if(lane==='live')this.state.queue.shift();else if(lane==='recent')this.state.recentQueue.shift();else this.state.historyCursor-=this.partition.count;
   }
   const block=this.state.activeBlocks[lane];this.current.activeHeight=block.height;
   if(block.position<block.txIds.length){
@@ -154,6 +156,15 @@ export class RawLedgerDiscovery extends EventEmitter{
     const info=await this.json('/info');if(info.network!=='arweave.N.1'||!Number.isSafeInteger(info.height)||info.height<3)throw new Error('invalid_arweave_info');
     const tip=info.height-2;
     this.state.observedTip=tip;
+    // Recent blocks get a bounded lane without dropping historical catch-up.
+    const catchupHeight=this.state.activeBlocks.live?.height??this.state.queue[0]??this.state.tip??tip;
+    const recentFrom=Math.max(-1,this.state.recentTip??tip-16,tip-64);
+    if(tip-catchupHeight>64){
+    for(let h=this.partition.after(recentFrom);h<=tip;h+=this.partition.count){
+     if(h!==this.state.activeBlocks.recent?.height&&!this.state.recentQueue.includes(h))this.state.recentQueue.push(h);
+    }
+    this.state.recentQueue.sort((a,b)=>b-a);this.state.recentQueue=this.state.recentQueue.slice(0,64);this.state.recentTip=tip;
+    }
     if(this.state.historyCursor===null)this.state.historyCursor=this.partition.before(tip);
     if(this.state.tip!==null&&tip>this.state.tip){
      let added=0;

@@ -1,3 +1,9 @@
+# Supporter queue recovery — 5 October 2026
+
+Server source update after the published preview.13 Windows ZIP. Separates name-sync and content quotas, persists bounded live-reader demand, gives current roots their own scheduling lane and scans recent native blocks without waiting for historical catch-up. Newly registered/rebound names receive priority while existing names continue refreshing. Preparation pins cached verified files. Local monitoring now distinguishes quota pauses.
+
+These changes address stalled work, not universal discovery. Static indexes and this node's partial raw index can still miss a recent data item. No gateway fallback or name-proof downgrade is introduced. See [configuration and limits](../resilient-access.md).
+
 # ArNS Mesh 0.5.0-preview.13 — candidate
 
 Supporters sign and announce reachable numeric-IP endpoints. Peers verify identity by callback and exchange bounded advertisements. Joined desktops automatically learn/persist alternatives, prefer measured valid-content routes and switch after source failure. Discovery does not grant name authority: mirrors retain original trusted publishers' signed name observations.
