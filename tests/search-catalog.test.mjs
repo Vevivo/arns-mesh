@@ -21,6 +21,9 @@ const record=(entries=[entry()],revision=1)=>({schema:'arns-mesh-search/v1',revi
 test('bounded HTML extraction excludes script/style/template and searches Turkish topic words locally',t=>{
  const html='<head><title>Müzik &amp; Sanat</title><meta content="İstanbul haberleri" name="description"><style>secretStyle</style></head><body><script>secretScript</script><template>secretTemplate</template><h1>Bağımsız MÜZİK</h1><p>konser &#x1F3B5;</p></body>';
  const text=extractSearchText(html);assert.equal(text.title,'Müzik & Sanat');assert.equal(text.description,'İstanbul haberleri');assert.equal(text.text,'Bağımsız MÜZİK konser 🎵');
+ assert.equal(extractSearchText('<script '.repeat(20000)).text,'');
+ assert.equal(extractSearchText('<script>if (x < y) run()</script><p>Kept text</p>').text,'Kept text');
+ assert.equal(extractSearchText('<meta name="description" content="x > y"><p>Body</p>').description,'x > y');
  assert.throws(()=>extractSearchText('a'.repeat(SEARCH_LIMITS.documentBytes+1)),/limit/);
  const author=identity(),cache=new SearchCatalog(path.join(temp(t),'search.json'));cache.accept(author.sign(record([entry(text)])),[author.id]);
  assert.equal(cache.search('muzik istanbul',[author.id]).total,1);assert.equal(cache.search('bagimsiz',[author.id]).total,1);assert.equal(cache.search('secretScript',[author.id]).total,0);assert.equal(cache.search('music nonexistent',[author.id]).total,0);
@@ -40,8 +43,8 @@ test('signatures, rollback, equal-revision conflicts and oversized data fail clo
 
 test('new signed target replaces old topic text atomically and storage source count stays bounded',t=>{
  const cache=new SearchCatalog(path.join(temp(t),'search.json')),authors=[identity(),identity(),identity()],trusted=authors.map(x=>x.id);
- cache.accept(authors[0].sign(record()),trusted);cache.accept(authors[0].sign(record([entry({targetId:'C'.repeat(43),title:'Space',description:'Planets',text:'Astronomy'})],2)),trusted);
- assert.equal(cache.search('muzik',trusted).total,0);assert.equal(cache.search('planets',trusted).hits[0].targetId,'C'.repeat(43));
+ cache.accept(authors[0].sign(record()),trusted);cache.accept(authors[0].sign(record([entry({targetId:'C'.repeat(43),title:'Space',description:'Planets',text:'Astronomy starts here'})],2)),trusted);
+ assert.equal(cache.search('muzik',trusted).total,0);assert.equal(cache.search('art',trusted).total,0,'art must not match starts');assert.equal(cache.search('planets',trusted).hits[0].targetId,'C'.repeat(43));
  for(const author of authors.slice(1))cache.accept(author.sign(record()),trusted);
  assert.equal(Object.keys(cache.sources).length,2);assert.equal(cache.records(trusted).length,2);
 });

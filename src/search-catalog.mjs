@@ -17,15 +17,29 @@ function entities(s){return s.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbs
 // A bounded, non-executing text preview, not a DOM renderer or a full crawler.
 export function extractSearchText(html){
  if(typeof html!=='string'||Buffer.byteLength(html)>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');
- const safe=html.replace(/<!--[\s\S]*?(?:-->|$)/g,' ').replace(/<(script|style|template|noscript|svg)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi,' ');
- const strip=s=>entities(s.replace(/<[^>]*(?:>|$)/g,' '));
- const title=clean(strip(safe.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1]||''),160);
- let description='';
- for(const m of safe.matchAll(/<meta\b[^>]*>/gi)){
-  const attrs=Object.create(null);for(const a of m[0].matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=a[2]??a[3]??a[4];
-  if(/^(description|og:description)$/i.test(attrs.name||attrs.property||'')){description=clean(entities(attrs.content||''),320);break;}
+ let at=0,inHead=false,inTitle=false,titleText='',bodyText='',description='';
+ const append=text=>{if(inTitle)titleText=(titleText+text).slice(0,2048);else if(!inHead&&bodyText.length<SEARCH_LIMITS.text*8)bodyText=(bodyText+text).slice(0,SEARCH_LIMITS.text*8);};
+ while(at<html.length){
+  const start=html.indexOf('<',at);if(start<0){append(html.slice(at));break;}append(html.slice(at,start));
+  if(html.startsWith('<!--',start)){const end=html.indexOf('-->',start+4);at=end<0?html.length:end+3;continue;}
+  // Scan once, respecting quotes. Repeated unterminated tags must not cause
+  // a regex to rescan the remainder of an attacker-controlled document.
+  let end=start+1,quote='';for(;end<html.length;end++){const c=html[end];if(quote){if(c===quote)quote='';}else if(c==='"'||c==="'")quote=c;else if(c==='>')break;}
+  if(end===html.length)break;at=end+1;
+  const token=html.slice(start,end+1),m=/^<\s*(\/?)\s*([a-z][a-z0-9:-]*)/i.exec(token);if(!m)continue;
+  const closing=Boolean(m[1]),tag=m[2].toLowerCase();
+  if(!closing&&['script','style','template','noscript','svg'].includes(tag)){
+   const close=new RegExp('</'+tag+'\\s*>','ig');close.lastIndex=at;const found=close.exec(html);at=found?close.lastIndex:html.length;append(' ');continue;
+  }
+  if(tag==='head'){inHead=!closing;continue;}
+  if(tag==='title'){inTitle=!closing;continue;}
+  if(tag==='meta'&&!closing&&token.length<=4096&&!description){
+   const attrs=Object.create(null);for(const a of token.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=a[2]??a[3]??a[4];
+   if(/^(description|og:description)$/i.test(attrs.name||attrs.property||''))description=clean(entities(attrs.content||''),320);
+  }
+  append(' ');
  }
- const text=clean(strip(safe.replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi,' ').replace(/<title\b[^>]*>[\s\S]*?<\/title\s*>/gi,' ')),SEARCH_LIMITS.text);
+ const title=clean(entities(titleText),160),text=clean(entities(bodyText),SEARCH_LIMITS.text);
  return {title,description,text};
 }
 function validateRecord(r){
@@ -103,11 +117,11 @@ export class SearchCatalog{
   })().finally(()=>this.running=null);return this.running;
  }
  search(query,trustedPeers){
-  const q=clean(query,160),terms=[...new Set(fold(q).match(/[\p{L}\p{N}_-]+/gu)||[])].slice(0,12),records=this.records(trustedPeers),rows=new Map();
+  const q=clean(query,160),terms=[...new Set(fold(q).match(/[\p{L}\p{N}]+/gu)||[])].slice(0,12),records=this.records(trustedPeers),rows=new Map();
   for(const {record,envelope} of records)for(const entry of record.entries){const old=rows.get(entry.name);if(!old||Date.parse(entry.observedAt)>Date.parse(old.observedAt))rows.set(entry.name,{...entry,publisher:envelope.witnessPeerId});}
   const hits=[];if(terms.length)for(const row of rows.values()){
-   const fields=[row.name,row.title,row.description,row.text].map(fold),all=fields.join(' ');if(!terms.every(t=>all.includes(t)))continue;
-   const score=terms.reduce((s,t)=>s+fields.reduce((n,f,i)=>n+(f.includes(t)?[12,8,4,1][i]:0),0),0);
+   const fields=[row.name,row.title,row.description,row.text].map(s=>fold(s).match(/[\p{L}\p{N}]+/gu)||[]),matches=(words,term)=>words.some(word=>word.startsWith(term));if(!terms.every(t=>fields.some(f=>matches(f,t))))continue;
+   const score=terms.reduce((s,t)=>s+fields.reduce((n,f,i)=>n+(matches(f,t)?[12,8,4,1][i]:0),0),0);
    let excerpt=row.description||row.text;const offset=fold(excerpt).indexOf(terms[0]);if(offset>100)excerpt='…'+excerpt.slice(Math.max(0,offset-60));
    hits.push({...row,score,excerpt:excerpt.slice(0,240)});
   }

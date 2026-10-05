@@ -1,6 +1,6 @@
 # Topic search — preview.9 candidate
 
-The Home page has a topic search field. The top address bar still opens a known ArNS name or `ar://name` directly. Search returns up to 30 matching names, titles and excerpts from the catalogue already downloaded to this device. All query words must occur in the indexed name/text; accents and Turkish dotted/dotless I are normalized. This is keyword matching, not translation or semantic/AI search.
+The Home page has a topic search field. The top address bar still opens a known ArNS name or `ar://name` directly. Search returns up to 30 matching names, titles and excerpts from the catalogue already downloaded to this device. All query words must match a word or word prefix in the indexed name/text (for example, `art` matches `artwork`, not `start`); accents and Turkish dotted/dotless I are normalized. This is keyword matching, not translation or semantic/AI search.
 
 Results include the name-observation time, page-indexing time and a dated availability report. **Entry page indexed** does not mean all assets exist. **Site copy reported by peer** describes the provider's preparation scope at indexing time, not a current reachability guarantee. **Saved on this device** is shown only when this reader has a matching ready saved version. Opening any result follows the existing name-resolution and content-verification path. Search metadata never overrides an ArNS binding or becomes a content proof.
 
