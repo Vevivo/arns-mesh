@@ -2,13 +2,15 @@ import http from 'node:http';
 import net from 'node:net';
 import fs from 'node:fs';
 import {requestIpJson} from './ip-transport.mjs';
+import {peerDirectory} from './peer-directory.mjs';
 
 export function parsePeerAddresses(lines){
  const entries=Array.isArray(lines)?lines:String(lines).split(/\s+/).filter(Boolean);
  if(entries.length>16)throw new Error('too_many_direct_peers');
  return [...new Set(entries)].map(value=>{const i=value.lastIndexOf(':'),host=value.slice(0,i).replace(/^\[|\]$/g,''),port=Number(value.slice(i+1));if(!net.isIP(host)||!Number.isInteger(port)||port<1||port>65535)throw new Error('invalid_peer_ip_port');return {host,port};});
 }
-export function loadDirectPeers(file=process.env.ARNS_IP_PEERS){if(!file)return [];try{return parsePeerAddresses(JSON.parse(fs.readFileSync(file)));}catch{return [];}}
+export function loadConfiguredPeers(file=process.env.ARNS_IP_PEERS){if(!file)return [];try{return parsePeerAddresses(JSON.parse(fs.readFileSync(file)));}catch{return [];}}
+export function loadDirectPeers(file=process.env.ARNS_IP_PEERS){const configured=loadConfiguredPeers(file),directory=peerDirectory(file);return directory?directory.rank([...configured,...directory.addresses()]):configured;}
 export async function queryDirectPeer(peer,request,{signal}={}){
  const lookup=request.op==='location'||request.op==='content';
  const pendingError=request.op==='location'?'location_lookup_pending':'content_lookup_pending';
@@ -31,7 +33,7 @@ export async function queryDirectPeer(peer,request,{signal}={}){
 
 // This endpoint exchanges signed Mesh envelopes and raw signed items. It never
 // proxies URLs, resolves domain names, or serves a web page on a site's behalf.
-export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740,networkAnnouncement=()=>null}={}){
+export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740,networkAnnouncement=()=>null,networkRecovery=()=>null,discovery=null}={}){
  if(!net.isIP(host)||!Number.isInteger(port)||port<0||port>65535)throw new Error('invalid_peer_listener');
  if(!peer.identity)throw new Error('peer_identity_unavailable');
  let active=0;
@@ -43,9 +45,10 @@ export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740,netw
   req.on('data',chunk=>{bytes+=chunk.length;if(bytes>8192){req.destroy();return;}body+=chunk;});
   req.on('end',async()=>{try{
    const request=JSON.parse(body);
-   if(!['snapshot','content','location','network'].includes(request.op))throw new Error('mesh_operation_not_allowed');
+   if(!['snapshot','content','location','network','catalog','peers','peer-check'].includes(request.op))throw new Error('mesh_operation_not_allowed');
    const network=request.op==='network'?networkAnnouncement():null;
-   const reply=request.op==='network'?(network?{ok:true,network}:{ok:false,error:'network_not_published'}):await peer._handleAsync(request);
+   const recovery=request.op==='network'&&request.recovery===true?networkRecovery():null;
+   const reply=['peers','peer-check'].includes(request.op)?await discovery?.handle(request,{remoteAddress:req.socket.remoteAddress,signal:AbortSignal.timeout(3500)})||{ok:false,error:'peer_exchange_unavailable'}:request.op==='network'?(network?{ok:true,network,...(recovery?{recovery}:{})}:{ok:false,error:'network_not_published'}):await peer._handleAsync(request);
    peer.requestsServed++;
    if(request.op==='content'&&reply.ok){const item=JSON.parse(reply.recordJson);peer.contentChunksServed++;peer.contentBytesServed+=Buffer.from(item.data,'base64').length;}
    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(reply));

@@ -2,7 +2,7 @@
 
 [Home](../../README.md) · [VPS / Pi setup](supporter.md) · [Türkçe](../tr/ag-kodu.md)
 
-Requires **preview.8 or newer** on the desktop and peers publishing network lists. Older peers may continue serving content. Installing a desktop update does not upgrade a production supporter.
+Use **Mesh 0.5.0** for the desktop and supporter. Updating the desktop does not update a server installation.
 
 ## Which item do I need?
 
@@ -12,7 +12,7 @@ Requires **preview.8 or newer** on the desktop and peers publishing network list
 | Network invitation (`mesh1.…`) | A public network key and initial addresses used to join |
 | Connection profile (`mesh-connect.json`) | Legacy/manual source settings; not website files |
 
-**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. Preview.13 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
+**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. 0.5.0 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
 
 The sections below document today's connection mechanism and advanced operator actions. Codes remain an optional advanced/recovery mechanism in the intended product; normal users should eventually receive a prepared connected download. Current standard ZIPs still need connection setup.
 
@@ -57,7 +57,7 @@ bash scripts/install-peer.sh --network 'COMPLETE_MESH1_CODE_FROM_OPERATOR'
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Replace the quoted placeholder. In preview.13 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
+Replace the quoted placeholder. In 0.5.0 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
 
 Updates preserve existing configuration. To deliberately join an existing installation, stop its peer, back up its data, run `node scripts/network.mjs join 'REAL_CODE' --data DATA_DIRECTORY`, then restart. The CLI invocation is explicit trust and does not show a second confirmation screen.
 
@@ -75,7 +75,7 @@ Copying a list does **not** copy website content. Catalog/content replication re
 
 Run `publish` again with the same data directory when the reader profile changes. The signing key is retained and the revision increases. An unchanged key and starting-address set produce the same invitation. Changing starting addresses requires a new code for first-time users; an existing member can learn new addresses while an old source remains reachable.
 
-Outside Saved mode (Live in preview.8, Automatic in the candidate), desktops check on startup and about every 15 minutes. They reject invalid signatures, expired announcements, revision rollback and conflicting equal revisions. An unavailable update retains the last accepted source files. Saved mode makes no connection-list requests. Complete retained files can open locally; in the candidate missing content may still be requested from Mesh/raw sources, so this is not a system-wide network-off mode.
+Outside Saved mode (Automatic), desktops check on startup and about every 15 minutes. They reject invalid signatures, expired announcements, revision rollback and conflicting equal revisions. An unavailable update retains the last accepted source files. Saved mode makes no connection-list requests. Complete retained files can open locally; in the candidate missing content may still be requested from Mesh/raw sources, so this is not a system-wide network-off mode.
 
 Default announcement lifetime is 14 days. The running authority peer checks at startup and every six hours, renewing when three days or less remain. Mirrors cannot renew without the key. Expiration blocks new joins/new list acceptance; it does not delete cached sources or saved content. **This is not a subscription expiry policy.**
 

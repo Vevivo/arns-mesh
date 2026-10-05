@@ -1,3 +1,4 @@
+import {getSharedIndex,sharedLocation} from '../../src/shared-index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -35,7 +36,7 @@ function createIdentity(file){
 }
 
 export class MeshPeer {
-  constructor({dataDir,bootstrapFile,locationsFile=process.env.ARNS_LOCATIONS,snapshotStore=null,allowRemoteFetch=true,maxTopics=Infinity}){
+  constructor({dataDir,bootstrapFile,locationsFile=process.env.ARNS_LOCATIONS,snapshotStore=null,allowRemoteFetch=true,maxTopics=256,storageLimits={}}){
     this.allowRemoteFetch=allowRemoteFetch;this.maxTopics=maxTopics;
     this.dataDir=dataDir;this.snapshotStore=snapshotStore;
     this.bootstrapFile=bootstrapFile;
@@ -55,7 +56,7 @@ export class MeshPeer {
     this.dht=null;
     this.identity=null;
     this.witnessPeerId=null;
-    this.contentStore=new VerifiedContentStore(path.join(dataDir,'content'),{maxFiles:allowRemoteFetch?Infinity:2048});
+    this.contentStore=new VerifiedContentStore(path.join(dataDir,'content'),{maxFiles:allowRemoteFetch?Infinity:2048,...storageLimits});
     this.contentStore.on('stored',id=>this._announceTopic('content:'+id,contentTopic(id)).catch(()=>{}));
     this.historyLookups=new Map();this.historyStarts=[];
   }
@@ -67,6 +68,7 @@ export class MeshPeer {
     const now=Date.now();this.historyStarts=this.historyStarts.filter(t=>now-t<60000);
     if(this.historyStarts.length>=12||this.historyLookups.size>=2)return;
     this.historyStarts.push(now);
+    try{this.onContentDemand?.(dataId);}catch(error){this.lastDemandError=String(error.message).slice(0,200);}
     const known=this.locationIndex.get(dataId),directPeers=loadDirectPeers();if(!known&&!resolver&&!directPeers.length)return;
     // One bounded replication hop. A downstream cache-only request cannot
     // start or await another warm lookup, preventing cycles between empty peers.
@@ -87,6 +89,7 @@ export class MeshPeer {
     };
   }
   _handle(req){
+    if(req.op==='catalog')return this.searchReply?.(req)||{ok:false,error:'search_catalog_unavailable'};
     if(req.op==='hello') return {ok:true,noisePublicKey:this.swarm.keyPair.publicKey.toString('hex'),witnessPeerId:this.witnessPeerId,kind:'mesh-peer'};
     if(req.op==='content'){
       const id=String(req.dataId||'');
@@ -97,7 +100,7 @@ export class MeshPeer {
       if(req.cacheOnly!==true)this._warmLocation(id);
       return {ok:false,error:'content_not_cached'};
     }
-    if(req.op==='snapshot'){const name=String(req.name||'').toLowerCase();if(!validArName(name))return {ok:false,error:'invalid_arns_name'};const row=this.snapshotStore?.exportLocal(name);return row?this._envelope(row):{ok:false,error:'snapshot_not_found'};}
+    if(req.op==='snapshot'){const name=String(req.name||'').toLowerCase();if(!validArName(name))return {ok:false,error:'invalid_arns_name'};if(req.witnessPeerIds!==undefined&&(!Array.isArray(req.witnessPeerIds)||req.witnessPeerIds.length>16||req.witnessPeerIds.some(id=>typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))))return {ok:false,error:'invalid_snapshot_witnesses'};const row=req.prepared===true?this.pinner?.readySnapshot(name):this.snapshotStore?.exportLocal(name);if(row&&(!row.provenance||row.provenance.kind==='local-rpc')&&(!req.witnessPeerIds||req.witnessPeerIds.includes(this.witnessPeerId)))return this._envelope({...row,...(req.prepared===true?{prepared:true}:{})});return this.snapshotRelay?.reply({...req,name})||{ok:false,error:'snapshot_not_found'};}
     if(req.op==='resolve'){
       const name=String(req.name||'').toLowerCase();
       if(!validArName(name)) return {ok:false,error:'invalid_arns_name'};
@@ -130,6 +133,11 @@ export class MeshPeer {
     return {ok:false,error:'unknown_op'};
   }
   async _handleAsync(req){
+    // A disk index can answer immediately, including cache-only/offline requests.
+    if(req.op==='location'&&validDataId(req.dataId)&&!this.locationIndex.get(req.dataId)){
+      const hint=sharedLocation(await getSharedIndex()?.find(req.dataId));
+      if(hint)return this._envelope({...hint,dataId:req.dataId});
+    }
     const reply=this._handle(req);
     if(!['location','content'].includes(req.op)||reply.ok||req.cacheOnly===true)return reply;
     const job=this.historyLookups.get(String(req.dataId||''));
@@ -164,7 +172,6 @@ export class MeshPeer {
     await d.flushed();
   }
   _trimCache(){
-    if(this.allowRemoteFetch)return;
     for(const [key,limit] of [['records',256],['proofs',256],['locations',2048]]){
       const rows=this.cache[key]||{};this.cache[key]=Object.fromEntries(Object.entries(rows).slice(-limit));
     }
@@ -174,7 +181,7 @@ export class MeshPeer {
   async start(){
     if(this.swarm) return this.status();
     ensureDir(this.dataDir);
-    if(this.allowRemoteFetch||!fs.existsSync(this.cacheFile)||fs.statSync(this.cacheFile).size<=4*1024*1024)this.cache=readJson(this.cacheFile,this.cache);
+    if(!fs.existsSync(this.cacheFile)||fs.statSync(this.cacheFile).size<=4*1024*1024)this.cache=readJson(this.cacheFile,this.cache);
     this._trimCache();
     this.identity=createIdentity(this.identityFile);
     this.witnessPeerId=peerIdFromPublicKey(this.identity.publicKeyPem);
@@ -213,7 +220,7 @@ export class MeshPeer {
         socket.end();
       });
     });
-    for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-(this.allowRemoteFetch?Infinity:16)))this._announce(name).catch(()=>{});
+    for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-this.maxTopics))this._announce(name).catch(()=>{});
     if(this.allowRemoteFetch)this._announceTopic('index',locationIndexTopic()).catch(()=>{});
     for(const item of this.contentStore.stats().files.slice(-this.maxTopics)){const id=item.dataId;this._announceTopic('content:'+id,contentTopic(id)).catch(()=>{});}
     this.startedAt=new Date().toISOString();
@@ -273,6 +280,7 @@ export class MeshPeer {
       sharedNames:Object.keys(this.cache.records||{}),
       cachedLocations:Object.keys(this.cache.locations||{}).length,
       indexLocations:this.locationIndex.size,
+      sharedIndex:getSharedIndex()?.status()||null,
       cachedContent:this.contentStore.stats().files.length,
       connections:this.connections,
       requestsServed:this.requestsServed,

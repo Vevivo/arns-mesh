@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import {createSwarmMeshClient} from './swarm-client.mjs';
 import {fetchMeshContent} from './content-fetcher.mjs';
 import {validArName,validDataId} from './swarm-common.mjs';
@@ -7,8 +8,24 @@ import {validateSnapshot} from './name-snapshots.mjs';
 import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export class SitePinner{
- constructor({file,snapshots,contentStore}){this.file=file;this.snapshots=snapshots;this.store=contentStore;this.jobs=new Map();this.rows=Object.create(null);try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}for(const row of Object.values(this.rows))if(row.status==='saving')row.status='interrupted';}
- status(){return {sites:Object.values(this.rows),storage:this.store.pinStats()};}
+ constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient}){
+  this.file=file;this.snapshots=snapshots;this.store=contentStore;this.fetchContent=fetchContent;this.createClient=createClient;this.jobs=new Map();this.rows=Object.create(null);
+  try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}
+  for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
+ }
+ isReady(row){
+  if(!row||!['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)||row.saved!==row.total||row.failed)return false;
+  // Older releases did not embed the dated binding in saved-site metadata.
+  // A later observation of the same target cannot reconstruct the old date.
+  const binding=row.snapshot||this.snapshots.get(row.name);
+  if(!binding||binding.txId!==row.rootDataId||binding.observedAt!==row.observedAt)return false;
+  try{validateSnapshot(binding,row.name);}catch{return false;}
+  const ids=this.store.pins?.[row.pinGroup||row.name]||[];
+  return ids.length>=row.total&&ids.every(id=>this.store.has(id));
+ }
+ readySnapshot(name,{trustedPeers=[]}={}){if(!this.isReady(this.rows[name]))return null;return this.snapshotStore({trustedPeers}).get(name);}
+ preparedStore({trustedPeers=[]}={}){return {get:name=>this.readySnapshot(name,{trustedPeers})};}
+ status(){return {sites:Object.values(this.rows),storage:this.store.pinStats(),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}
  save(){fs.writeFileSync(this.file+'.tmp',JSON.stringify(this.rows),{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  // A pinned version must retain its own dated name binding. Later live
  // observations must not silently redirect a saved entry to unpinned bytes.
@@ -22,18 +39,33 @@ export class SitePinner{
    return {...snapshot,provenance:{...provenance}};
   },put:(...args)=>this.snapshots.put(...args)};
  }
- remove(name){if(this.jobs.has(name))throw new Error('site_save_in_progress');this.store.unpin(name);delete this.rows[name];this.save();}
- start(name,{accessPolicy='live',trustedPeers=[]}={}){
+ remove(name){
+  if(this.jobs.has(name))throw new Error('site_save_in_progress');
+  const old=this.rows[name];delete this.rows[name];try{this.save();}catch(e){this.rows[name]=old;throw e;}
+  for(const group of new Set([name,old?.pinGroup,old?.update?.pinGroup].filter(Boolean)))this.store.unpin(group);
+ }
+ start(name,{accessPolicy='live',trustedPeers=[],signal,contentSources='all',snapshot:provided=null,managedBy=null}={}){
   if(!validArName(name))throw new Error('invalid_arns_name');
   if(this.jobs.has(name))return this.jobs.get(name);
-  const snapshot=(accessPolicy==='saved'?this.snapshotStore({trustedPeers}):this.snapshots).get(name);if(!snapshot)throw new Error('saved_name_unavailable');
+  const snapshot=provided||(accessPolicy==='saved'?this.snapshotStore({trustedPeers}):this.snapshots).get(name);if(!snapshot)throw new Error('saved_name_unavailable');
+  validateSnapshot(snapshot,name);if(snapshot.provenance?.kind!=='local-rpc'&&!(snapshot.provenance?.kind==='trusted-peer'&&trustedPeers.includes(snapshot.provenance.witnessPeerId)))throw new Error('saved_peer_trust_required');
   if(this.jobs.size>=2)throw new Error('site_save_busy');
-  const job=this.run(name,snapshot).finally(()=>this.jobs.delete(name));this.jobs.set(name,job);return job;
+  const job=this.run(name,snapshot,{signal,contentSources,managedBy}).finally(()=>this.jobs.delete(name));this.jobs.set(name,job);return job;
  }
- async run(name,snapshot){
-  const row=this.rows[name]={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},status:'saving',scope:'document',total:1,saved:0,failed:0,errors:[]};this.save();
-  const client=createSwarmMeshClient();client.setName(name);
-  const fetchOne=async id=>{const item=await fetchMeshContent(id,{client,contentStore:this.store});if(item.cacheError)throw new Error('content_cache_failed: '+item.cacheError);if(!this.store.has(id))throw new Error('content_not_cached');await this.store.pin(id,name);return item;};
+ async run(name,snapshot,{signal,contentSources,managedBy}={}){
+  const old=this.rows[name],previous=this.isReady(old)?{...old,update:undefined}:null;
+  const pinGroup='site:'+crypto.createHash('sha256').update(name).digest('hex')+':'+snapshot.txId;
+  const row={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},pinGroup,...(managedBy==='catalog'?{managedBy:'catalog'}:{}),status:'saving',scope:'document',total:1,saved:0,failed:0,errors:[]};
+  this.rows[name]=previous?{...previous,update:row}:row;try{this.save();}catch(error){if(old)this.rows[name]=old;else delete this.rows[name];throw error;}
+  const stale=old?.update?.pinGroup||(!previous&&old?.pinGroup);if(stale&&stale!==pinGroup&&stale!==previous?.pinGroup)this.store.unpin(stale);
+  const client=this.createClient();client.setName(name);
+  const fetchOne=async id=>{
+   signal?.throwIfAborted();
+   const item=await this.fetchContent(id,{client,contentStore:this.store,signal,contentSources});
+   signal?.throwIfAborted();
+   if(item.cacheError)throw new Error('content_cache_failed: '+item.cacheError);if(!this.store.has(id))throw new Error('content_not_cached');
+   await this.store.pin(id,pinGroup);return item;
+  };
   const ids=[],seen=new Set([snapshot.txId]);let next=0,limitReported=false;
   const expand=item=>{
    const type=item.direct.tags?.find(t=>t.name.toLowerCase()==='content-type')?.value||'';
@@ -55,11 +87,23 @@ export class SitePinner{
   };
   try{
    const root=await fetchOne(snapshot.txId);row.saved=1;expand(root);this.save();
-   const worker=async()=>{while(next<ids.length){const id=ids[next++];try{const item=await fetchOne(id);row.saved++;expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
-   await Promise.all([worker(),worker()]);
+   const worker=async()=>{while(next<ids.length){signal?.throwIfAborted();const id=ids[next++];try{const item=await fetchOne(id);row.saved++;expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
+   await worker(); // One preparation transfer at a time; shared server work is bounded separately.
    row.status=row.failed?'partial':row.scope==='linked-arweave'?'linked-resources-saved':row.scope==='manifest'?'manifest-saved':'document-saved';
   }catch(e){row.status='partial';row.failed++;row.errors.push({error:String(e.message).slice(0,240)});}
-  finally{row.updatedAt=new Date().toISOString();this.save();await client.stop();}
+  finally{
+   try{
+   row.updatedAt=new Date().toISOString();
+   if(this.isReady(row)){
+    // Publish the new binding only after all files are pinned. Old groups stay
+    // pinned until that atomic metadata commit succeeds, including on crashes.
+    this.rows[name]=row;
+    try{this.save();}catch(error){this.rows[name]=previous?{...previous,update:row}:row;throw error;}
+    const prefix='site:'+crypto.createHash('sha256').update(name).digest('hex')+':';
+    for(const group of Object.keys(this.store.pins||{}))if(group!==pinGroup&&(group===name||group.startsWith(prefix)))this.store.unpin(group);
+   }else{this.rows[name]=previous?{...previous,update:row}:row;this.save();}
+   }finally{await client.stop();}
+  }
   return {...row};
  }
 }

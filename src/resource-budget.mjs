@@ -29,6 +29,6 @@ export class ChunkCache extends Map {
 }
 
 let transfers=null;
-export function configureTransferBudget(role){transfers=['client','desktop'].includes(role)?new WorkBudget({active:2,pending:128}):null;}
+export function configureTransferBudget(role){transfers=new WorkBudget({active:2,pending:role==='index'?32:128});}
 export function transferBudgetStatus(){return transfers?.status()||{mode:'index-node'};}
 export function withTransferBudget(work,signal){return transfers?transfers.run(work,{signal}):work(signal);}

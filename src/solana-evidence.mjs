@@ -5,6 +5,7 @@ import { MAINNET_PROGRAM_IDS,getArnsRecordPDA,getAntRecordPDA,deserializeArnsRec
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 import {rpcIp as rpc} from './ip-transport.mjs';
 import {observeAntProgram} from './ant-program.mjs';
+import {isSourceUnavailable} from './resilient-access.mjs';
 function acct(r,address,owner){
  if(!r?.value)throw new Error('account_not_found:'+address);
  if(!Number.isSafeInteger(r.context?.slot)||r.context.slot<0)throw new Error('invalid_account_slot');
@@ -44,8 +45,8 @@ export async function buildArNSStateEvidence(name,{seedFile=process.env.SOLANA_R
    ant:{address:an.address,slot:an.slot,owner:an.owner,programId:antProgram.programId,assetObservedSlot:antProgram.slot,rawSha256:an.rawSha256,stateSha256:an.stateSha256,txId:ant.transactionId,ttlSeconds:ant.ttlSeconds},
    slot,finalizedBlock:block?{blockhash:block.blockhash,previousBlockhash:block.previousBlockhash,parentSlot:block.parentSlot}:null,
    stakeCommitment:commitment?{totalStake,deepStake,deepRatio:totalStake?deepStake/totalStake:null}:null});
- }catch(e){observations.push({ok:false,endpoint,error:String(e.message||e)})}}
- const good=observations.filter(x=>x.ok);if(!good.length)throw new Error('no_state_evidence:'+JSON.stringify(observations));const first=good[0];
+ }catch(e){signal?.throwIfAborted();observations.push({ok:false,endpoint,error:String(e.message||e),unavailable:isSourceUnavailable(e)})}}
+ const good=observations.filter(x=>x.ok);if(!good.length){const error=new Error('no_state_evidence:'+JSON.stringify(observations));if(observations.every(x=>x.unavailable))error.code='NAME_SOURCE_UNAVAILABLE';throw error;}const first=good[0];
  if(good.some(x=>x.arns.rawSha256!==first.arns.rawSha256||x.ant.rawSha256!==first.ant.rawSha256||x.ant.programId!==first.ant.programId))throw new Error('rpc_sources_conflict');
  if(good.length<Number(process.env.SOLANA_RPC_QUORUM||1))throw new Error('state_source_quorum_not_reached');
  const evidence={schema:'arns-mesh-solana-evidence/v1',generatedAt:new Date().toISOString(),name,txId:first.ant.txId,antId:first.arns.processId,programIds:{arns:MAINNET_PROGRAM_IDS.arns,ant:first.ant.programId},checks:{pdaDerivedLocally:true,accountOwnersMatchExpectedPrograms:true,accountBytesDecodedLocally:true,rawAccountHashesCaptured:true,finalizedCommitmentRequested:true,blockCommitmentCaptured:Boolean(first.stakeCommitment),accountInclusionMerkleProof:false},trustLevel:'finalized-rpc-evidence-not-inclusion-proof',observations};

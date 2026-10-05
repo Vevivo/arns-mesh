@@ -1,3 +1,5 @@
+> Historical evidence. For the current release, see the [Mesh home page](../../README.md).
+
 # Preview 6: blocked resources and browser error handling
 
 This update keeps gateway, CDN, external HTTP/IP navigation, DNS and automatic fallback restrictions in place. It does not add a gateway proxy or a domain lookup path.

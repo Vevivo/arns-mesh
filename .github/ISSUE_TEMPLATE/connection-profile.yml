@@ -16,7 +16,7 @@ body:
     id: version
     attributes:
       label: Desktop version
-      placeholder: 0.5.0-preview.13
+      placeholder: 0.5.0
     validations:
       required: true
   - type: dropdown

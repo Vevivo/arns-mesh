@@ -1,3 +1,5 @@
+> Historical evidence. For the current release, see the [Mesh home page](../../README.md).
+
 # DNS/gateway outage work — 25 September 2026
 
 Goal: a reader enters an ArNS name and obtains its signed Arweave content

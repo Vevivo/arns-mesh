@@ -53,6 +53,7 @@ for(const nested of [false,true])test(`prepared ${nested?'nested':'flat'} manife
  const client={content:async()=>{throw new Error('empty_peer');},locateCandidates:async()=>[]};
  const result=await fetchMeshContent(leaf.idB64Url,{client,locationsFile:local,signal:AbortSignal.timeout(5000)});
  assert.deepEqual(JSON.parse(result.direct.payload),manifest);assert.equal(result.loc.record.preparation.kind,'external-index-preparation');
+ assert.equal(result.contentSource,'arweave');
  const saved=new LocationIndex(local,{preparedFile:undefined});assert.equal(saved.get(leaf.idB64Url).itemSize,leaf.binary.length);assert.equal(saved.get(leaf.idB64Url).preparation.provider,'arweave-graphql');
  assert.ok(saved.get(html.idB64Url));assert.equal(saved.get(unrelated.idB64Url),null);
  assert.ok(Number.isSafeInteger(saved.get(html.idB64Url).weaveOffset));

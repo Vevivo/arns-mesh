@@ -1,13 +1,13 @@
-# Topic search — preview.12 candidate
+# Topic search — Mesh 0.5.0
 
-This describes the **preview.12 candidate**, not the published preview.8 runtime on `main`. [Tested candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
+This page describes Mesh 0.5.0.
 The Home page has a topic search field. The top address bar still opens a known ArNS name or `ar://name` directly. Search returns up to 30 matching names, titles and excerpts from the catalogue already downloaded to this device. All query words must match a word or word prefix in the indexed name/text (for example, `art` matches `artwork`, not `start`); accents and Turkish dotted/dotless I are normalized. This is keyword matching, not translation or semantic/AI search.
 
 Results include the name-observation time, page-indexing time and a dated availability report. **Entry page indexed** does not mean all assets exist. **Site copy reported by peer** describes the provider's preparation scope at indexing time, not a current reachability guarantee. **Saved on this device** is shown only when this reader has a matching ready saved version. Opening any result follows the existing name-resolution and content-verification path. Search metadata never overrides an ArNS binding or becomes a content proof.
 
 ## Reader
 
-1. Use a candidate build containing topic search; the published preview.8 ZIP does not contain this feature.
+1. Open Mesh 0.5.0 and join your network.
 2. Join the operator's network normally. Its signed recovery extension supplies trusted witness identities; a legacy profile without `trustedPeers` needs the operator's updated connection information. No extra search account or API key is required.
 3. On Home, choose **Refresh catalogue** if needed. Automatic checks run at startup and roughly every 15 minutes outside Saved mode. Type a topic and choose **Search Mesh**. Query words stay on the device.
 4. If the provider is unavailable, the last accepted catalogue remains searchable, including after application restart. Saved mode disables catalogue refresh, but not local search.
@@ -31,4 +31,4 @@ A supporter configured with the source peer address and its trusted witness iden
 
 Automated tests cover signed HTML/manifest extraction, Turkish queries, changed targets, corrupt and evicted bytes, untrusted signatures, rollback/conflicting revisions, bounded storage/requests, escaped result markup and the toolbar/content privilege boundary. A real loopback HTTP experiment transfers a catalogue through an intermediate peer with its original signature, closes both peers, restarts the reader and successfully searches the retained copy. These are local process tests, not independent-machine disaster acceptance.
 
-Linux/Windows source CI and a Windows candidate ZIP are separate from production release and native UI acceptance. The owner's two-PC test remains deferred. No general Web/ArNS coverage, instant update guarantee, semantic search, independent name-state proof or new OS-level outage result is claimed.
+Linux/Windows source CI and a Windows release ZIP are separate from production release and native UI acceptance. The owner's two-PC test remains deferred. No general Web/ArNS coverage, instant update guarantee, semantic search, independent name-state proof or new OS-level outage result is claimed.

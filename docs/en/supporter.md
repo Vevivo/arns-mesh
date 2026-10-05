@@ -17,12 +17,12 @@ No domain, nginx, TLS certificate, wallet or full Arweave/Solana node is require
 
 ## 1. Get the matching supporter source
 
-The published desktop is preview.13. Its later server-side R84 integration is included in the source revision below. Do not install the older `main` runtime by omitting the checkout step.
+Use the same 0.5.0 release for the reader and supporter. The R84 integration is included.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach 37d51c79614c389b515b43d4a3bd92f9bd5083d2
+git checkout --detach v0.5.0
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 read -r -p 'Paste the complete mesh1 connection code: ' MESH_CODE
 bash scripts/install-peer.sh --network "$MESH_CODE"
@@ -106,7 +106,7 @@ node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 
 If a router exposes a different port, set `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` in `peer.env` using actual values. Restart only this new supporter after a configuration change. The setting does not open ports. IPv6 endpoints use `[ADDRESS]:PORT`.
 
-Already joined preview.13 readers learn reachable supporters without a new code. The public invitation still controls initial contact and trusted publishers. A newly learned peer gains no authority to redefine names.
+Already joined 0.5.0 readers learn reachable supporters without a new code. The public invitation still controls initial contact and trusted publishers. A newly learned peer gains no authority to redefine names.
 
 ## 5. Add the R84 index if you want broader location coverage
 
@@ -133,4 +133,4 @@ Logs: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Stop: `system
 
 For an update, stop this supporter, privately back up its data and launcher, review the chosen revision, rerun the installer and restart. Preserve the matching old application and data for rollback. Keep identities and signing keys private; never clone one identity onto several active peers.
 
-[Peer discovery details](shared-network.md) · [Status and limits](status.md) · [Legacy preview.8 operations](supporter-advanced.md)
+[Peer discovery details](shared-network.md) · [Status and limits](status.md) · [Operations reference](supporter-advanced.md)

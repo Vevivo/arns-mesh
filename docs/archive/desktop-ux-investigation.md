@@ -1,3 +1,5 @@
+> Historical evidence. For the current release, see the [Mesh home page](../../README.md).
+
 # Desktop usability investigation — preview.4
 
 This record separates source changes, automated assertions and actual Windows GUI results. Windows runs use the packaged executable, real Electron renderers and native menus/dialogs. They are not public ArNS availability tests.

@@ -2,7 +2,7 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
-Windows preview.13 is a published prerelease. For the later server additions, use the pinned source revision in the [supporter guide](supporter.md); the runtime development history is in [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Automatic supporter announcements/address exchange are implemented; coordinated replica placement is still pending. See [shared-network behavior](shared-network.md).
+The desktop and supporter share Mesh 0.5.0. See the [outage test](../validation/upstream-outage-2026-10-06.md) and [shared-network behavior](shared-network.md).
 
 ## Two runtime roles
 
@@ -11,13 +11,13 @@ The **reader** resolves only requested names/content, uses bounded caches, has n
 | Stage | Current mechanism | What it does not establish |
 |---|---|---|
 | Bootstrap | Included/imported invitation with an authority key and IP starting peers, signed source-list updates and optional mirrors; legacy profiles | An open public peer directory, independent authority continuity or NAT traversal |
-| Name → target | Solana RPC observation with owner/PDA/name and decoding checks; candidate availability-only fallback to dated local/trusted-provider observations | Trustless account inclusion, independence of RPC operators, instantaneous latest state |
+| Name → target | Solana RPC observation with owner/PDA/name and decoding checks; availability-only fallback to dated local/trusted-provider observations | Trustless account inclusion, independence of RPC operators, instantaneous latest state |
 | Target → location | Local/peer hints, sparse historical published indexes, bounded raw-ledger discovery on supporters; reader-demand discovery near a known parent location | Complete or current location coverage |
 | Location → bytes | Mesh chunks or raw Arweave transactions/chunks via approved IP routes | Availability if no reachable copy exists |
 | Bytes → content | Protocol-specific identity/signature/integrity checks before use | Freshness of the name mapping |
 | Render | Per-tab isolated sessions; untrusted pages have no privileged preload/Node access | That an external API/CDN can function offline |
 
-The Node access path rejects DNS/domain requests, HTTPS/SNI, arbitrary URL fetches and gateway routes. The desktop separately restricts page requests and background networking. Supported immutable `https://arweave.net/<id>` and `/raw/<id>` page URLs are intercepted locally and routed through the Mesh/raw path; they do not authorize an outgoing gateway HTTPS connection. Windows OS allowlisting and DNS/gateway/DoH negative controls, including IPv6/UDP restrictions, were exercised in the [outage experiment](../disaster-network.md). This is not complete egress acceptance across every Chromium/WebRTC path or pre-existing socket; full packet capture remains pending. Application logs alone do not certify that no other process traffic occurred.
+The Node access path rejects DNS/domain requests, HTTPS/SNI, arbitrary URL fetches and gateway routes. The desktop separately restricts page requests and background networking. Supported immutable `https://arweave.net/<id>` and `/raw/<id>` page URLs are intercepted locally and routed through the Mesh/raw path; they do not authorize an outgoing gateway HTTPS connection. Windows OS allowlisting and DNS/gateway/DoH negative controls, including IPv6/UDP restrictions, were exercised in the [outage experiment](../archive/disaster-network.md). This is not complete egress acceptance across every Chromium/WebRTC path or pre-existing socket; full packet capture remains pending. Application logs alone do not certify that no other process traffic occurred.
 
 Direct Mesh/RPC HTTP is not encrypted. Content checks detect invalid data; they do not hide requests or prevent an active intermediary from disrupting service or manipulating an unproven RPC observation. Content authenticity, name freshness and transport confidentiality are separate properties.
 
@@ -28,18 +28,18 @@ Direct Mesh/RPC HTTP is not encrypted. Content checks detect invalid data; they 
 3. Peers answer specific location/content requests and can copy verified content from configured peers. A returned hint is untrusted until the requested bytes verify. Merely discovering a peer does not produce an index.
 4. Earlier operator deployments used Turbo/Goldsky to prepare some location catalogs while those services were reachable. Loading a prepared snapshot later is different from independently discovering a previously unknown location. No private prepared snapshot or runtime API collector is included in this distribution.
 
-Preview.7 also lets a reader search for a missing linked item near the already-known parent page location: the anchor and up to 64 earlier blocks, up to 256 transaction IDs per block, outer bundle headers only. A scan has a three-minute deadline and a 96 MiB response budget; the reader reserves at most 256 MiB/day for this work. It still verifies the full requested item before use. This is demand-driven recovery, not universal first-root discovery or continuous ledger scanning. See [resource behavior and measured media results](../arweave-resources.md).
+Preview.7 also lets a reader search for a missing linked item near the already-known parent page location: the anchor and up to 64 earlier blocks, up to 256 transaction IDs per block, outer bundle headers only. A scan has a three-minute deadline and a 96 MiB response budget; the reader reserves at most 256 MiB/day for this work. It still verifies the full requested item before use. This is demand-driven recovery, not universal first-root discovery or continuous ledger scanning. See [resource behavior and measured media results](../archive/arweave-resources.md).
 
-The catalog observes registry/ANT records under quotas. Published preview.8 schedules roughly six-hour registry refreshes with incremental work. The candidate attempts registry refresh around every 15 minutes and incremental ANT work around once a minute plus processing time; a sweep can still take hours. Budgets, RPC errors and queues delay updates. The catalog selects the first configured RPC; more addresses do not imply automatic failover for every worker. [Candidate preparation and timing](../resilient-access.md).
+The catalog observes registry/ANT records under quotas. It attempts registry refresh around every 15 minutes and incremental ANT work around once a minute plus processing time; a sweep can still take hours. Budgets, RPC errors and queues delay updates. The catalog selects the first configured RPC; more addresses do not imply automatic failover for every worker. [Candidate preparation and timing](../resilient-access.md).
 
 
 ## Outage cases
 
 - **Empty reader, warm peer:** can work if name observations and verified bytes are available. This is not proof of first discovery.
 - **Empty reader, unknown location:** must obtain a location from a useful peer/index/raw discovery route. General success remains incomplete.
-- **Saved content:** retained versions use their own dated name bindings and verified bytes. In the candidate, missing content can still be requested from Mesh/raw sources; Saved suspends live name checks and monitor probes, not all networking. A complete retained fixture opened after restart with zero application HTTP requests. Dynamic dependencies can remain absent; a dated binding is not latest chain state.
+- **Saved content:** retained versions use their own dated name bindings and verified bytes. In Mesh, missing content can still be requested from Mesh/raw sources; Saved suspends live name checks and monitor probes, not all networking. A complete retained fixture opened after restart with zero application HTTP requests. Dynamic dependencies can remain absent; a dated binding is not latest chain state.
 - **One peer lost:** another independent peer needs the relevant bytes/hints. One-host multi-process tests do not prove resilience against a provider outage.
-- **No live RPC:** live freshness is unavailable. The candidate can use an accepted dated binding from local storage or an explicitly trusted reachable provider. If raw Arweave is unavailable too, verified copies must already exist locally/on Mesh. A newly discovered peer is not automatically a trusted name witness; independent-host outage acceptance is still pending.
+- **No live RPC:** live freshness is unavailable. Mesh can use an accepted dated binding from local storage or an explicitly trusted reachable provider. If raw Arweave is unavailable too, verified copies must already exist locally/on Mesh. A newly discovered peer is not automatically a trusted name witness; independent-host outage acceptance is still pending.
 
 ## Resource bounds
 

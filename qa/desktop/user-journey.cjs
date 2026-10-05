@@ -54,7 +54,7 @@ async function close(){
   record('first-launch',{pages:context.pages().map(p=>p.url()),status:await ui.locator('#message').innerText(),homeText:welcome?await welcome.locator('body').innerText():null});
   if(candidate){assert.equal(await ui.locator('#settings-panel').isVisible(),true);await ui.locator('#settings-panel [data-close]').click();}
   if(welcome){
-    assert.equal(await welcome.locator('input,form').count(),0);
+    assert.equal(await welcome.locator('form[role=search]').count(),candidate?1:0);
     assert.equal(await ui.locator('#settings-button').count(),1);
     await screenshot('01b-home-redesign');
     const fonts=await welcome.evaluate(async()=>{await document.fonts.ready;return {heading:document.fonts.check('800 40px Besley'),body:document.fonts.check('500 14px "Plus Jakarta Sans"')};});

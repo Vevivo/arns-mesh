@@ -7,6 +7,10 @@ const hash = id => crypto.createHash('sha256').update(id).digest('hex');
 const MAX_LEAF_BYTES = 2 * 1024 * 1024;
 const BRANCH = 'arns-mesh-index-branch/v1';
 const cache = new Map();
+// Parsed JSON consumes more heap than its encoded bytes. Bound both the total
+// encoded size and entry count, including shards shared by background readers.
+const MAX_CACHE_BYTES=4*1024*1024;
+export function locationCacheStatus(){return {entries:cache.size,encodedBytes:[...cache.values()].reduce((n,e)=>n+e.bytes,0),maxEncodedBytes:MAX_CACHE_BYTES};}
 const boundedFiles = new Map();
 export function configureLocationCache(file,limits){if(limits)boundedFiles.set(file,limits);else boundedFiles.delete(file);}
 
@@ -35,9 +39,9 @@ function readNode(file) {
     if (rows.schema === BRANCH) {
       if (!Array.isArray(rows.children) || rows.children.some(key => !/^[a-f0-9]{2,64}$/.test(key))) throw new Error('invalid_index_branch');
     } else if (Object.keys(rows).some(id => !valid(id))) throw new Error('invalid_index_leaf');
-    entry = {stamp, rows};
+    entry = {stamp, rows, bytes:stat.size};
     cache.set(file, entry);
-    if (cache.size > 32) cache.delete(cache.keys().next().value);
+    while(cache.size>8||locationCacheStatus().encodedBytes>MAX_CACHE_BYTES)cache.delete(cache.keys().next().value);
   }
   return entry.rows;
 }

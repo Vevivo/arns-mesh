@@ -1,6 +1,6 @@
 # Resilient access — current supporter source
 
-This describes the recovery features and the 5 October supporter queue update on `feat/resilient-access`. The published preview.13 Windows ZIP predates this server update; `main` still has the preview.8 runtime.
+Mesh 0.5.0 includes automatic recovery, retained-site versions, supporter preparation and signed network recovery. [Measured outage result](validation/upstream-outage-2026-10-06.md).
 The project owner operates the initial service. Ordinary desktop users read sites; they do not run a public peer. A supporter voluntarily runs another peer and stores useful copies. A developer can work on the code without hosting anything. The owner dashboard is local service administration, not a new public gateway.
 
 ## What survives which outage?
@@ -40,7 +40,7 @@ The local dashboard exposes both daily meters, priority objects and quota pauses
 
 ## Provider configuration
 
-Use the existing [VPS/Pi installation guide](en/supporter.md). The Windows reader is separate. On the candidate peer these environment variables apply:
+Use the existing [VPS/Pi installation guide](en/supporter.md). The Windows reader is separate. On the supporter these environment variables apply:
 
 | Variable | Default | Purpose |
 |---|---:|---|
@@ -76,7 +76,7 @@ Source tests use real loopback RPC, raw Arweave and signed Mesh HTTP transports,
 
 The owner's two-PC test is deliberately deferred until both PCs are available:
 
-1. Use the tested candidate desktop on both PCs, keeping preview.8 and its settings backup. Join the provider network and inspect its recovery witness identities.
+1. Use Mesh 0.5.0 on both PCs with separate test profiles. Join the provider network and inspect its recovery witness identities.
 2. Use a prepared site and a fresh reader store on the second PC. Exercise the four upstream combinations using isolated test firewall rules; record the source, snapshot date, content IDs and full network traffic.
 3. For loss of the original VPS, another machine must run a **headless peer with copied snapshots and verified pinned bytes**, its own identity and an authority-approved public witness identity. Installing the desktop on both PCs alone does not create two serving peers. A replica currently needs its own accepted local observations to export snapshots; blind transitive trust in another peer's name assertion is not enabled.
 4. Block the original provider and verify a genuinely independent surviving peer serves the prepared site. Include undernames, a changed target, a manifest, missing assets and invalid data.
