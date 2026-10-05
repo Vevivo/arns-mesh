@@ -5,7 +5,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import {SharedIndex,sharedLocation} from '../src/shared-index.mjs';
 import {LocationIndex} from '../src/location-index.mjs';
-import {queryDirectPeer} from '../src/direct-peer.mjs';
+import {queryDirectPeer,parsePeerAddresses} from '../src/direct-peer.mjs';
 import {verifyRecord} from '../src/common.mjs';
 import {fetchDataItemDirect} from '../src/arweave-direct.mjs';
 import {createSwarmMeshClient} from '../src/swarm-client.mjs';
@@ -17,7 +17,7 @@ const index=new SharedIndex(root),catalog=JSON.parse(fs.readFileSync(path.join(p
 const known=new LocationIndex(path.join(provider,'locations.json'));
 const hasContent=id=>['ans104','l1'].some(kind=>fs.existsSync(path.join(provider,'peer/content',id+'.'+kind))); 
 const rows=Object.entries(catalog.targets).sort((a,b)=>crypto.createHash('sha256').update(a[0]).digest('hex').localeCompare(crypto.createHash('sha256').update(b[0]).digest('hex')));
-const peer={host:'194.163.169.13',port:49740},selected=[];
+const peers=parsePeerAddresses(process.env.QA_PEER_ADDRESS||'');if(peers.length!==1)throw new Error('QA_PEER_ADDRESS requires one numeric IP:port');const peer=peers[0],selected=[];
 for(const [name,row] of rows){if(hasContent(row.dataId)||known.get(row.dataId))continue;const hint=await index.find(row.dataId);if(hint){selected.push({name,...row,hint});if(selected.length>=3)break;}}
 report.selectedWithoutPreloading=selected.map(x=>({name:x.name,dataId:x.dataId,band:x.hint.sharedIndex.band}));
 report.catalogTargets=rows.length;report.index=index.status();console.log(JSON.stringify({event:'samples-selected',...report}));
