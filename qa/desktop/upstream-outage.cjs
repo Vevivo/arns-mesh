@@ -39,6 +39,7 @@ const endpoint=x=>{const at=x.lastIndexOf(':');return {host:x.slice(0,at).replac
   for(let i=0;i<40;i++){page=context.pages().find(p=>!before.has(p));if(page)break;await delay(100);}assert.ok(page);
   const at=Date.now();await ui.locator('#address').fill('ar://'+name);await ui.locator('#open-address').click();
   await ui.waitForFunction(()=>document.querySelector('#access-stages [data-stage="open"]')?.classList.contains('done')||document.querySelector('#access-stages .error'),null,{timeout:95000});
+  report.lastNavigation={name,stages:await ui.locator('#access-stages').innerText(),proof:await ui.locator('#proof').innerText()};save();
   assert.equal(await ui.locator('#access-stages [data-stage="open"]').evaluate(e=>e.classList.contains('done')),true,'Page must open: '+name);
   await delay(2500);
   const dom=await page.evaluate(()=>({url:location.href,title:document.title,textLength:document.body?.innerText?.length||0,images:[...document.images].map(x=>({complete:x.complete,width:x.naturalWidth,src:x.currentSrc}))}));

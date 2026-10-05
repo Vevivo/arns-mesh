@@ -1,7 +1,10 @@
 // Availability fallback never relaxes signature, ownership, conflict or proof
 // checks. A retained version is always labelled as historical observation.
 export function isSourceUnavailable(error){
- return ['ECONNREFUSED','ECONNRESET','ETIMEDOUT','EHOSTUNREACH','ENETUNREACH','EPIPE'].includes(error?.code)
+ // Native OS connect denial is an availability failure; filesystem and
+ // application-policy permission errors must not enable historical fallback.
+ return (['EACCES','EPERM'].includes(error?.code)&&error?.syscall==='connect')
+  ||['ECONNREFUSED','ECONNRESET','ETIMEDOUT','EHOSTUNREACH','ENETUNREACH','EPIPE'].includes(error?.code)
   ||[408,429,502,503,504].includes(error?.statusCode)
   ||[-32005,-32004].includes(error?.rpcCode)
   ||/^(request_deadline_exceeded|truncated_response|name_source_timeout)$/.test(error?.message||'');

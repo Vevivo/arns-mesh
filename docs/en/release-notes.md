@@ -15,6 +15,10 @@ A fresh reader and a supporter were placed together in an OS-isolated network wi
 
 [Detailed results](../validation/upstream-outage-2026-10-06.md). The release workflow also checks the packaged Windows interface and runs real-public-site acceptance with DNS, RPC and Arweave blocked for both reader and test supporter before publishing.
 
+## Windows firewall recovery
+
+Treat native socket connection denials (`EACCES`/`EPERM` with `syscall=connect`) as source unavailability, so Automatic mode can use trusted retained names and verified Mesh content. File permission failures, application policy rejections and signature/ownership errors do not receive this fallback.
+
 ## Downloads and use
 
 Download the Windows x64 ZIP, extract it and launch `Mesh-Browser.exe`. Join with your operator's `mesh1.` code, then open `ar://name`. The standard ZIP contains no operator endpoints, invitation or private data.

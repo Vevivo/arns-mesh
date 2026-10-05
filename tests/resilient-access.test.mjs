@@ -94,3 +94,37 @@ test('a fresh reader obtains a prepared older binding from its trusted peer when
   assert.equal(readerNames.get('prepared').txId,latest.id,'prepared binding must not overwrite the newer accepted name');
  }finally{await server.close();await rpc.close();}
 });
+
+test('Windows connect denial recovers through Mesh without treating file permissions as outages',async t=>{
+ const {isSourceUnavailable}=await import('../src/resilient-access.mjs');
+ const {EventEmitter}=await import('node:events');
+ for(const code of ['EACCES','EPERM']){
+  assert.equal(isSourceUnavailable(Object.assign(new Error('connect denied'),{code,syscall:'connect'})),true);
+  assert.equal(isSourceUnavailable(Object.assign(new Error('file denied'),{code,syscall:'open'})),false);
+  assert.equal(isSourceUnavailable(Object.assign(new Error('unclassified denied'),{code})),false);
+ }
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-connect-denied-'));env(t,dir);
+ const data=await item(),name='connect-denied',rpc=await rpcFixture(name,data.id);
+ fs.writeFileSync(process.env.SOLANA_RPC_SEEDS,JSON.stringify([rpc.address]));
+ const names=new NameSnapshotStore(path.join(dir,'provider-names.json'));names.observe(await buildArNSStateEvidence(name));
+ const peer=new MeshPeer({dataDir:path.join(dir,'provider'),snapshotStore:names,allowRemoteFetch:false});
+ const keys=crypto.generateKeyPairSync('ed25519');peer.identity={publicKeyPem:keys.publicKey.export({format:'pem',type:'spki'}),privateKeyPem:keys.privateKey.export({format:'pem',type:'pkcs8'})};peer.witnessPeerId=peerIdFromPublicKey(peer.identity.publicKeyPem);
+ await peer.contentStore.put(data.id,data.raw);
+ const mesh=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0});
+ fs.writeFileSync(process.env.ARNS_IP_PEERS,JSON.stringify(['127.0.0.1:'+mesh.address.port]));
+ const original=http.request;
+ let denied=0;
+ t.mock.method(http,'request',function(options,...args){
+  if(Number(options.port)!==rpc.address.port)return original.call(this,options,...args);
+  const req=new EventEmitter();
+  req.end=()=>queueMicrotask(()=>{denied++;req.emit('error',Object.assign(new Error('connect EACCES'),{code:'EACCES',syscall:'connect'}));});
+  req.destroy=()=>{};return req;
+ });
+ try{
+  const result=await resolveArUrl('ar://'+name,{accessPolicy:'auto',snapshotStore:new NameSnapshotStore(path.join(dir,'fresh-names.json')),contentStore:new VerifiedContentStore(path.join(dir,'fresh-content')),trustedPeers:[peer.witnessPeerId],signal:AbortSignal.timeout(10000)});
+  assert.ok(denied>0);assert.equal(result.meta.contentSignatureVerified,true);
+  assert.equal(result.meta.recovery.reason,'rpc-unavailable');assert.equal(result.meta.recovery.automatic,true);
+  assert.equal(result.meta.verification.currentStateVerified,false);
+  assert.match(result.body.toString(),/Controlled outage fixture/);
+ }finally{await mesh.close();await rpc.close();}
+});
