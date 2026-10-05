@@ -6,7 +6,7 @@ Windows x64 uygulama ZIP'i gerekir. Sunucu, cüzdan, Node.js veya indeks kurman�
 
 ## 1. İndir ve aç
 
-[Ana sayfadaki sürüm tablosundan](../../README.tr.md#indirme-ve-gerçek-durum) seçin. Yayımlanmış preview.8 ve test adayı preview.12 farklı paketlerdir. GitHub Actions dosyaları süre sonunda silinebilir ve oturum açmanızı isteyebilir. **Source code (zip)** yerine uygulama ZIP'ini indirin.
+[Ana sayfadaki sürüm tablosundan](../../README.tr.md#indirme-ve-gerçek-durum) seçin. Yayımlanmış preview.8 ve test adayı preview.13 farklı paketlerdir. GitHub Actions dosyaları süre sonunda silinebilir ve oturum açmanızı isteyebilir. **Source code (zip)** yerine uygulama ZIP'ini indirin.
 
 **Bütün dosyaları** kalıcı bir klasöre çıkarıp `Mesh-Browser.exe` dosyasını açın. EXE diğer dosyalarla aynı klasörde kalsın. Masaüstüne koymak için EXE'ye Windows kısayolu oluşturun; yalnız EXE'yi klasöründen taşımayın. Önizleme imzasızdır. Uyarıyı aşmak için güvenlik yazılımını kapatmayın veya yönetici çalıştırmayın; engellenirse uyarı ayrıntısını bildirin.
 
@@ -24,13 +24,13 @@ Katılım kaynak listesini değiştirir; eski ayarı tutmak için önce **Export
 
 Kod tekrar kullanılabilen ağ bilgisidir; şifre, lisans veya ödeme değildir. Standart indirmelerde bugün hazır davet yoktur. Gerekirse [bağlantı yardımı isteyin](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml); bu gönüllü koordinasyonudur, hizmet garantisi değildir.
 
-Kararlaştırılan hedef, kod girmeden açılan varsayılan indirmedir. Yeni destekçiyi otomatik keşfetme hâlâ [planlanan özelliktir](paylasilan-ag.md); bugünkü Connected paketleme bunu sağlamaz.
+Hedef, ilk bağlantıları hazır indirip kullanmaktır. Preview.13 ağa katıldıktan sonra yeni erişilebilir destekçileri otomatik öğrenir; [başlangıç bağlantısı ve güven sınırları](paylasilan-ag.md) geçerlidir.
 
 ## 3. Site aç veya konu ara
 
 **Üst adres çubuğuna** `ar://vevivo` gibi bir isim yazın. Alt isimlerde gerçekten kayıtlı biçimi kullanın; örneğin `undername_name`. Yol, sorgu ve parça eklenebilir. Ctrl+L adres çubuğunu seçer; sağ tık Yapıştır ve Ctrl+V çalışır.
 
-Preview.12 **Home** alanı ayrıca konu araması yapar. Kaynaklar erişilebilirken **Refresh catalogue** ile sınırlı kataloğu indirin; kelimeler cihazınızda aranır. Sonuç bulunması bütün dosyaların hazır olduğunu göstermez. Bu özellik preview.8'de yoktur. [Arama ayrıntıları](konu-aramasi.md).
+Preview.13 **Home** alanı ayrıca konu araması yapar. Kaynaklar erişilebilirken **Refresh catalogue** ile sınırlı kataloğu indirin; kelimeler cihazınızda aranır. Sonuç bulunması bütün dosyaların hazır olduğunu göstermez. Bu özellik preview.8'de yoktur. [Arama ayrıntıları](konu-aramasi.md).
 
 Aşamalar **Resolve name → Find sources → Locate content → Download → Verify → Open page** olarak ilerler; zamanlayıcı değil gerçek işlemler izlenir. Eksik dosya, doğrulama ve tarihli isim kaydı için **Page information** kullanın. Harici API'ler ve Arweave dışı CDN dosyaları kullanılamayabilir.
 
@@ -38,7 +38,7 @@ Aşamalar **Resolve name → Find sources → Locate content → Download → Ve
 
 Yıldız, adresi yer imine ekler. **Save current page**, desteklenen doğrulanmış dosyaları sınırlar içinde saklar. Sonucu bekleyip eksikleri kontrol edin; ana belgenin kaydedilmesi bütün dinamik sitenin arşivlendiğini kanıtlamaz.
 
-Preview.12 **Automatic** modu, erişilebiliyorsa canlı kaynağı kullanır; erişim hatasında kabul edilmiş tarihli sürüme dönebilir. **Saved** tutulan isim bilgisini kullanır, canlı isim kontrolünü/izleme sorgularını durdurur. Eksik içerik Mesh/ham kaynaklardan istenebilir; Saved bütün ağı kapatan düğme değildir. Tam saklanmış kopya yeniden açılırken uygulama HTTP kaydında sıfır yeni istek test edildi. Preview.8'in eski Live/Saved davranışı ayrıdır. [Adayda kurtarma kapsamı](dayanikli-erisim.md).
+Preview.13 **Automatic** modu, erişilebiliyorsa canlı kaynağı kullanır; erişim hatasında kabul edilmiş tarihli sürüme dönebilir. **Saved** tutulan isim bilgisini kullanır, canlı isim kontrolünü/izleme sorgularını durdurur. Eksik içerik Mesh/ham kaynaklardan istenebilir; Saved bütün ağı kapatan düğme değildir. Tam saklanmış kopya yeniden açılırken uygulama HTTP kaydında sıfır yeni istek test edildi. Preview.8'in eski Live/Saved davranışı ayrıdır. [Adayda kurtarma kapsamı](dayanikli-erisim.md).
 
 Adayın **Network monitor** ekranı cihazınızın Mesh/RPC/ham veri gözlemlerini, trafiğini ve doğrulanmış ana belgenin kaynağını gösterir. Peer sayısı dünyadaki Mesh kullanıcı sayısı değildir. “Not checked” çevrimdışı demek değildir; yanıt gelmesi bütün sitelerin mevcut olduğunu kanıtlamaz. [Göstergelerin anlamı](baglanti-izleme.md).
 

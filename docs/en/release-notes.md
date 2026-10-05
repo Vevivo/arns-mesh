@@ -1,3 +1,9 @@
+# ArNS Mesh 0.5.0-preview.13 — candidate
+
+Supporters sign and announce reachable numeric-IP endpoints. Peers verify identity by callback and exchange bounded advertisements. Joined desktops automatically learn/persist alternatives, prefer measured valid-content routes and switch after source failure. Discovery does not grant name authority: mirrors retain original trusted publishers' signed name observations.
+
+Saved mode pauses discovery. Participating desktops and peers must upgrade. Initial contact, reachable ports and prepared content are still required. Automatic independent replica placement/repair, a NAT relay and universal coverage are not added. [Behavior and test boundaries](shared-network.md).
+
 # ArNS Mesh 0.5.0-preview.12 — candidate
 
 Home pairs a new, symmetric Mesh node mark with a compact, neutral ArNS Mesh wordmark above the centered search field. The running desktop window uses the same mark instead of the default Electron icon. The promotional hero, introductory paragraphs and long usage guide remain removed. Catalogue details stay available on demand, and search results keep their dated availability labels.

@@ -6,7 +6,7 @@ You need the Windows x64 application ZIP. You do not need a server, wallet, Node
 
 ## 1. Download and open
 
-Choose a package from the [download/status table](../../README.md#downloads-and-actual-status). Published preview.8 and test candidate preview.12 are different builds. GitHub Actions artifacts can expire and may require sign-in. Download the application ZIP, not **Source code (zip)**.
+Choose a package from the [download/status table](../../README.md#downloads-and-actual-status). Published preview.8 and test candidate preview.13 are different builds. GitHub Actions artifacts can expire and may require sign-in. Download the application ZIP, not **Source code (zip)**.
 
 Extract **all** files into a permanent folder and start `Mesh-Browser.exe`. Keep the executable with the other files. To put it on the desktop, create a Windows shortcut to the executable; do not move just the EXE out of its folder. The preview is unsigned. Do not disable security tools or run it as administrator to bypass a warning; report the warning details if blocked.
 
@@ -24,13 +24,13 @@ Joining replaces the source list; use **Export profile** first if you want to ke
 
 The code is reusable network information, not a password, license or payment. Standard downloads currently contain no invitation. [Request connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if needed; this is volunteer coordination, not guaranteed service.
 
-The agreed product direction is a default download that opens without code entry. Automatic new-supporter discovery is still [planned](shared-network.md); today's connected packaging does not implement it.
+The agreed product direction is a default download that opens without code entry. Preview.13 learns later reachable supporters automatically after joining; [initial contact and trust limits](shared-network.md) still apply.
 
 ## 3. Open a site or search
 
 Enter a name such as `ar://vevivo` in **Mesh's top address bar**. Use the actual registered spelling for undernames, for example `undername_name`. Paths, queries and fragments are supported. Ctrl+L focuses the address bar; right-click Paste and Ctrl+V work.
 
-The preview.12 **Home** field is a separate topic search. Choose **Refresh catalogue** while sources are available, then search the bounded downloaded catalogue locally. A search result does not guarantee all files are available. This feature is absent from preview.8. [Search details](../topic-search.md).
+The preview.13 **Home** field is a separate topic search. Choose **Refresh catalogue** while sources are available, then search the bounded downloaded catalogue locally. A search result does not guarantee all files are available. This feature is absent from preview.8. [Search details](../topic-search.md).
 
 The progress row follows **Resolve name → Find sources → Locate content → Download → Verify → Open page**. It reflects actual work, not a timer. Use **Page information** for missing files, content verification and the dated name observation. Third-party APIs and non-Arweave CDN files may remain unavailable.
 
@@ -38,7 +38,7 @@ The progress row follows **Resolve name → Find sources → Locate content → 
 
 The star bookmarks an address. **Save current page** retains supported verified files within limits. Wait for its result and inspect missing files; saving a main document is not proof that the entire dynamic site was archived.
 
-Preview.12 **Automatic** access uses live sources where available and can fall back to an accepted historical version on availability failures. **Saved** access uses retained name information and suspends live name checks/monitor probes. Missing content can still be requested from Mesh/raw sources; Saved is not a system-wide network-off switch. A complete retained copy was tested across restart with zero new application HTTP requests. Preview.8 has its older Live/Saved behavior. [Candidate recovery scope](../resilient-access.md).
+Preview.13 **Automatic** access uses live sources where available and can fall back to an accepted historical version on availability failures. **Saved** access uses retained name information and suspends live name checks/monitor probes. Missing content can still be requested from Mesh/raw sources; Saved is not a system-wide network-off switch. A complete retained copy was tested across restart with zero new application HTTP requests. Preview.8 has its older Live/Saved behavior. [Candidate recovery scope](../resilient-access.md).
 
 The candidate's **Network monitor** shows this device's Mesh/RPC/raw observations, traffic and verified main-document source. Its peer count is not a worldwide Mesh user count. “Not checked” is not “offline”; a reply does not establish that every site is available. [Indicator meanings](../connection-monitor.md).
 

@@ -11,7 +11,7 @@ for(const name of files){
  const file=path.join(root,name);
  if(!fs.existsSync(file))continue;
  if(fs.lstatSync(file).isSymbolicLink()){issues.push([name,'symlink']);continue;}
- if(/(?:^|\/)(?:identity\.json|swarm-seed\.bin|bridge\.json|browser-data\.json|name-snapshots\.json|search-published\.json|search-cache\.json|saved-sites\.json|peer-pins\.json|ledger-discovery\.json|verified-peer-cache\.json|\.env(?:\..*)?)$/.test(name)||/\.(?:private\.json|pem|key|log|tap|exe|zip|dll)$/.test(name))issues.push([name,'runtime/private artifact']);
+ if(/(?:^|\/)(?:identity\.json|swarm-seed\.bin|bridge\.json|browser-data\.json|name-snapshots\.json|peer-directory\.json|snapshot-relay\.json|search-published\.json|search-cache\.json|saved-sites\.json|peer-pins\.json|ledger-discovery\.json|verified-peer-cache\.json|\.env(?:\..*)?)$/.test(name)||/\.(?:private\.json|pem|key|log|tap|exe|zip|dll)$/.test(name))issues.push([name,'runtime/private artifact']);
  const bytes=fs.readFileSync(file);if(bytes.length>1200000){issues.push([name,'oversized source file']);continue;}
  const s=bytes.toString('utf8');
  const patterns=[[/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/,'private key'],[/\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|sk-[A-Za-z0-9_-]{32,}|AKIA[A-Z0-9]{16})\b/,'credential pattern'],[/https?:\/\/[^\s/"'<>]+:[^\s/@"'<>]+@/,'URL credentials'],[/\b(?:host_[a-f0-9]{16}|sentinelx_context_[A-Za-z0-9_]+|libfile_[a-f0-9]+)\b/,'private operational identifier'],[/\/workspace\/(?:scratch|[^/]+)\//,'workspace path']];

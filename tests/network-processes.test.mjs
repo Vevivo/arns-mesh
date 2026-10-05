@@ -9,7 +9,9 @@ import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {signDataItem} from '@ardrive/turbo-upload';
 import {NetworkConnection} from '../apps/helper/network-connection.mjs';
-import {networkId,networkRecordHash} from '../src/network-invitation.mjs';
+import {networkId,networkRecordHash,connectionRecordHash} from '../src/network-invitation.mjs';
+import {PeerDiscovery} from '../src/peer-discovery.mjs';
+import {loadConfiguredPeers} from '../src/direct-peer.mjs';
 import {readProfile} from '../apps/helper/network-profile.mjs';
 import {createSwarmMeshClient} from '../src/swarm-client.mjs';
 import {fetchMeshContent} from '../src/content-fetcher.mjs';
@@ -55,4 +57,22 @@ test('two separate peer processes replicate verified bytes; restart discovers th
  const client=createSwarmMeshClient({directPeers:[{host:'127.0.0.1',port:Number(b.address.split(':').at(-1))}],dhtEnabled:false,cacheOnly:true});
  try{const result=await fetchMeshContent(item.idB64Url,{client,signal:AbortSignal.timeout(10000)});assert.equal(result.direct.payload.toString(),'verified content survives the original peer process');assert.equal(result.direct.transport,'p2p-content');}finally{await client.stop();}
  // Same-host processes demonstrate protocol behavior, not independent hosting.
+});
+
+test('late supporter self-enrolls across separate processes; existing reader learns it without a profile edit and survives seed loss',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-late-process-')),a=await spawnPeer(path.join(root,'a'));let b,discovery;
+ t.after(async()=>{discovery?.close();await a.close();await b?.close();fs.rmSync(root,{recursive:true,force:true});});
+ const invitation=await a.call('publish',{profile:{schema:'arns-mesh-network-profile/v1',directPeers:[a.address],rpcSources:['127.0.0.1:8899'],arweavePeers:[]},seeds:[a.address]});
+ const readerDir=path.join(root,'reader'),network=new NetworkConnection({dataDir:readerDir}),p=await network.inspect(invitation.code);
+ await network.join(invitation.code,{expectedId:networkId(p.invitation.key),expectedRevision:p.payload.revision,expectedHash:connectionRecordHash(p.envelope,p.recovery)});
+ discovery=new PeerDiscovery({dataDir:readerDir,scope:()=>({id:networkId(network.state.invitation.key),local:true}),peers:()=>loadConfiguredPeers(path.join(readerDir,'mesh-ip-peers.json'))});
+ await discovery.sync();const unchanged=JSON.stringify(readProfile(readerDir));
+ b=await spawnPeer(path.join(root,'b'));assert.notEqual(a.pid,b.pid);
+ assert.equal((await b.call('enroll',{code:invitation.code})).acceptedBy,1);
+ await discovery.sync();assert.ok(discovery.directory.addresses().some(x=>x.port===Number(b.address.split(':').at(-1))));assert.equal(JSON.stringify(readProfile(readerDir)),unchanged);
+ const key=crypto.generateKeyPairSync('rsa',{modulusLength:4096}).privateKey.export({format:'jwk'}),item=signDataItem(key,{data:Buffer.from('automatically learned supporter survives'),tags:[]});
+ await a.call('put',{dataId:item.idB64Url,bytes:item.binary.toString('base64')});await b.call('copy',{dataId:item.idB64Url,peers:[a.address]});
+ await a.close();await network.refresh();assert.equal(network.status().joined,true);
+ const client=createSwarmMeshClient({directPeers:loadConfiguredPeers(path.join(readerDir,'mesh-ip-peers.json')),directory:discovery.directory,dhtEnabled:false});
+ const result=await client.content(item.idB64Url,{signal:AbortSignal.timeout(8000)});assert.equal(result.payload.toString(),'automatically learned supporter survives');assert.equal(JSON.stringify(readProfile(readerDir)),unchanged);
 });

@@ -4,10 +4,11 @@ import {decodeInvitation,validateInvitation,verifyNetwork,networkId,connectionRe
 import {parsePeerAddresses} from '../../src/direct-peer.mjs';
 import {requestIpJson} from '../../src/ip-transport.mjs';
 import {applyProfile,readProfile} from './network-profile.mjs';
+import {peerDirectory,peerAddress} from '../../src/peer-directory.mjs';
 
-export async function findNetwork(invitation,{signal,current=null,query=requestIpJson,now=Date.now()}={}){
+export async function findNetwork(invitation,{signal,current=null,query=requestIpJson,now=Date.now(),alternatives=[]}={}){
  const invite=validateInvitation(invitation);
- const seeds=[...new Set([...(current?.profile.directPeers||[]),...invite.seeds])].slice(0,24);
+ const seeds=[...new Set([...alternatives,...(current?.profile.directPeers||[]),...invite.seeds])].slice(0,24);
  const results=[],errors=[];let cursor=0;
  const controller=new AbortController(),bounded=AbortSignal.any([controller.signal,AbortSignal.timeout(18000),...(signal?[signal]:[])]);
  async function worker(){while(cursor<seeds.length){
@@ -88,7 +89,9 @@ export class NetworkConnection{
   const state=this.state,epoch=this.epoch,controller=this.controller=new AbortController();
   const bounded=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
   const work=(async()=>{
-   const found=await findNetwork(state.invitation,{current:{...state.payload,recordHash:state.recordHash},signal:bounded,query:this.query,now:this.now()});
+   const directory=peerDirectory(path.join(this.dataDir,'mesh-ip-peers.json'));
+   const alternatives=directory?.context()?.id===networkId(state.invitation.key)?directory.addresses().map(peerAddress):[];
+   const found=await findNetwork(state.invitation,{current:{...state.payload,recordHash:state.recordHash},signal:bounded,query:this.query,now:this.now(),alternatives});
    bounded.throwIfAborted();if(epoch!==this.epoch)throw new Error('Network update cancelled.');
    if(found.payload.revision>state.payload.revision)this.commit(state.invitation,found);
    this.error=null;this.lastChecked=this.now();return this.status();

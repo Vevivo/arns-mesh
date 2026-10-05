@@ -2,7 +2,7 @@
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-**5 Ekim 2026** tarihinde kontrol edildi. `main` çalışma kodu ve son yayımlanmış sürüm: **preview.8**. Test edilmiş geliştirme adayı: **preview.12**, kaynak [cbd55a7](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e), [henüz birleştirilmemiş PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Belgelerin yayımlanması aday kodu veya yeni uygulama paketini yayımlamaz.
+5 Ekim 2026: Yayımlanmış sürüm ve `main` çalışma kodu preview.8. Güncel geliştirme adayı **preview.13**, [PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Önceki preview.12 kanıtları aşağıda ayrı tutuldu; yeni adayın Windows paketlemesi CI ile kontrol edilir.
 
 ## Mevcut, aday ve planlanan
 
@@ -14,8 +14,8 @@
 | Tarihli isimle kurtarma, yeni sürümü ayrı hazırlama | Preview.12 adayı; preview.9'da eklendi |
 | Yerel konu araması ve bağlantı izleme | Preview.12 adayı; katalog kapsamı ve adres sayıları sınırlı |
 | Sade ana ekran ve Mesh pencere simgesi | Preview.12 adayı |
-| Yeni destekçinin kendini duyurması, otomatik adres paylaşımı | Planlandı; mevcut katılım düğmesi yok |
-| İçerik başına ölçülen kaynak seçimi, otomatik kopya yerleştirme/tamamlama | Planlandı |
+| Yeni destekçinin kendini duyurması, otomatik adres paylaşımı | Preview.13 adayı; geri bağlantıyla kimlik kontrolü |
+| İçerik için kaynak seçimi | Preview.13: geçerli aktarım, gecikme ve hata geçmişi; otomatik kopya yerleştirme/onarım hâlâ yok |
 | Masaüstünden dosya sunma | Yok; okuyucu genel dinleyici açmaz |
 | Tam Arweave/CDB64 kopyası, bütün isimlere erişim | Sağlanmıyor |
 | Gerçek Pi testi, bağımsız sağlayıcı kaybı | Bekliyor |
@@ -38,3 +38,9 @@
 Sahibin iki PC testi cihazlar kullanılabilir olana kadar ertelendi. İki tarayıcı kurulumu iki veri sunan peer oluşturmaz. Tam ağ paketi yakalama ve gerçek Pi performansı bekliyor. Uygulama HTTP kaydı ve “yanıt veriyor” göstergelerinin kapsamı daha dardır.
 
 Yayımlanmış sürüm, aday, test düzeneği ve gerçek ağ kanıtları ayrı tutulur. Yeşil kaynak testi felaket hazırlığı veya genel kapsam kanıtı değildir. [İşleyiş](../en/architecture.md) · [Adayda kurtarma](dayanikli-erisim.md).
+
+## Preview.13 doğrulaması
+
+Linux'ta **175 kaynak testi** geçti. Sonradan gelen destekçi, ilk peer kapanması, profil değişmeden adres öğrenme, yeniden başlatma, sahte/eski duyurular, özel adreslere geri bağlantı engeli, orijinal isim imzasını aktarma ve hızlı hatalı içeriği reddetme sınandı. Ayrı süreç testleri aynı makinedeydi. Kurulum/güncelleme duman testi mevcut profil, kimlik ve kayıtlı verilerin korunmasını kontrol eder; npm kurulumu bu duman testinde taklittir.
+
+Bu yeni özelliğin bağımsız genel IP'li sunucular, ev NAT'ı ve Pi üzerinde kabulü tamamlanmadı. [Uygulanan davranış ve sınırlar](paylasilan-ag.md).

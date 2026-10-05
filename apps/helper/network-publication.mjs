@@ -1,11 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {signNetwork,verifyNetwork,signNetworkRecovery,verifyNetworkRecovery,connectionProfile,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,MAX_NETWORK_BYTES,MAX_NETWORK_AGE} from '../../src/network-invitation.mjs';
+import {signNetwork,verifyNetwork,signNetworkRecovery,verifyNetworkRecovery,connectionProfile,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,networkId,MAX_NETWORK_BYTES,MAX_NETWORK_AGE} from '../../src/network-invitation.mjs';
 import {validateProfile} from './network-profile.mjs';
 
 function readJson(file,max=MAX_NETWORK_BYTES){if(fs.statSync(file).size>max)throw new Error('Network file is too large.');return JSON.parse(fs.readFileSync(file,'utf8'));}
 function writeJson(file,value){const tmp=file+'.tmp';fs.writeFileSync(tmp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});try{fs.renameSync(tmp,file);}finally{fs.rmSync(tmp,{force:true});}}
+export function peerNetworkScope(dataDir,connection){
+ if(connection?.state)return {id:networkId(connection.state.invitation.key),local:connection.state.invitation.local};
+ // A provider may publish a network without being a joined reader itself.
+ try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);verifyNetwork(record.envelope,record.invitation,{allowExpired:true});return {id:networkId(record.invitation.key),local:record.invitation.local};}catch{return null;}
+}
 export function readNetworkPublication(dataDir){
  try{
   const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);

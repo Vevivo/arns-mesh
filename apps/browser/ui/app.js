@@ -126,6 +126,7 @@ function renderNetwork(state={}){
  if(!state.joined)return;
  $('joined-network-name').textContent=state.name;
  $('joined-network-status').textContent=(state.refreshing?'Checking signed connection updates…':state.error?'Update unavailable. Last accepted addresses are retained. '+state.error:state.expired?'The connection list needs renewal. Last accepted addresses are retained.':`Connected to this network · List revision ${state.revision}`);
+ const peers=lastState.peerDiscovery;$('peer-discovery-status').textContent=lastState.accessPolicy==='saved'?'Peer discovery paused in Saved mode.':`${peers?.learned||0} learned peer addresses · Content is verified before use. These are saved routes, not a count of online users.`;
  $('refresh-network').disabled=state.refreshing||lastState.accessPolicy==='saved';
 }
 function renderAvailableNetworks(rows){

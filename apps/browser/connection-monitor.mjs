@@ -3,7 +3,7 @@ const kinds={'mesh-peer':'mesh','solana-rpc':'rpc','raw-arweave':'arweave'};
 const names={'Mesh peer':'mesh','Solana RPC':'rpc','Raw Arweave':'arweave'};
 const key=(kind,address)=>kind+'|'+address;
 const ipAddress=e=>(e.host.includes(':')?'['+e.host+']':e.host)+':'+e.port;
-const cancelled=e=>/abort|cancel|app_stopped|query_superseded/i.test(e.error||'');
+const cancelled=e=>/abort|cancel|app_stopped|query_superseded|peer_query_finished/i.test(e.error||'');
 export class ConnectionMonitor {
  constructor(){this.rows=new Map();this.active=new Map();this.events=[];this.bytes=0;this.requests=0;this.failures=0;this.profileKey='';this.checking=false;}
  configure(profile){

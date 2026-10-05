@@ -4,7 +4,7 @@
 
 A supporter stores useful data and answers other devices' requests. You do not need to develop software. Run the Linux service on your server/Pi; use the Windows browser separately if you also want to browse.
 
-**This guide installs the tested preview.12 source candidate.** It includes bounded site preparation and dated recovery observations. It is not a published release or the planned automatic-enrollment network. For the published preview.8/profile route and detailed administration, see [advanced operations](supporter-advanced.md).
+**This guide installs the preview.13 source candidate.** It includes bounded site preparation and dated recovery observations. It adds automatic supporter announcements and peer exchange; it is not a published release. For the published preview.8/profile route and detailed administration, see [advanced operations](supporter-advanced.md).
 
 ## 1. What you need
 
@@ -36,12 +36,12 @@ Run in a new directory as the ordinary account that will own this service:
 ```sh
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e
+git checkout feat/resilient-access
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/install-peer.sh --network 'PASTE_COMPLETE_MESH1_CODE_HERE'
 ```
 
-Replace the quoted placeholder with the **whole real invitation**. The checkout pins the source tested in [this run](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203). Install before an outage: GitHub/npm are download dependencies. Do not run over another project's data directory. The installer creates its own versioned files, preserves existing Mesh data/settings on update and does not open firewall ports or change other services.
+This installs the current candidate branch; check [PR #9 tests](https://github.com/Vevivo/arns-mesh/pull/9) for the revision you select. Install before an outage: GitHub/npm are download dependencies. Use a separate data directory. The installer preserves existing Mesh settings/data and does not open ports or change other services.
 
 Default location: `~/.local/share/ArNS-Mesh-Supporter`. Start in the foreground:
 
@@ -63,7 +63,9 @@ Expected result: `Mesh endpoint responded`. This checks the endpoint only, not a
 
 Your **peer address** is that reachable IP and port. `0.0.0.0` is only a listen setting; `127.0.0.1` means the reader's own machine. A private Pi address is only useful inside networks that can reach it. Allow only the selected TCP port (default **49741**) in your existing provider/host/router policy. See [reachability details](supporter-advanced.md#4-check-that-other-people-can-use-it).
 
-**Current enrollment step:** give this intended-public peer address to the existing network operator. The operator checks it, adds it to the signed source list and republishes. Joined readers learn that list automatically outside Saved mode; they do not need a new code for an ordinary list update. Installing with `--network` learns upstreams but does not advertise your new address. Automatic self-announcement is [planned](shared-network.md), not a current button.
+**Preview.13 enrollment is automatic:** the service announces its signed public endpoint to an existing peer. That peer connects back and verifies its identity; joined upgraded readers learn the address. The operator need not republish the signed source list for every content supporter. Both sides must run the new protocol, so upgrade an older starting peer first.
+
+Default `MESH_ADVERTISE=auto` uses the IP observed by a peer and the listener's port. If your external port differs, add `MESH_ADVERTISE=YOUR_PUBLIC_IP:PORT` to `peer.env`, using the actual endpoint. `off` disables announcements. This setting does not open a port or bypass CGNAT. See [shared-network details](shared-network.md).
 
 You do not need to create your own network or issue a new invitation to every reader.
 
@@ -107,13 +109,13 @@ node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
 du -sh "$HOME/.local/share/ArNS-Mesh-Supporter/data"
 ```
 
-Look for retained name observations, ready versions, missing files and errors. A site being listed does not mean all files are present. A replica needs its own accepted observations; copying another peer's name assertion does not automatically make it trusted.
+Also inspect `Learned peer addresses`, `Announced endpoint`, `Peers accepting announcement in last 24h` and `Relayed name records`; these are not online-user counts. Look for retained name observations, ready versions, missing files and errors. A site being listed does not mean all files are present. A replica needs its own accepted observations; copying another peer's name assertion does not automatically make it trusted.
 
 ## 5. Prove that your contribution helps
 
 From a separate reader, use a test profile containing your peer, open a prepared site and inspect the served content/source. Check `contentBytesServed`, `catalog.meshReplicated`, `catalog.locationsReplicated` and preparation status on the server. A responding port or a rising request counter is insufficient.
 
-For no-RPC recovery, the operator must explicitly configure the peer's public recovery-witness identity in the candidate's trusted sources. An address alone does not grant name trust. See [recovery configuration](../resilient-access.md#provider-configuration). Never send your private identity or authority key.
+For no-RPC recovery, a supporter can relay original trusted publishers' signed name observations; it need not become a new name authority. Check `snapshotRelay.records` and the corresponding content copies. Trusting its own independently published observations still requires explicit publisher configuration. Never share a private identity or authority key.
 
 Before claiming redundancy, test isolated readers/peers with the original source unavailable and then with RPC/raw Arweave unavailable. Surviving independent hosts need the dated name mapping, corresponding verified files and sufficient upload capacity. Do not disrupt other services for this test. Physical independent-host and Pi acceptance are still pending.
 
@@ -126,6 +128,6 @@ Before claiming redundancy, test isolated readers/peers with the original source
 | Signed network-list mirror | Offer another copy of connection information; it does not copy websites |
 | Content/name data | Actually serve prepared versions during upstream outages |
 
-Optional: [mirror the network list](network-code.md#add-a-supporter-and-a-mirror). Existing readers can try accepted list addresses, but a new reader must know a reachable starting peer. Mirrors cannot renew an expired authority record. [Limits](network-code.md#updates-expiration-and-outages).
+Joined supporters automatically mirror the signed network list; [details](network-code.md#add-a-supporter-and-a-mirror). Existing readers can try accepted list addresses, but a new reader must know a reachable starting peer. Mirrors cannot renew an expired authority record. [Limits](network-code.md#updates-expiration-and-outages).
 
 For updates, stop the peer, privately back up `data` and the launcher, choose a reviewed source revision, rerun the installer and restart. Existing configuration is preserved. Keep the matching old program/data for rollback. Do not clone a private identity onto several machines and call them independent peers. [Update, backup, rollback and removal](supporter-advanced.md#7-update-rollback-backup-remove).

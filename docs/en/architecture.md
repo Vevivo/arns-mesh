@@ -2,7 +2,7 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
-This page distinguishes the published preview.8 baseline from the preview.12 candidate. Automatic supporter enrollment and replica placement are the [next design](shared-network.md), not current behavior. Use the [candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e) for the recovery paths below.
+This page describes the preview.13 candidate in [PR #9](https://github.com/Vevivo/arns-mesh/pull/9), separate from published preview.8. Automatic supporter announcements/address exchange are implemented; coordinated replica placement is still pending. See [shared-network behavior](shared-network.md).
 
 ## Two runtime roles
 

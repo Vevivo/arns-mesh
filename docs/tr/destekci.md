@@ -4,7 +4,7 @@
 
 Destekçi yararlı veriyi saklar ve başka cihazların isteklerini yanıtlar. Yazılım geliştirmeniz gerekmez. Linux servisini sunucunuzda/Pi'de çalıştırın; gezinti için ayrıca Windows tarayıcısını kullanabilirsiniz.
 
-**Bu rehber test edilmiş preview.12 kaynak adayını kurar.** Sınırlı site hazırlığı ve tarihli kurtarma kayıtlarını içerir. Yayımlanmış sürüm veya planlanan otomatik katılım ağı değildir. Yayımlanmış preview.8/profil yolu ve ayrıntılı yönetim için [gelişmiş işlemlere](destekci-ayrintili.md) bakın.
+**Bu rehber preview.13 kaynak adayını kurar.** Sınırlı site hazırlığı ve tarihli kurtarma kayıtlarını içerir. Otomatik destekçi duyurusu ve adres paylaşımı eklenmiştir; yayımlanmış sürüm değildir. Yayımlanmış preview.8/profil yolu ve ayrıntılı yönetim için [gelişmiş işlemlere](destekci-ayrintili.md) bakın.
 
 ## 1. Gerekenler
 
@@ -36,12 +36,12 @@ Yeni bir dizinde, servisin sahibi olacak normal kullanıcıyla çalıştırın:
 ```sh
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e
+git checkout feat/resilient-access
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/install-peer.sh --network 'TAM_MESH1_KODUNU_BURAYA_YAPISTIR'
 ```
 
-Tırnak içindeki yer tutucuyu **gerçek davetin tamamıyla** değiştirin. Checkout, [bu çalışmada](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203) test edilen kaynağı sabitler. Kesintiden önce kurun; GitHub/npm indirme bağımlılıklarıdır. Başka projenin veri dizinine kurmayın. Kurucu kendi sürüm dizinini oluşturur, güncellemede mevcut Mesh verisini/ayarlarını korur; port açmaz veya diğer servisleri değiştirmez.
+Daldaki güncel aday kurulur; seçtiğiniz commit için [PR #9 testlerini](https://github.com/Vevivo/arns-mesh/pull/9) kontrol edin. Kesintiden önce kurun: GitHub/npm indirme bağımlılıklarıdır. Başka projenin veri dizinini kullanmayın. Kurucu mevcut Mesh ayar/verilerini korur, port açmaz veya başka servisleri değiştirmez.
 
 Varsayılan konum: `~/.local/share/ArNS-Mesh-Supporter`. Önce terminalde başlatın:
 
@@ -63,7 +63,9 @@ Beklenen çıktı: `Mesh endpoint responded`. Bu yalnız erişimi kontrol eder, 
 
 **Peer adresiniz** bu erişilebilir IP ve porttur. `0.0.0.0` dinleme ayarıdır; `127.0.0.1` okuyucunun kendi bilgisayarını gösterir. Pi'nin özel yerel adresi yalnız ona ulaşan ağlarda kullanılabilir. Mevcut sağlayıcı/sunucu/modem kurallarınızda yalnız seçtiğiniz TCP portuna izin verin; varsayılan **49741**. [Ayrıntılı erişim adımları](destekci-ayrintili.md).
 
-**Bugünkü katılım adımı:** paylaşmayı amaçladığınız bu genel peer adresini mevcut ağ yöneticisine verin. Yönetici kontrol edip imzalı kaynak listesine ekler ve yeniden yayımlar. Ağa katılmış tarayıcılar Saved dışındaki modda listeyi otomatik öğrenir; normal liste güncellemesinde yeni kod gerekmez. `--network` kurulumu kaynakları öğrenir, yeni adresinizi duyurmaz. Otomatik kendini duyurma [planlanıyor](paylasilan-ag.md); mevcut bir düğme değildir.
+**Preview.13 katılımı otomatiktir:** servis kendi imzalı genel adresini mevcut peer'e duyurur. Karşı peer geri bağlanıp kimliği doğrular; ağa katılmış yeni sürüm okuyucular adresi öğrenir. Ağ yöneticisinin her katılımcı için listeyi yeniden yayımlaması gerekmez. İki taraf da yeni protokolü çalıştırmalıdır. Eski sunucu önce güncellenmelidir.
+
+Varsayılan `MESH_ADVERTISE=auto`, karşı peer'in gördüğü IP'yi ve dinleme portunu kullanır. Modemde dış port farklıysa `peer.env` içine `MESH_ADVERTISE=GENEL_IP:PORT` yazın; gerçek adresi kullanın. `off` duyuruyu kapatır. Bu ayar port açmaz, CGNAT sorununu çözmez. Ayrıntılar: [paylaşılan ağ](paylasilan-ag.md).
 
 Her destekçinin ayrı ağ kurup kullanıcılara yeni davet dağıtması gerekmez.
 
@@ -107,13 +109,13 @@ node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
 du -sh "$HOME/.local/share/ArNS-Mesh-Supporter/data"
 ```
 
-Tutulan isim kayıtlarına, hazır sürümlere, eksik dosyalara ve hatalara bakın. Sitenin listede olması bütün dosyalarının bulunduğunu göstermez. Kopya sunan peer kendi kabul edilmiş isim gözlemlerine ihtiyaç duyar; başka peer'in iddiasını kopyalamak onu otomatik güvenilir yapmaz.
+`Learned peer addresses`, `Announced endpoint`, `Peers accepting announcement in last 24h` ve `Relayed name records` alanlarına da bakın. Bunlar aktif kullanıcı sayısı değildir. Tutulan isim kayıtlarına, hazır sürümlere, eksik dosyalara ve hatalara bakın. Sitenin listede olması bütün dosyalarının bulunduğunu göstermez. Kopya sunan peer kendi kabul edilmiş isim gözlemlerine ihtiyaç duyar; başka peer'in iddiasını kopyalamak onu otomatik güvenilir yapmaz.
 
 ## 5. Katkının gerçekten işe yaradığını kontrol et
 
 Ayrı okuyucuda sizin peer'inizi içeren test ayarıyla hazırlanmış siteyi açın, veri kaynağını inceleyin. Sunucudaki `contentBytesServed`, `catalog.meshReplicated`, `catalog.locationsReplicated` ve hazırlık durumuna bakın. Yanıt veren port veya artan istek sayısı tek başına yeterli değildir.
 
-RPC'siz kurtarma için ağ yöneticisi peer'in açık kurtarma kimliğini adayın güvenilen kaynaklarına açıkça eklemelidir. Adres tek başına isim kaydına güven yetkisi vermez. [Kurtarma ayarlarına](dayanikli-erisim.md) bakın. Özel peer kimliğini veya ağ imza anahtarını göndermeyin.
+RPC'siz kurtarma için destekçi güvenilen yayımlayıcının orijinal imzalı isim kayıtlarını aktarabilir; yeni destekçiyi isim yetkilisi yapmak şart değildir. `snapshotRelay.records` ve ilgili ismin dosyalarının gerçekten saklandığını kontrol edin. Ayrı bir yayımlayıcının kendi isim gözlemlerine güvenmek ise açık güven ayarı gerektirir. Özel kimlik veya yetkili anahtar paylaşılmaz.
 
 Yedeklilik iddiasından önce ayrı test okuyucuları/peer'leriyle önce ilk kaynağı, ardından RPC/ham Arweave'i erişilemez yaparak deneyin. Bağımsız kalan cihazlarda tarihli isim kaydı, ona karşılık gelen doğrulanmış dosyalar ve yeterli yükleme kapasitesi gerekir. Bu test için başka servisleri kesmeyin. Bağımsız fiziksel sunucu ve Pi kabulü hâlâ bekliyor.
 
@@ -126,6 +128,6 @@ Yedeklilik iddiasından önce ayrı test okuyucuları/peer'leriyle önce ilk kay
 | İmzalı ağ listesi kopyası | Bağlantı bilgilerinin başka kopyasını sunmak; siteleri kopyalamaz |
 | İçerik/isim verileri | Kaynaklar kesildiğinde hazırlanmış sürümleri gerçekten sunmak |
 
-İsteğe bağlı olarak [ağ listesini de kopyalayıp sunun](ag-kodu.md). Eski okuyucu kabul ettiği listedeki adresleri deneyebilir; yeni okuyucu erişilebilir bir başlangıç adresi bilmelidir. Liste kopyası süresi dolan yetkili kaydı yenileyemez.
+Ağa katılmış destekçi imzalı ağ listesini de otomatik kopyalar; [ayrıntılar](ag-kodu.md). Eski okuyucu kabul ettiği listedeki adresleri deneyebilir; yeni okuyucu erişilebilir bir başlangıç adresi bilmelidir. Liste kopyası süresi dolan yetkili kaydı yenileyemez.
 
 Güncellemede peer'i durdurun, `data` ve başlatıcıyı özel olarak yedekleyin, incelenmiş kaynak sürümünü seçin, kurucuyu yeniden çalıştırıp başlatın. Mevcut bağlantılar korunur. Geri dönüş için eşleşen eski program/veri yedeğini tutun. Aynı özel kimliği farklı cihazlara kopyalayıp bağımsız peer saymayın. [Güncelleme, yedek, geri dönüş ve kaldırma](destekci-ayrintili.md).

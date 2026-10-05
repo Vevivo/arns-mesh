@@ -1,65 +1,54 @@
-# Shared supporter network — agreed design, not implemented
+# Shared supporter network — preview.13 candidate
 
-[Türkçe](../tr/paylasilan-ag.md) · [Home](../../README.md) · [Install the current supporter](supporter.md)
+[Türkçe](../tr/paylasilan-ag.md) · [Home](../../README.md) · [VPS / Pi setup](supporter.md)
 
-The product direction is simple: readers download and browse; volunteers install a supporter; usable peers and content copies are shared automatically. The initial project owner should not be the only source or the only directory that must stay online. This page specifies work to build, not commands or buttons already present.
+Preview.13 implements supporter announcements, address exchange and automatic routing to learned peers. It is a development candidate, separate from the published preview.8. It does not yet coordinate where independent replicas are placed or repair lost copies.
 
-## The intended experience
+## What happens when a supporter joins?
 
-| Reader | Supporter |
+1. Install with the existing network's `mesh1.` invitation. The service contacts a known reachable peer; it does not create another network or issue a code to every reader.
+2. The service signs an advertisement containing its persistent identity, network ID, numeric IP/port, capabilities and expiry. By default it uses the IP observed by another peer and its listening port. No domain or external IP-discovery service is used.
+3. The receiving peer checks the signature, network, expiry, sequence and allowed address. It connects back and asks that endpoint to sign a fresh random challenge. A direct announcement must also match the sender's IP.
+4. Peers exchange bounded, individually signed advertisements. A browser already joined to the same network learns, independently probes and retains those addresses without a new code or profile import. Discovery runs on startup and roughly every minute plus processing time. Saved mode pauses it.
+5. Requests prefer routes that recently supplied valid content, using observed latency and failures. One source starts first; a second can start after 150 ms. At most two requests run at once. Failures reduce preference, and content identity/signatures are verified before a result is accepted. This is bounded source selection, not a measurement of every peer or its global load.
+
+Both the participating supporters and desktop need preview.13 or later code implementing this protocol. Older peers can still serve their previous operations but cannot exchange these announcements. Old desktop binaries do not upgrade themselves.
+
+## Addresses are not name authority
+
+A learned peer can serve independently verifiable bytes without permission to change an ArNS name. The signed operator source list still controls trusted name/catalogue publishers. Discovery neither modifies that list nor adds publisher trust.
+
+Supporters also retain and relay original trusted publishers' signed name observations, including prepared-version observations, without resigning them. The reader checks the original signature and its own trusted publisher list. A newly discovered mirror therefore need not become a new name authority. Up to four known names are visited per minute/pass, two upstream routes per record, with at most 512 records and 1 MiB of relay storage. This is bounded, partial preparation; inspect `snapshotRelay` before assuming a particular name is retained.
+
+Useful outage access still needs **the dated name binding and the actual corresponding files**. Address exchange, a catalogue or a signed list alone does not copy a website. Existing bounded content preparation remains separate. Automatic replica placement, repair and guarantees of two independent copies are future work.
+
+## Configuration and reachability
+
+- Default `MESH_ADVERTISE=auto`: announce the observed public IP with the listener's port.
+- Set `MESH_ADVERTISE=YOUR_PUBLIC_IP:PORT` when the externally reachable port differs. IPv6 uses `[ADDRESS]:PORT`. This does not configure the router or firewall.
+- Set `MESH_ADVERTISE=off` to stop announcing; the peer can still learn routes and respond to configured readers.
+- A public invitation accepts public numeric addresses. Explicit local test invitations additionally allow loopback; discovery never scans private LANs or cloud metadata addresses.
+- A Pi behind NAT needs a working inbound route. There is no automatic NAT traversal, relay or CGNAT bypass. Codespaces domain port forwarding is not a public numeric-IP supporter endpoint.
+
+Use the [supporter guide](supporter.md). `operator.mjs` and `operator-status.json` show learned addresses, the advertised endpoint, recent accepted announcements and retained relay records. These are local observations, not an online-user census or verified storage capacity. Desktop Settings shows learned routes; the connection monitor reports observed endpoints.
+
+## Bounds and failure cases
+
+| Mechanism | Bound / meaning |
 |---|---|
-| Download a browser with initial network settings included | Install the headless service on a VPS or reachable Pi |
-| Open an ArNS name without entering a connection code | Choose storage and traffic budgets |
-| Let Mesh learn alternatives and select a useful responsive source | Have the service announce its reachable address and available data |
-| Continue through another source when one fails | Help retain files, name observations and location records |
+| Learned directory | 32 peers per network; 4 identities per IP; one identity per endpoint |
+| Advertisements | 24-hour lifetime; renewal after roughly 12 hours; at most 16 in a reply |
+| Exchange pass | Two destinations, at most four new records checked, 15-second deadline |
+| Reachability challenges | At most two active and eight new probes per minute |
+| Content routes | At most two concurrent requests; observed failures receive 2–60 second preference penalties |
+| Persistence | Valid signed addresses survive restart; network changes clear the previous network's directory |
 
-No payment, license or wallet is required. Desktop serving is a separate future opt-in feature; browsing alone does not authorize background sharing.
+These quotas limit work; they do not prove honest operators or prevent a well-resourced Sybil attack. Expired routes are removed. If all initially known routes are dead before alternatives were learned, the client still needs a new reachable starting address. Internet/IP connectivity is required.
 
-## How a late supporter becomes reachable
+Network-list authority and expiry rules remain unchanged: mirrors cannot renew a signature. Existing joined clients may keep accepted state and use historical recovery, but a fresh install cannot join using an expired authority list. A Connected ZIP can include an invitation; standard public ZIPs still require initial setup.
 
-1. The new service contacts a reachable initial peer from its configuration. No first contact is possible if every known route is dead.
-2. It proves control of a persistent peer identity and announces its address, protocol capabilities and bounded availability information. A signature identifies the announcer; it does not establish name correctness, honest capacity or independence.
-3. Existing peers validate syntax, destination policy, reachability, signature and freshness, then share a bounded record with other peers. Rate limits, expiry, replay protection and restrictions on private/local destinations are required.
-4. Browsers periodically learn and retain alternative addresses. They need neither a new download nor a code whenever a supporter joins.
-5. For a requested content ID, the reader tries sources likely to have the bytes. Selection uses observed valid responses and delivery performance, with bounded concurrency/timeouts and failure backoff. A quick invalid reply must never win.
+## Evidence and remaining acceptance
 
-New peers may supply independently verifiable content. Accepting an ArNS name-to-content assertion or search catalogue requires a separate trust policy; automatic discovery must not grant that authority. How membership and trusted publishers evolve beyond the present single-authority list is still an implementation decision.
+The source tests start an already joined reader, introduce a later supporter, verify automatic learning without modifying its configured profile, stop the seed and retrieve real signed test bytes from the survivor. A separate-process test uses distinct data directories and network transfers. Restart persistence, invalid/expired/forged/rollback advertisements, private-target rejection, endpoint identity checks, original name-signature relay and fast invalid content are covered.
 
-## Share the storage work before the outage
-
-Each participating supporter needs its own identity and chosen quotas. Preserve dated name bindings and the exact content version they describe. Actual HTML, manifest entries and supported assets must be copied and verified; index hints alone cannot serve a missing file.
-
-The initial target is at least two usable copies of selected sites on independent hosts. That is a placement goal, not a durability guarantee. Count verified copies rather than self-reported disk size, and distinguish machines under one provider/operator from independent failure domains. The automatic placement/repair scheduler is not built yet.
-
-Do not copy every site to every machine or promise a full Arweave/CDB64 mirror. Distribute selected content within budgets; check copies periodically and replace lost replicas. Retain the previous complete version while a name update is still being prepared. A fresh update that was never observed or copied cannot be recovered from nowhere.
-
-## When RPC and raw Arweave are both unavailable
-
-A reader needs an accepted dated name binding, its content bytes and a reachable route to those bytes. These may be local or on surviving supporters. It must show the observation date and historical status rather than claim latest chain state. The current candidate implements bounded historical access; automatic independent replica placement is separate work.
-
-If the initial provider stops, other peers must already hold both useful data and the information needed to find one another. A freshly installed reader still needs one usable bootstrap route. Internet connectivity is assumed; this design does not create connectivity for isolated devices.
-
-## What must change from today's implementation?
-
-| Today | Required work |
-|---|---|
-| Standard ZIP has no invitation; Connected packaging is available | A deliberately prepared default connected distribution with several independent starting peers |
-| Operator signs a source list; peers can mirror it | Automatic bounded supporter announcement and peer exchange |
-| Configured sources and limited retries | Measured per-content source selection, failure switching and load-aware scheduling |
-| Bounded caches and candidate site preparation | Automatic placement, availability checks and repair across independent supporters |
-| Recovery trusts configured publisher identities | Separate admission, content verification and name/publisher trust rules |
-| List defaults to 14 days; only authority renews it | Recovery/bootstrap policy for prolonged authority loss, fresh installs, key rotation and compromised records |
-| Explicit IP listeners; no direct-mode relay/NAT traversal | Honest reachability detection and a bounded connectivity solution for eligible home supporters |
-
-Mirrors cannot extend an authority signature's expiry. Keeping an old address does not by itself authorize a new expired-list join. These dependencies must be addressed and tested, not hidden behind an automatic-join label.
-
-## Acceptance before announcing this as available
-
-- A reader already in use discovers a later supporter without a new code or manual profile edit.
-- The initial operator is stopped; independent survivors still distribute useful addresses and serve previously replicated sites.
-- RPC and raw Arweave are separately blocked, then both are blocked; an empty reader with a valid starting configuration obtains the correct retained version from surviving supporters.
-- Invalid bytes, conflicting/stale name assertions, forged announcements, rollback and address flooding are rejected or bounded.
-- Storage/upload limits hold under measured load; actual replication completeness and lost copies are visible.
-- Windows reader and real Pi/VPS connectivity are tested from different networks, including the relevant NAT restrictions.
-
-None of these complete shared-network acceptance conditions has passed yet. Current candidate/release evidence is recorded separately in [status](status.md).
+These are controlled same-host tests. They do not prove independent-provider resilience, home NAT reachability, Pi performance or global fastest-peer selection. Test those with prepared replicas on separate networks before advertising disaster readiness. See [current checks and artifacts](status.md).
