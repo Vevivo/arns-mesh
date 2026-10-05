@@ -1,5 +1,7 @@
 # ArNS Mesh 0.5.0-preview.9 — candidate
 
+The candidate also adds a Home topic search with signed, bounded provider catalogues, local keyword queries and dated availability labels. Supporter peers can mirror the original signed catalogue; readers retain it across restart and outages. The address bar keeps direct ArNS navigation. See [search scope, trust and budgets](../topic-search.md).
+
 Automatic access now treats RPC and raw Arweave availability independently. It can use dated local or explicitly trusted provider observations when live name sources are unavailable, and a previously prepared version when the newest target cannot be fetched. Historical access remains labelled and content signatures are checked. Verification failures and explicit proof requirements are not treated as permission to downgrade name trust.
 
 Providers can retain rechecked catalog name observations, prepare bounded site copies, and keep the previous complete version while an update is incomplete. Transfers, parsed location shards, raw chunks and proof caches have tighter resource limits. Optional local-only monitoring shows preparation, queue errors and actual resources. Signed recovery witness extensions preserve the legacy connection-list format.

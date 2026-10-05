@@ -1,5 +1,8 @@
 # ArNS Mesh
 
+**Preview.9 adayında konu araması:** Ana sayfadan konuya göre, üst adres çubuğundan doğrudan ArNS ismiyle erişim. İndirilen sınırlı katalog cihazda aranır ve kesintide korunur. Bütün ArNS sitelerini kapsamaz; yayımlanmış preview.8 ZIP'inde bulunmaz. [Kullanım ve gerçek sınırlar](docs/tr/konu-aramasi.md).
+
+
 **ArNS isimlerini bir gateway domainine yönlendirmeden, peer’lerden ve ham Arweave ağından gelen doğrulanmış içerikle açan masaüstü tarayıcı.**
 
 Amaç, domainler, DNS veya gateway hizmetleri kullanılamadığında **IP bağlantısı ve erişilebilir veri kaynakları hâlâ varsa** içeriğe ulaşabilmek. Uygulamaya `ar://isim` yazılır; ismin hedefi bulunur, veri alınır, kimliği ve imzası doğrulanarak gösterilir. Hiçbir erişilebilir kaynakta bulunmayan veri üretilemez.

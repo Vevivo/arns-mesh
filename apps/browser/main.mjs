@@ -1,5 +1,8 @@
 import '../../src/network-lockdown.mjs';
 import fs from 'node:fs';
+import {SearchCatalog} from '../../src/search-catalog.mjs';
+import {loadDirectPeers} from '../../src/direct-peer.mjs';
+import {homeQuery,renderSearchHome} from './search-home.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {app,BaseWindow,WebContentsView,protocol,session,ipcMain,dialog,Menu} from 'electron';
@@ -30,6 +33,7 @@ import {recordPageIssue,consoleIssue,updatePageHealth} from './page-health.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/welcome.html';
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
 let win,toolbar,runtime,store,pinner,library,related,settingsFile,timer,panelOpen=false,shuttingDown=false;
+let searchCatalog,searchTimer,searchController,lastSearchSync=0;
 let accessPolicy='auto',trustedPeers=[],witnessQuorum=2;
 let connectionCheck=null,network=null,networkPreview=null,networkInspection=null,networkJoining=false;
 process.chdir(coreRoot);
@@ -64,7 +68,14 @@ function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
   if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','ario-full-black.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
   const type=name.endsWith('.woff2')?'font/woff2':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html';
-  return new Response(fs.readFileSync(path.join(here,'ui',name)),{headers:{'content-type':type+(name.endsWith('.woff2')?'':'; charset=utf-8'),'content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
+  let body=fs.readFileSync(path.join(here,'ui',name));
+  if(name==='welcome.html'){
+    const query=homeQuery(request.url);if(query===null)return new Response('Invalid search',{status:400});
+    const result=searchCatalog.search(query,effectiveTrustedPeers());
+    for(const row of result.hits){const saved=pinner.rows[row.name];row.localReady=Boolean(saved?.rootDataId===row.targetId&&pinner.isReady(saved));}
+    body=renderSearchHome(body.toString(),result);
+  }
+  return new Response(body,{headers:{'content-type':type+(name.endsWith('.woff2')?'':'; charset=utf-8'),'content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}});
 }
 function filterSession(ses,{ui=false,tab=null}={}){
   ses.setPermissionRequestHandler((_wc,_permission,cb)=>cb(false));ses.setPermissionCheckHandler(()=>false);
@@ -75,6 +86,15 @@ function filterSession(ses,{ui=false,tab=null}={}){
     if(!allowed){recordNetwork({type:'blocked',reason:'browser_external_request',host:(()=>{try{return new URL(details.url).hostname;}catch{return '';}})(),resourceType:details.resourceType});if(tab&&details.resourceType!=='mainFrame'){recordPageIssue(tab,{kind:'blocked',url:details.url,message:'External resource blocked.',source:'browser-request-filter'});updatePageHealth(tab);send();}}
     cb({cancel:!allowed});
   });
+}
+function reloadHomes(){for(const tab of tabs.rows.values()){const wc=tab.view?.webContents;if(wc&&!wc.isDestroyed()&&homeQuery(wc.getURL())!==null)wc.reload();}}
+async function syncSearch({force=false}={}){
+ if(shuttingDown||accessPolicy==='saved'||!searchCatalog)return;
+ if(searchCatalog.running){if(force){reloadHomes();await searchCatalog.running;reloadHomes();}return searchCatalog.running;}
+ if(!force&&Date.now()-lastSearchSync<15*60000)return;
+ lastSearchSync=Date.now();searchController?.abort();const controller=searchController=new AbortController();
+ try{const work=searchCatalog.sync({peers:loadDirectPeers(),trustedPeers:effectiveTrustedPeers(),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});if(force)reloadHomes();await work;}
+ finally{if(searchController===controller)searchController=null;if(force)reloadHomes();}
 }
 function effectiveTrustedPeers(){return [...new Set([...trustedPeers,...(readProfile(runtime.dataDir).trustedPeers||[])])];}
 async function resolveForTab(tab,raw,{signal,onProgress=()=>{},fixedSnapshot=null}={}){
@@ -165,7 +185,7 @@ async function newTab(raw=''){
     // to register it aborts tab creation; there is no gateway fallback.
     ses.protocol.handle('https',request=>resourceHandler(tab,request));
     filterSession(ses,{tab});ses.protocol.handle('ar',request=>arHandler(tab,request));
-    ses.protocol.handle('arnsui',request=>request.url===WELCOME||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
+    ses.protocol.handle('arnsui',request=>homeQuery(request.url)!==null||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
     tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
     tab.view.setBackgroundColor('#f6f4ef');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
     await navigate(raw,tab);send({focusAddress:!raw});return tab.id;
@@ -205,7 +225,7 @@ function shortcuts(wc){wc.on('before-input-event',(event,input)=>{
 });}
 function guardTab(tab){
   const wc=tab.view.webContents;shortcuts(wc);attachContextMenu(wc,Menu,()=>win);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
-  const target=url=>{if(url===WELCOME)return '';try{return /^ar:\/\//i.test(url)?normalizeAddress(url):null;}catch{return null;}};
+  const target=url=>{if(homeQuery(url)!==null)return '';try{return /^ar:\/\//i.test(url)?normalizeAddress(url):null;}catch{return null;}};
   const blocked=url=>{
     report(new Error('External or invalid link blocked. This browser opens ar:// addresses; no gateway fallback.'),tab);
     // did-start-navigation precedes the cancellable events. Never normalize a
@@ -213,10 +233,17 @@ function guardTab(tab){
     if(tab.lastBlockedNavigation!==url){tab.lastBlockedNavigation=url;recordNetwork({type:'blocked',reason:'browser_navigation',host:(()=>{try{return new URL(url).hostname;}catch{return '';}})()});}
   };
   wc.setWindowOpenHandler(({url})=>{const canonical=target(url);if(canonical!==null)void newTab(canonical).catch(error=>report(error,tab));else blocked(url);return {action:'deny'};});
-  wc.on('will-navigate',(event,url)=>{event.preventDefault();if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){send({command:'settings'});return;}const canonical=target(url);if(canonical!==null)void navigate(canonical,tab).catch(error=>report(error,tab));else blocked(url);});
+  wc.on('will-navigate',(event,url)=>{event.preventDefault();
+    if(homeQuery(wc.getURL())!==null){
+      if(url==='arnsui://app/connect'){send({command:'settings'});return;}
+      if(url==='arnsui://app/search-refresh'){void syncSearch({force:true}).catch(error=>report(error,tab));return;}
+      if(homeQuery(url)!==null){tabs.begin(tab.id,'');void wc.loadURL(url).catch(error=>report(error,tab));return;}
+    }
+    const canonical=target(url);if(canonical!==null)void navigate(canonical,tab).catch(error=>report(error,tab));else blocked(url);
+  });
   wc.on('will-redirect',(event,url)=>{if(target(url)===null){event.preventDefault();blocked(url);}});
-  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(url==='arnsui://app/connect'&&wc.getURL()===WELCOME){event.preventDefault();send({command:'settings'});return;}if(url&&target(url)===null){event.preventDefault();blocked(url);}});
-  wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;const canonical=target(url);if(canonical===null){blocked(url);return;}tab.lastBlockedNavigation=null;if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
+  wc.on('will-frame-navigate',(event,details)=>{const url=details?.url||event.url;if(homeQuery(wc.getURL())!==null&&['arnsui://app/connect','arnsui://app/search-refresh'].includes(url)){if(!(details?.isMainFrame??event.isMainFrame))event.preventDefault();return;}if(url&&target(url)===null){event.preventDefault();blocked(url);}});
+  wc.on('did-start-navigation',(_event,url,inPlace,main)=>{if(!main||inPlace)return;if(homeQuery(wc.getURL())!==null&&['arnsui://app/connect','arnsui://app/search-refresh'].includes(url))return;const canonical=target(url);if(canonical===null){blocked(url);return;}tab.lastBlockedNavigation=null;if(canonical!==tab.url)tabs.begin(tab.id,canonical);send();});
   wc.on('did-navigate-in-page',(_event,url,main)=>{const canonical=target(url);if(main&&canonical){tab.url=canonical;send();}});
   wc.on('console-message',(details,level,message)=>{
     if(!tab.url||!tabs.rows.has(tab.id))return;
@@ -285,7 +312,7 @@ handle('import-profile',async(mode='merge')=>{
   const profile=mode==='merge'?mergeProfiles(readProfile(runtime.dataDir),incoming):incoming;
   connectionCheck?.abort();
   for(const tab of tabs.rows.values())stop(tab);
-  networkInspection?.abort();networkPreview=null;network.detach();applyProfile(runtime.dataDir,profile);cache.clear();send();
+  networkInspection?.abort();networkPreview=null;network.detach();searchController?.abort();applyProfile(runtime.dataDir,profile);cache.clear();reloadHomes();lastSearchSync=0;void syncSearch().catch(()=>{});send();
   return {imported:true,meshPeers:profile.directPeers.length,rpcSources:profile.rpcSources.length};
 });
 handle('export-profile',async()=>{
@@ -307,13 +334,13 @@ handle('save-settings',data=>{
   try{
     const n=saveRpcSources(rpcTemp,data.rpcSources);saveDirectPeers(peerTemp,data.directPeers||'');
     connectionCheck?.abort();for(const tab of tabs.rows.values())stop(tab);
-    networkInspection?.abort();networkPreview=null;network.detach();fs.renameSync(rpcTemp,runtime.rpcFile);fs.renameSync(peerTemp,process.env.ARNS_IP_PEERS);trustedPeers=nextTrusted;witnessQuorum=data.witnessQuorum===1?1:2;savePrefs();cache.clear();return {rpcSources:n};
+    networkInspection?.abort();networkPreview=null;network.detach();fs.renameSync(rpcTemp,runtime.rpcFile);fs.renameSync(peerTemp,process.env.ARNS_IP_PEERS);trustedPeers=nextTrusted;searchController?.abort();witnessQuorum=data.witnessQuorum===1?1:2;savePrefs();cache.clear();reloadHomes();lastSearchSync=0;void syncSearch().catch(()=>{});return {rpcSources:n};
   }finally{fs.rmSync(rpcTemp,{force:true});fs.rmSync(peerTemp,{force:true});}
 });
 async function setAccessPolicy(value){
   if(!['auto','live','saved'].includes(value))throw new Error('invalid_access_policy');
   for(const tab of tabs.rows.values())stop(tab);accessPolicy=value;
-  if(value==='saved'){networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
+  if(value==='saved'){searchController?.abort();networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
   savePrefs();cache.clear();send();
   if(tabs.active.url)await navigate(tabs.active.url);
 }
@@ -342,7 +369,8 @@ async function start(){
   library=new BrowserState(path.join(runtime.dataDir,'browser-state.json'));settingsFile=path.join(runtime.dataDir,'preferences.json');
   try{const saved=JSON.parse(fs.readFileSync(settingsFile));accessPolicy=saved.accessPolicy==='saved'?'saved':'auto';trustedPeers=parseTrustedPeers((saved.trustedPeers||[]).join('\n'));witnessQuorum=saved.witnessQuorum===1?1:2;}catch{}
   pinner=new SitePinner({file:path.join(runtime.dataDir,'saved-sites.json'),snapshots:runtime.snapshots,contentStore:store});
-  network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{cache.clear();send();}});
+  searchCatalog=new SearchCatalog(path.join(runtime.dataDir,'search-cache.json'));
+  network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{cache.clear();reloadHomes();lastSearchSync=0;void syncSearch().catch(()=>{});send();}});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
   win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef'});
   toolbar=new WebContentsView({webPreferences:{session:uiSession,preload:path.join(here,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});
@@ -351,6 +379,7 @@ async function start(){
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
   timer=setInterval(()=>send(),1000);send();
+  void syncSearch().catch(()=>{});searchTimer=setInterval(()=>void syncSearch().catch(()=>{}),15*60000);
   if(accessPolicy!=='saved'){
     network.start();
     if(network.status().joined)void network.refresh().catch(()=>{});
@@ -376,4 +405,4 @@ if(!app.requestSingleInstanceLock())app.quit();else{
   app.whenReady().then(start).catch(error=>{console.error(error);dialog.showErrorBox('ArNS Mesh Browser could not start',String(error.message||error));app.quit();});
 }
 app.on('window-all-closed',()=>app.quit());
-app.on('will-quit',()=>{clearInterval(timer);connectionCheck?.abort();networkInspection?.abort();network?.stop();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});
+app.on('will-quit',()=>{clearInterval(timer);clearInterval(searchTimer);searchController?.abort();connectionCheck?.abort();networkInspection?.abort();network?.stop();runtime?.discovery.stop();for(const tab of tabs.rows.values())tab.controller.abort(new Error('app_stopped'));cache.clear();});

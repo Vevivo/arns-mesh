@@ -1,5 +1,7 @@
 import '../../src/network-lockdown.mjs';
 import os from 'node:os';
+import {SearchPublisher,SearchCatalog} from '../../src/search-catalog.mjs';
+import {readProfile} from '../helper/network-profile.mjs';
 import {CatalogWorker} from '../../src/catalog-worker.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,6 +43,17 @@ async function refresh(){if(refreshing||stopping)return;refreshing=true;try{for(
 if(pinned.includes(name)){const old=pinner.rows[name],snapshot=runtime.snapshots.get(name);if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
 try{await peer.start();}catch(e){console.error(JSON.stringify({event:'dht-unavailable',error:String(e.message)}));}
 const listenArg=process.argv.indexOf('--listen'),listen=listenArg>=0?parsePeerAddresses(process.argv[listenArg+1])[0]:{host:'0.0.0.0',port:49740};
+const search=new SearchPublisher({file:path.join(dataDir,'search-published.json'),snapshots:runtime.snapshots,contentStore:peer.contentStore,pinner,sign:record=>peer._envelope(record)});
+const searchMirrors=new SearchCatalog(path.join(dataDir,'search-cache.json'));
+const searchTrust=()=>[...new Set([...trustedPeers,...(readProfile(dataDir).trustedPeers||[])])].filter(id=>id!==peer.witnessPeerId);
+peer.searchReply=req=>{
+ if(req.witnessPeerId&&req.witnessPeerId!==peer.witnessPeerId)return searchMirrors.mirror(searchTrust(),req.witnessPeerId)||{ok:false,error:'search_catalog_unavailable'};
+ return search.reply();
+};
+const searchPass=()=>search.pass().catch(error=>{search.lastError=String(error.message).slice(0,160);});
+void searchPass();const searchTimer=setInterval(()=>void searchPass(),60000);
+const mirrorSearch=()=>searchMirrors.sync({peers:parsePeerAddresses(readProfile(dataDir).directPeers),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000)}).catch(()=>{});
+if(upstream)void mirrorSearch();const searchMirrorTimer=setInterval(()=>{if(upstream)void mirrorSearch();},15*60000);
 const direct=await startDirectPeerServer(peer,{...listen,networkAnnouncement:()=>readNetworkPublication(dataDir),networkRecovery:()=>readNetworkRecovery(dataDir)});
 let catalog=null;
 const makeCatalog=endpoint=>new CatalogWorker({dataDir,peer,endpoint,snapshotStore:runtime.snapshots,pinner:process.env.ARNS_PREPARE_ENABLED==='1'?pinner:null,maxPreparedSites:Number(process.env.ARNS_PREPARE_MAX_SITES||32),jobsPerPass:8,mintsPerPass:8});
@@ -62,11 +75,11 @@ if(upstream)runtime.discovery.start();
 if(upstream)void refresh();const timer=setInterval(()=>{if(upstream)void refresh();},60000);
 const version=JSON.parse(fs.readFileSync(path.join(coreRoot,'package.json'))).version;
 const publishStatus=()=>{
- const value={version,...peer.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),catalog:catalog?.status()||null,network:network.status(),savedSites:pinner.status()};
+ const value={version,...peer.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),catalog:catalog?.status()||null,search:search.status(),network:network.status(),savedSites:pinner.status()};
  writeOperatorStatus(dataDir,value);console.log(JSON.stringify({event:'peer-status',...value}));
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);network.stop();runtime.discovery.stop();catalog?.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
+async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);network.stop();runtime.discovery.stop();catalog?.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
 process.on('SIGINT',stop);process.on('SIGTERM',stop);
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));

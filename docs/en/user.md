@@ -51,3 +51,7 @@ To remove the portable app, close it and delete its extracted program folder. Th
 ## Prepare before a disruption
 
 Download the program, receive a profile with several reachable independent peers/RPC sources, and save the sites you need beforehand. GitHub and npm are installation sources, not required runtime services. If every reachable source lacks a file, or no usable live name source remains, the app cannot produce the missing information. See [tested scope](status.md).
+
+## Topic search in the preview.9 candidate
+
+Home has a separate topic search field; the top bar continues to open known ArNS addresses. Download a trusted catalogue with **Refresh catalogue**, then search locally. Cached results survive provider outages and restart, but opening a site still needs its actual content. This feature is not in the published preview.8 ZIP. [Instructions and limits](../topic-search.md).

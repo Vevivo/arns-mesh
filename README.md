@@ -1,5 +1,8 @@
 # ArNS Mesh
 
+Home now also offers **topic search** across a small, signed catalogue of verified cached entry pages. Searches run locally; downloaded catalogues remain searchable during outages. This is a preview.9 candidate feature, not in the published preview.8 ZIP and not a complete Web/ArNS index. [How search works and its limits](docs/topic-search.md).
+
+
 **A desktop browser for opening ArNS names through verified peer and raw Arweave content, without redirecting to a gateway domain.**
 
 The aim is continued access when ordinary domains, DNS or gateways are unavailable **but IP connectivity and reachable data sources still exist**. Enter `ar://name`; the app finds the target, retrieves the content and checks its identity and signature before displaying it. It cannot recover data that no reachable source holds.

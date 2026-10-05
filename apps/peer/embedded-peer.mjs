@@ -87,6 +87,7 @@ export class MeshPeer {
     };
   }
   _handle(req){
+    if(req.op==='catalog')return this.searchReply?.(req)||{ok:false,error:'search_catalog_unavailable'};
     if(req.op==='hello') return {ok:true,noisePublicKey:this.swarm.keyPair.publicKey.toString('hex'),witnessPeerId:this.witnessPeerId,kind:'mesh-peer'};
     if(req.op==='content'){
       const id=String(req.dataId||'');

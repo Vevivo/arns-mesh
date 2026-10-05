@@ -44,3 +44,7 @@ Uygulamayı kapat. Yeni sürümü **ayrı klasöre** çıkar; eskisini geri dön
 Kaldırmak için uygulamayı kapatıp program klasörünü sil. Kişisel verilerin korunur. Bunları da silmek istiyorsan `%APPDATA%\ArNS-Mesh-Browser` klasörünü ayrıca silmen gerekir; profil, geçmiş, yer imleri ve saklanan sayfalar gider. Bu paket uzantı veya native-host kaydı kurmaz.
 
 Kesinti öncesi uygulamayı ve birden fazla bağımsız kaynak içeren profili edin; gerekli siteleri sakla. Çalışma sırasında GitHub/npm gerekmez. Erişilebilir hiçbir kaynakta bulunmayan içerik veya canlı isim bilgisi üretilemez. [Test kapsamı](durum.md).
+
+## Preview.9 adayında konu araması
+
+Ana sayfadaki kutuya bir konu, üst adres çubuğuna doğrudan ArNS ismi yazılır. **Refresh catalogue** ile güvenilen sağlayıcının küçük kataloğu indirilir; kelimeler cihazda aranır. Katalog kesintide ve yeniden açılışta korunur; siteyi açmak için gerçek dosyalar da gerekir. Yayımlanmış preview.8 ZIP'inde bu özellik yoktur. [Adım adım anlatım](konu-aramasi.md).

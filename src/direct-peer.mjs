@@ -43,7 +43,7 @@ export async function startDirectPeerServer(peer,{host='0.0.0.0',port=49740,netw
   req.on('data',chunk=>{bytes+=chunk.length;if(bytes>8192){req.destroy();return;}body+=chunk;});
   req.on('end',async()=>{try{
    const request=JSON.parse(body);
-   if(!['snapshot','content','location','network'].includes(request.op))throw new Error('mesh_operation_not_allowed');
+   if(!['snapshot','content','location','network','catalog'].includes(request.op))throw new Error('mesh_operation_not_allowed');
    const network=request.op==='network'?networkAnnouncement():null;
    const recovery=request.op==='network'&&request.recovery===true?networkRecovery():null;
    const reply=request.op==='network'?(network?{ok:true,network,...(recovery?{recovery}:{})}:{ok:false,error:'network_not_published'}):await peer._handleAsync(request);

@@ -1,0 +1,117 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {peerIdFromPublicKey,verifyRecord,sha256} from './common.mjs';
+import {validArName,validDataId} from './swarm-common.mjs';
+import {verifyStoredContent} from './content-store.mjs';
+import {resolveManifestPath} from './manifest-path.mjs';
+import {queryDirectPeer} from './direct-peer.mjs';
+
+export const SEARCH_LIMITS=Object.freeze({entries:256,recordBytes:384*1024,envelopeBytes:800*1024,documentBytes:1024*1024,text:1200,sources:2});
+const schema='arns-mesh-search/v1';
+const clean=(s,n)=>String(s||'').replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g,' ').replace(/\s+/g,' ').trim().slice(0,n);
+const fold=s=>s.normalize('NFKD').toLowerCase().replace(/\p{M}/gu,'').replace(/ı/g,'i');
+const atomic=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(value),{mode:0o600});fs.renameSync(file+'.tmp',file);};
+function read(file,max){try{if(fs.statSync(file).size<=max)return JSON.parse(fs.readFileSync(file));}catch{}return null;}
+function entities(s){return s.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi,(all,n)=>{if(n[0]!=='#')return {amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' '}[n.toLowerCase()];const cp=n[1].toLowerCase()==='x'?parseInt(n.slice(2),16):Number(n.slice(1));return cp>0&&cp<=0x10ffff&&!(cp>=0xd800&&cp<=0xdfff)?String.fromCodePoint(cp):' ';});}
+// A bounded, non-executing text preview, not a DOM renderer or a full crawler.
+export function extractSearchText(html){
+ if(typeof html!=='string'||Buffer.byteLength(html)>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');
+ const safe=html.replace(/<!--[\s\S]*?(?:-->|$)/g,' ').replace(/<(script|style|template|noscript|svg)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi,' ');
+ const strip=s=>entities(s.replace(/<[^>]*(?:>|$)/g,' '));
+ const title=clean(strip(safe.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1]||''),160);
+ let description='';
+ for(const m of safe.matchAll(/<meta\b[^>]*>/gi)){
+  const attrs=Object.create(null);for(const a of m[0].matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=a[2]??a[3]??a[4];
+  if(/^(description|og:description)$/i.test(attrs.name||attrs.property||'')){description=clean(entities(attrs.content||''),320);break;}
+ }
+ const text=clean(strip(safe.replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi,' ').replace(/<title\b[^>]*>[\s\S]*?<\/title\s*>/gi,' ')),SEARCH_LIMITS.text);
+ return {title,description,text};
+}
+function validateRecord(r){
+ if(r?.schema!==schema||!Number.isSafeInteger(r.revision)||r.revision<1||!Number.isFinite(Date.parse(r.generatedAt))||Date.parse(r.generatedAt)>Date.now()+30000||!Array.isArray(r.entries)||r.entries.length>SEARCH_LIMITS.entries)throw new Error('invalid_search_catalog');
+ const names=new Set();for(const x of r.entries){
+  if(!validArName(x?.name)||names.has(x.name)||!validDataId(x.targetId)||!validDataId(x.documentId)||!['document','prepared'].includes(x.availability))throw new Error('invalid_search_entry');names.add(x.name);
+  for(const [key,max] of [['title',160],['description',320],['text',SEARCH_LIMITS.text]])if(typeof x[key]!=='string'||clean(x[key],max)!==x[key])throw new Error('invalid_search_text');
+  for(const key of ['observedAt','indexedAt'])if(!Number.isFinite(Date.parse(x[key]))||Date.parse(x[key])>Date.now()+30000)throw new Error('invalid_search_date');
+ }
+ return r;
+}
+export function verifySearchEnvelope(e,trustedPeers){
+ if(!e?.ok||typeof e.recordJson!=='string'||Buffer.byteLength(e.recordJson)>SEARCH_LIMITS.recordBytes||Buffer.byteLength(JSON.stringify(e))>SEARCH_LIMITS.envelopeBytes||typeof e.witnessPublicKeyPem!=='string'||e.witnessPublicKeyPem.length>256||typeof e.signature!=='string'||!/^[A-Za-z0-9_-]{86}$/.test(e.signature))throw new Error('invalid_search_envelope');
+ if(!trustedPeers.includes(e.witnessPeerId)||peerIdFromPublicKey(e.witnessPublicKeyPem)!==e.witnessPeerId)throw new Error('untrusted_search_publisher');
+ if(crypto.createPublicKey(e.witnessPublicKeyPem).asymmetricKeyType!=='ed25519'||!verifyRecord(e.recordJson,e.signature,e.witnessPublicKeyPem))throw new Error('invalid_search_signature');
+ return validateRecord(JSON.parse(e.recordJson));
+}
+
+export class SearchPublisher{
+ constructor({file,snapshots,contentStore,pinner,sign}){
+  Object.assign(this,{file,snapshots,contentStore,pinner,sign});this.cursor=0;this.running=null;this.lastError=null;
+  this.record={schema,revision:1,generatedAt:new Date().toISOString(),entries:[]};
+  try{const saved=read(file,SEARCH_LIMITS.recordBytes);if(saved)this.record=validateRecord(saved);}catch{}
+ }
+ async pass(){if(this.running)return this.running;this.running=this._pass().finally(()=>this.running=null);return this.running;}
+ async _pass(){
+  const names=this.snapshots.names().sort(),rows=new Map(this.record.entries.map(r=>[r.name,r]));
+  // Never attach old keywords to a newly observed target. Also remove evicted
+  // documents; retained client catalogues still label availability as dated.
+  for(const [name,row] of rows){const s=this.snapshots.exportLocal(name);if(!s||s.txId!==row.targetId||!this.contentStore.has(row.targetId)||!this.contentStore.has(row.documentId))rows.delete(name);}
+  const verified=async id=>{const raw=this.contentStore.get(id,{maxBytes:2*SEARCH_LIMITS.documentBytes});if(!raw)throw new Error('search_content_missing');if(raw.length>2*SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const r=await verifyStoredContent(raw,id);if(r.payload.length>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');return r;};
+  for(let count=0;count<Math.min(32,names.length);count++){
+   const name=names[this.cursor++%names.length],snapshot=this.snapshots.exportLocal(name);if(!snapshot)continue;
+   try{
+    let id=snapshot.txId,document=await verified(id);
+    const type=r=>r.tags.find(t=>t.name.toLowerCase()==='content-type')?.value.toLowerCase()||'';
+    if(type(document).includes('application/x.arweave-manifest')){id=resolveManifestPath(JSON.parse(document.payload.toString()),'').id;document=await verified(id);}
+    if(!type(document).includes('text/html')){rows.delete(name);continue;}
+    const fields=extractSearchText(document.payload.toString('utf8'));
+    if(!fields.title&&!fields.description&&!fields.text){rows.delete(name);continue;}
+    const ready=this.pinner?.rows[name];
+    rows.set(name,{name,targetId:snapshot.txId,documentId:id,...fields,observedAt:snapshot.observedAt,indexedAt:new Date().toISOString(),availability:ready?.rootDataId===snapshot.txId&&this.pinner.isReady(ready)?'prepared':'document'});
+   }catch(error){rows.delete(name);this.lastError=String(error.message).slice(0,160);}
+   await new Promise(resolve=>setImmediate(resolve));
+  }
+  const next={schema,revision:Math.max(Date.now(),this.record.revision+1),generatedAt:new Date().toISOString(),entries:[]};
+  for(const row of [...rows.values()].sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt)||a.name.localeCompare(b.name))){if(next.entries.length>=SEARCH_LIMITS.entries)break;next.entries.push(row);if(Buffer.byteLength(JSON.stringify(next))>SEARCH_LIMITS.recordBytes){next.entries.pop();break;}}
+  atomic(this.file,next);this.record=next;this.envelope=null;return this.status();
+ }
+ reply(){return this.envelope??=this.sign(this.record);}
+ status(){return {entries:this.record.entries.length,limit:SEARCH_LIMITS.entries,generatedAt:this.record.generatedAt,scope:'verified cached HTML entry documents',lastError:this.lastError};}
+}
+
+export class SearchCatalog{
+ constructor(file){this.file=file;this.sources=Object.create(null);this.watermarks=Object.create(null);this.running=null;this.error=null;
+  const s=read(file,2*SEARCH_LIMITS.envelopeBytes+32768);if(s?.schema==='arns-mesh-search-cache/v1'){this.sources=Object.assign(Object.create(null),s.sources);this.watermarks=Object.assign(Object.create(null),s.watermarks);}
+ }
+ accept(envelope,trustedPeers){
+  const record=verifySearchEnvelope(envelope,trustedPeers),id=envelope.witnessPeerId,hash=sha256(envelope.recordJson),old=this.watermarks[id];
+  if(old&&(record.revision<old.revision||record.revision===old.revision&&hash!==old.hash))throw new Error('search_catalog_rollback_or_conflict');
+  if(!old&&Object.keys(this.watermarks).length>=64)throw new Error('search_publisher_history_limit');
+  const sources=Object.assign(Object.create(null),this.sources),watermarks={...this.watermarks,[id]:{revision:record.revision,hash}};
+  for(const key of Object.keys(sources))if(!trustedPeers.includes(key))delete sources[key];
+  sources[id]=envelope;for(const key of Object.keys(sources).filter(k=>k!==id).slice(SEARCH_LIMITS.sources-1))delete sources[key];
+  atomic(this.file,{schema:'arns-mesh-search-cache/v1',sources,watermarks});this.sources=sources;this.watermarks=watermarks;
+ }
+ records(trustedPeers){const out=[];for(const e of Object.values(this.sources)){try{out.push({record:verifySearchEnvelope(e,trustedPeers),envelope:e});}catch{}}return out;}
+ mirror(trustedPeers,witnessPeerId){return this.records(trustedPeers).find(x=>!witnessPeerId||x.envelope.witnessPeerId===witnessPeerId)?.envelope||null;}
+ async sync({peers,trustedPeers,signal,query=queryDirectPeer}){
+  if(this.running)return this.running;
+  this.running=(async()=>{let accepted=0,lastError=null;
+   const sources=[...new Set(trustedPeers)].slice(0,SEARCH_LIMITS.sources);
+   for(const peer of peers.slice(0,2))for(const witnessPeerId of sources){try{signal?.throwIfAborted();const e=await query(peer,{op:'catalog',witnessPeerId},{signal});signal?.throwIfAborted();if(e?.witnessPeerId!==witnessPeerId)throw new Error('search_publisher_mismatch');this.accept(e,trustedPeers);accepted++;}catch(e){lastError=String(e.message).slice(0,160);}}
+   this.error=accepted?null:lastError||'No trusted search publisher is configured.';return {accepted,error:this.error};
+  })().finally(()=>this.running=null);return this.running;
+ }
+ search(query,trustedPeers){
+  const q=clean(query,160),terms=[...new Set(fold(q).match(/[\p{L}\p{N}_-]+/gu)||[])].slice(0,12),records=this.records(trustedPeers),rows=new Map();
+  for(const {record,envelope} of records)for(const entry of record.entries){const old=rows.get(entry.name);if(!old||Date.parse(entry.observedAt)>Date.parse(old.observedAt))rows.set(entry.name,{...entry,publisher:envelope.witnessPeerId});}
+  const hits=[];if(terms.length)for(const row of rows.values()){
+   const fields=[row.name,row.title,row.description,row.text].map(fold),all=fields.join(' ');if(!terms.every(t=>all.includes(t)))continue;
+   const score=terms.reduce((s,t)=>s+fields.reduce((n,f,i)=>n+(f.includes(t)?[12,8,4,1][i]:0),0),0);
+   let excerpt=row.description||row.text;const offset=fold(excerpt).indexOf(terms[0]);if(offset>100)excerpt='…'+excerpt.slice(Math.max(0,offset-60));
+   hits.push({...row,score,excerpt:excerpt.slice(0,240)});
+  }
+  hits.sort((a,b)=>b.score-a.score||Date.parse(b.observedAt)-Date.parse(a.observedAt)||a.name.localeCompare(b.name));
+  return {query:q,hits:hits.slice(0,30),total:hits.length,entries:rows.size,sources:records.length,generatedAt:records.map(x=>x.record.generatedAt).sort().at(-1)||null,error:this.error,syncing:Boolean(this.running)};
+ }
+}
