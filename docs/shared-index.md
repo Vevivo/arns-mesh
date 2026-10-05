@@ -32,7 +32,7 @@ Run the sync command periodically as a **separate** timer/cron job. Do not impor
 
 For an existing systemd sync service, a companion timer can use `OnBootSec=2min`, `OnCalendar=*:0/15`, `RandomizedDelaySec=30` and `Persistent=true`. Enable it with `systemctl enable --now arns-mesh-index-sync.timer`. Systemd does not start another copy while that service is still running. On the reference VPS the initial 24 GiB override is removed by `ExecStartPost` only after a successful complete sync; later runs return to 4 GiB/day. A failed run retains downloaded partitions and is retried by the timer.
 
-Retained name preparation is independent of these indexes. Missing retained bindings in an older catalog are now automatically queued for fresh registry/ANT validation. They are never copied directly from a discovery row into a trusted snapshot. `ARNS_CATALOG_MINTS_PER_PASS` may raise the reference service's name batch from 8 to 32 (the hard cap), within its existing time and byte budgets. This accelerates preparation but does not promise complete/current coverage during an outage.
+Retained name preparation is independent of these indexes. Missing retained bindings in an older catalog are now automatically queued for fresh registry/ANT validation, prioritizing names whose target bytes are already available locally. Ordinary cursor turns still advance other names. Discovery rows are never copied directly into trusted snapshots. `ARNS_CATALOG_MINTS_PER_PASS` may raise the reference service's name batch from 8 to 32 (the hard cap), within its existing time and byte budgets. This accelerates preparation but does not promise complete/current coverage during an outage.
 
 ## Check that it is being used
 

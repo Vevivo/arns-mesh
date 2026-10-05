@@ -83,6 +83,8 @@ test('legacy discovery targets queue missing retained names without manufacturin
  const snapshots={get:name=>name==='complete'?{slot:100,txId:'A'.repeat(43),antId:mint}:name==='updated'?{slot:99,txId:'B'.repeat(43),antId:mint}:null,putMany:()=>writes++,names:()=>['complete','updated']};
  const resumed=new TargetCatalog({file,snapshotStore:snapshots,rpc:async(_ep,method,params)=>{requested.push(params[0]);return {context:{slot:100},value:null};}});
  assert.deepEqual(resumed.state.pendingNames,['new','missing','updated']);assert.equal(writes,0);
+ const available=new TargetCatalog({file,snapshotStore:snapshots,hasContent:()=>true});
+ assert.deepEqual(available.state.pendingNames,['missing','updated','new']);assert.equal(writes,0);
  await resumed.step({mints:2});
  assert.equal(requested.length,2);assert.equal(resumed.state.cursor,1);assert.equal(writes,0);
  assert.equal(resumed.state.errors.length,2);assert.deepEqual(resumed.state.pendingNames,['missing','updated']);

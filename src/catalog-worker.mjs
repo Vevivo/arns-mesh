@@ -35,7 +35,7 @@ export class CatalogWorker {
   this.passTimeoutMs=passTimeoutMs;this.catalogTimeoutMs=Math.min(catalogTimeoutMs,Math.floor(passTimeoutMs/2));this.fetchContent=fetchContent;
   this.mintsPerPass=Math.max(1,Math.min(32,mintsPerPass));this.bulkScan=bulkScan;
   this.client=client??createSwarmMeshClient({excludeWitnesses:[peer.witnessPeerId].filter(Boolean)});
-  this.catalog=new TargetCatalog({file:path.join(dataDir,'target-catalog.json'),endpoint,snapshotStore});
+  this.catalog=new TargetCatalog({file:path.join(dataDir,'target-catalog.json'),endpoint,snapshotStore,hasContent:id=>Boolean(peer.contentStore.has?.(id))});
   this.file=path.join(dataDir,'catalog-work.json');this.state={day:'',bytes:0,jobs:[],seen:{},completed:0,failed:0,lastError:null};
   try{if(fs.statSync(this.file).size<=this.maxWorkBytes)this.state=JSON.parse(fs.readFileSync(this.file));}catch{}
   this.state.priorityJobs??=[];

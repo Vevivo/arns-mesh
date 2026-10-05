@@ -37,8 +37,8 @@ export async function decodeRegistry(response,{signal}={}){
  return {records:records.sort((a,b)=>a.name.localeCompare(b.name)),quarantine,slot:response.context.slot};
 }
 export class TargetCatalog {
- constructor({file,endpoint,rpc=rpcIp,maxTargets=20000,maxBytes=16*1024*1024,snapshotStore=null,registryIntervalMs=15*60000}={}){
-  this.snapshotStore=snapshotStore;this.registryIntervalMs=registryIntervalMs;
+ constructor({file,endpoint,rpc=rpcIp,maxTargets=20000,maxBytes=16*1024*1024,snapshotStore=null,hasContent=()=>false,registryIntervalMs=15*60000}={}){
+  this.snapshotStore=snapshotStore;this.hasContent=hasContent;this.registryIntervalMs=registryIntervalMs;
   this.file=file;this.endpoint=endpoint;this.rpc=rpc;this.maxTargets=maxTargets;this.maxBytes=maxBytes;
   this.state={schema:'mesh-target-catalog/v1',registry:[],targets:{},cursor:0,registryAt:0,slot:0,quarantine:[],errors:[]};
   try{if(fs.statSync(file).size<=maxBytes){const saved=JSON.parse(fs.readFileSync(file));if(saved.schema===this.state.schema)this.state=saved;}}catch{}
@@ -47,15 +47,17 @@ export class TargetCatalog {
  queueMissingSnapshots(){
   if(!this.snapshotStore)return;
   const current=new Map(this.state.registry.map(r=>[r.name,r.mint]));
-  const pending=new Set((this.state.pendingNames||[]).filter(name=>current.has(name)));
+  const pending=new Set((this.state.pendingNames||[]).filter(name=>current.has(name))),available=new Set();
   for(const [name,row] of Object.entries(this.state.targets)){
    if(current.get(row.baseName)!==row.mint)continue;
    const saved=this.snapshotStore.get(name);
-   if(!saved||(saved.slot<row.slot&&(saved.txId!==row.dataId||saved.antId!==row.mint)))pending.add(row.baseName);
+   if(!saved||(saved.slot<row.slot&&(saved.txId!==row.dataId||saved.antId!==row.mint))){pending.add(row.baseName);if(validId(row.dataId)&&this.hasContent(row.dataId))available.add(row.baseName);}
   }
   // Discovery rows are only work hints. Re-observe the registry and ANT through
   // step() before creating a retained binding; never promote old rows to proof.
-  this.state.pendingNames=[...pending].slice(0,50000);
+  // Finish usable retained copies first; ordinary cursor turns still prevent
+  // other names from starving. This only changes order, never name trust.
+  this.state.pendingNames=[...pending].sort((a,b)=>Number(available.has(b))-Number(available.has(a))).slice(0,50000);
  }
  save(){const body=JSON.stringify(this.state);if(Buffer.byteLength(body)>this.maxBytes)throw new Error('catalog_disk_budget');fs.mkdirSync(path.dirname(this.file),{recursive:true});fs.writeFileSync(this.file+'.tmp',body,{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  async refresh({signal}={}){
