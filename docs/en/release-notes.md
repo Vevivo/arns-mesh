@@ -2,7 +2,7 @@
 
 Server source update after the published preview.13 Windows ZIP. Separates name-sync and content quotas, persists bounded live-reader demand, gives current roots their own scheduling lane and scans recent native blocks without waiting for historical catch-up. Newly registered/rebound names receive priority while existing names continue refreshing. Preparation pins cached verified files. Local monitoring now distinguishes quota pauses.
 
-These changes address stalled work, not universal discovery. Static indexes and this node's partial raw index can still miss a recent data item. No gateway fallback or name-proof downgrade is introduced. See [configuration and limits](../resilient-access.md).
+These changes address stalled work, not universal discovery. Static indexes and this node's partial raw index can still miss a recent data item. No gateway fallback or name-proof downgrade is introduced. See [configuration and limits](../resilient-access.md) and [measured recovery evidence](../catalog-recovery-2026-10-05.md).
 
 # ArNS Mesh 0.5.0-preview.13 — candidate
 
