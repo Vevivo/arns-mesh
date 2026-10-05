@@ -1,3 +1,4 @@
+import {getSharedIndex,sharedLocation} from './shared-index.mjs';
 import {encodeL1Content} from './l1-content.mjs';
 import {verifyStoredContent} from './content-store.mjs';
 import {fetchDataItemDirect,fetchL1Direct,locateDataItem} from './arweave-direct.mjs';
@@ -32,12 +33,14 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
    return result;
   }catch(error){signal?.throwIfAborted();throw new Error('content_location_unavailable: '+error.message);}
  }
- const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId);
+ const shared=getSharedIndex();
+ const sharedHint=sharedLocation(await shared?.find(dataId,{signal}));
+ const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId)||sharedHint;
  // Give the broader published index a short first opportunity. Launching 72
  // L1 probes and three older index lookups for every bundled asset caused
  // thousands of unnecessary requests during the real manifest test.
  let releasePreferred;
- let preferredPending=Number(Boolean(hint))+Number(Boolean(historical?.findOffsets));
+ let preferredPending=Number(Boolean(hint))+Number(Boolean(historical?.findOffsets)&&!sharedHint);
  const preferredFailure=()=>{if(--preferredPending<=0)releasePreferred();};
  const preferredFailed=new Promise(resolve=>{releasePreferred=resolve;});
  const waitForPreferred=s=>preferredPending<=0?Promise.resolve():new Promise((resolve,reject)=>{
@@ -102,9 +105,10 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
    return firstVerified(candidates.map(loc=>inner=>retrieve(loc.record,'mesh-index',inner)),{signal:s});
   })
  ];
- if(hint)tasks.push(attempt('local-index',async s=>{try{return await retrieve(hint,'local-index',s);}catch(error){preferredFailure();throw error;}}));
+ if(hint)tasks.push(attempt('local-index',async s=>{try{return await retrieve(hint,sharedHint?'shared-local-index':'local-index',s);}catch(error){preferredFailure();throw error;}}));
  if(historical?.findOffsets)tasks.push(attempt('published-offset-index',async s=>{
   try{
+  if(sharedHint)await waitForPreferred(s);
   const hints=await historical.findOffsets(dataId,{onProgress:progress,signal:s});
   if(!hints.length)throw new Error('not_in_published_offset_index');
   return await firstVerified(hints.map(hint=>inner=>retrieve(hint,'published-offset-index',inner)),{signal:s,concurrency:2});

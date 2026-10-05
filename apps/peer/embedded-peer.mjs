@@ -1,3 +1,4 @@
+import {getSharedIndex,sharedLocation} from '../../src/shared-index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -132,6 +133,11 @@ export class MeshPeer {
     return {ok:false,error:'unknown_op'};
   }
   async _handleAsync(req){
+    // A disk index can answer immediately, including cache-only/offline requests.
+    if(req.op==='location'&&validDataId(req.dataId)&&!this.locationIndex.get(req.dataId)){
+      const hint=sharedLocation(await getSharedIndex()?.find(req.dataId));
+      if(hint)return this._envelope({...hint,dataId:req.dataId});
+    }
     const reply=this._handle(req);
     if(!['location','content'].includes(req.op)||reply.ok||req.cacheOnly===true)return reply;
     const job=this.historyLookups.get(String(req.dataId||''));
@@ -274,6 +280,7 @@ export class MeshPeer {
       sharedNames:Object.keys(this.cache.records||{}),
       cachedLocations:Object.keys(this.cache.locations||{}).length,
       indexLocations:this.locationIndex.size,
+      sharedIndex:getSharedIndex()?.status()||null,
       cachedContent:this.contentStore.stats().files.length,
       connections:this.connections,
       requestsServed:this.requestsServed,
