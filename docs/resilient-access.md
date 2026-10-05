@@ -30,7 +30,7 @@ A document being saved is not evidence that every dynamic API, external CDN, com
 
 ## Queue recovery update — 5 October 2026
 
-Name observations and content downloads use separate, persisted daily meters, including bytes received by failed requests. Upgrading does not reset the existing content meter. Newly registered or rebound names get a rotating priority turn alongside normal registry scanning. A full registry sweep still takes time.
+Name observations and content downloads use separate, persisted daily meters, including bytes received by failed requests. Each pass has a 60-second deadline and reserves up to 30 seconds for name validation, allowing a full registry check on a CPU-limited provider. Upgrading does not reset the existing content meter. Newly registered or rebound names get a rotating priority turn alongside normal registry scanning. A full registry sweep still takes time.
 
 The content scheduler alternates a persistent priority lane and the existing asset queue. It reserves 64 of 256 priority slots for bounded live reader requests; catalog roots use the remaining slots. Repeated requests retain backoff. Verified content remains mandatory. Request admission uses the existing per-peer limits; it is not an unbounded remote download API.
 

@@ -23,7 +23,7 @@ export function nameDailyBudget(env=process.env){
 // curated list. Discovery failures must not starve work already in the queue.
 export class CatalogWorker {
  constructor({dataDir,peer,endpoint,client,dailyBytes=catalogDailyBudget(),nameDailyBytes=nameDailyBudget(),intervalMs=60000,mintsPerPass=16,bulkScan=false,
-  passTimeoutMs=45000,catalogTimeoutMs=15000,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32}){
+  passTimeoutMs=60000,catalogTimeoutMs=30000,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32}){
   if(!Number.isSafeInteger(dailyBytes)||dailyBytes<1||!Number.isSafeInteger(passTimeoutMs)||passTimeoutMs<2||!Number.isSafeInteger(catalogTimeoutMs)||catalogTimeoutMs<1)throw new Error('invalid_catalog_budget');
   if(!Number.isSafeInteger(maxJobs)||maxJobs<4||maxJobs>32768)throw new Error('invalid_catalog_queue_budget');
   if(!Number.isSafeInteger(jobsPerPass)||jobsPerPass<1||jobsPerPass>16||!Number.isSafeInteger(maxPreparedSites)||maxPreparedSites<0||maxPreparedSites>256)throw new Error('invalid_preparation_budget');
