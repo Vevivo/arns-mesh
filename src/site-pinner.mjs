@@ -8,7 +8,8 @@ import {validateSnapshot} from './name-snapshots.mjs';
 import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export class SitePinner{
- constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient}){
+ constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient,maxFiles=1024}){
+  if(!Number.isSafeInteger(maxFiles)||maxFiles<1||maxFiles>32768)throw new Error('invalid_site_file_limit');this.maxFiles=maxFiles;
   this.file=file;this.snapshots=snapshots;this.store=contentStore;this.fetchContent=fetchContent;this.createClient=createClient;this.jobs=new Map();this.rows=Object.create(null);
   try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}
   for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
@@ -81,7 +82,7 @@ export class SitePinner{
    for(const id of children){
     if(!validDataId(id))throw new Error('invalid_reference_id');
     if(seen.has(id))continue;
-    if(seen.size>=1025){if(!limitReported){row.failed++;row.errors.push({error:'site_file_limit'});limitReported=true;}continue;}
+    if(seen.size>=this.maxFiles+1){if(!limitReported){row.failed++;row.errors.push({error:'site_file_limit'});limitReported=true;}continue;}
     seen.add(id);ids.push(id);row.total++;
    }
   };

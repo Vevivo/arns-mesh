@@ -32,3 +32,7 @@ Kesinti testi tek fiziksel makinede yalıtılmış süreçlerle yapılmıştır;
 Her ArNS isminin içeriği arşivlenmiş değildir. Haricî API/CDN işlevleri sitenin saklanan dosyalarından ayrı olabilir. R84 indeksi içerik konumlarını tutar; dosyaların kendisi ayrıca saklanır. Raspberry Pi için 64 bit kurulum rehberi vardır; fiziksel Pi testi yapılmamıştır.
 
 [Kullanım](kullanici.md) · [Destekçi kurulumu](destekci.md) · [Geliştirme](gelistirici.md).
+
+## Güncel isim ve içerik takibi
+
+[Hazırlık nasıl çalışır, hangi testler yapıldı?](surekli-hazirlik.md).

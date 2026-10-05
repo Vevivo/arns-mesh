@@ -39,7 +39,7 @@ test('program-wide ANT observation follows all registered targets and rejects ro
  catalog.state.registry=[{name:'one',mint},{name:'alias',mint}];catalog.state.registryAt=Date.now();catalog.state.slot=100;
  await catalog.refreshTargets();assert.equal(Object.keys(catalog.state.targets).length,4);
  assert.equal(catalog.state.targets.docs_alias.dataId,'B'.repeat(43));assert.equal(request.params[1].filters.length,1);
- assert.equal(request.options.maxBytes,8*1024*1024);
+ assert.equal(request.options.maxBytes,16*1024*1024);
  response={context:{slot:199},value:[]};await assert.rejects(catalog.refreshTargets(),/invalid_ant_catalog_scan/);assert.equal(Object.keys(catalog.state.targets).length,4);
  // Per-ANT refresh also cannot replace a newer observation with older RPC data.
  await catalog.step();assert.equal(Object.keys(catalog.state.targets).length,4);

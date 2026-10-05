@@ -69,7 +69,7 @@ export class MeshPeer {
     if(this.historyStarts.length>=12||this.historyLookups.size>=2)return;
     this.historyStarts.push(now);
     try{this.onContentDemand?.(dataId);}catch(error){this.lastDemandError=String(error.message).slice(0,200);}
-    const known=this.locationIndex.get(dataId),directPeers=loadDirectPeers();if(!known&&!resolver&&!directPeers.length)return;
+    const known=this.locationIndex.get(dataId),directPeers=loadDirectPeers();if(!known&&!resolver&&!directPeers.length&&!process.env.ARNS_PREPARATION_INBOX)return;
     // One bounded replication hop. A downstream cache-only request cannot
     // start or await another warm lookup, preventing cycles between empty peers.
     const cachedPeers=createSwarmMeshClient({directPeers,dhtEnabled:false,cacheOnly:true,excludeWitnesses:[this.witnessPeerId]});

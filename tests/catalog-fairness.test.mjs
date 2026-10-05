@@ -129,3 +129,15 @@ test('promoting a failed background root preserves its retry backoff',t=>{
  w.prioritizeRoots();assert.equal(w.enqueueDemand(id),true);
  assert.equal(w.state.priorityJobs[0].demand,true);assert.equal(w.state.priorityJobs[0].attempt,4);assert.ok(w.state.priorityJobs[0].after>Date.now());
 });
+
+test('continuous name observations advance while a content request remains blocked',async t=>{
+ let release,entered;const waiting=new Promise(r=>entered=r);
+ const w=setup(t,{independentNames:true,fetchContent:async()=>{entered();await new Promise(r=>release=r);return {direct:{storedBytes:Buffer.from('x'),payload:Buffer.from('x'),tags:[]}};}});
+ const content=w.pass();await waiting;let calls=0;
+ w.catalog.step=async()=>{calls++;accountBudgetBytes(41);w.catalog.state.targets['new'+calls]={dataId:numbered(calls),observedAt:Date.now()};};
+ await w.refreshNames();await w.refreshNames();
+ assert.equal(calls,2);assert.equal(w.status().nameSync.dayResponseBytes,82);assert.ok(w.state.priorityJobs.some(j=>j.id===numbered(2)));
+ release();await content;
+ const resumed=new CatalogWorker({dataDir:path.dirname(w.file),peer:w.peer,endpoint:'http://127.0.0.1:1',client:{}});
+ assert.equal(resumed.status().nameSync.dayResponseBytes,82);assert.equal(resumed.status().completed,1);
+});

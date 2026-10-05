@@ -39,7 +39,7 @@ else
 fi
 release_root="$install_root/releases/$version-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 mv "$stage_root" "$release_root"
-printf '#!/usr/bin/env bash\nset -euo pipefail\nexport ARNS_MESH_DATA=%q\nexport ARNS_MESH_DIRECT_ONLY=1\nexport ARNS_INDEX_DAILY_MIB="${ARNS_INDEX_DAILY_MIB:-64}"\nexport ARNS_CATALOG_ENABLED=1\nexport ARNS_CATALOG_DAILY_MIB="${ARNS_CATALOG_DAILY_MIB:-64}"\nexec %q --max-old-space-size=384 %q --listen "${MESH_LISTEN:-0.0.0.0:49741}"\n' "$install_root/data" "$node_bin" "$release_root/app/apps/peer/main.mjs" > "$install_root/Start-Peer.sh.new"
+printf '#!/usr/bin/env bash\nset -euo pipefail\nexport ARNS_MESH_DATA=%q\nexport ARNS_MESH_DIRECT_ONLY=1\nexport ARNS_INDEX_DAILY_MIB="${ARNS_INDEX_DAILY_MIB:-64}"\nexport ARNS_CATALOG_ENABLED=1\nexport ARNS_ONLINE_PREPARATION="${ARNS_ONLINE_PREPARATION:-1}"\nexport ARNS_PREPARE_ENABLED=1\nexport ARNS_PREPARATION_DAILY_MIB="${ARNS_PREPARATION_DAILY_MIB:-64}"\nexport ARNS_CATALOG_DAILY_MIB="${ARNS_CATALOG_DAILY_MIB:-64}"\nexec %q --max-old-space-size=384 %q --listen "${MESH_LISTEN:-0.0.0.0:49741}"\n' "$install_root/data" "$node_bin" "$release_root/app/apps/peer/main.mjs" > "$install_root/Start-Peer.sh.new"
 chmod 700 "$install_root/Start-Peer.sh.new"
 if [[ -f "$install_root/Start-Peer.sh" ]]; then cp "$install_root/Start-Peer.sh" "$install_root/Start-Peer.sh.previous"; fi
 mv "$install_root/Start-Peer.sh.new" "$install_root/Start-Peer.sh"

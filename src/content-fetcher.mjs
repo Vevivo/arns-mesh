@@ -1,3 +1,4 @@
+import {awaitPreparedLocation} from './preparation-inbox.mjs';
 import {getSharedIndex,sharedLocation} from './shared-index.mjs';
 import {encodeL1Content} from './l1-content.mjs';
 import {verifyStoredContent} from './content-store.mjs';
@@ -105,6 +106,8 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
    return firstVerified(candidates.map(loc=>inner=>retrieve(loc.record,'mesh-index',inner)),{signal:s});
   })
  ];
+ // Server-only file handoff: this process keeps its IP-only network policy.
+ if(process.env.ARNS_PREPARATION_INBOX)tasks.push(attempt('online-prepared-index',async s=>retrieve(await awaitPreparedLocation(dataId,{locationsFile,signal:s}),'online-prepared-index',s)));
  if(hint)tasks.push(attempt('local-index',async s=>{try{return await retrieve(hint,sharedHint?'shared-local-index':'local-index',s);}catch(error){preferredFailure();throw error;}}));
  if(historical?.findOffsets)tasks.push(attempt('published-offset-index',async s=>{
   try{

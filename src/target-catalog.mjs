@@ -74,9 +74,9 @@ export class TargetCatalog {
   this.state.cursor%=Math.max(1,decoded.records.length);this.save();return decoded;
  }
  async step({signal,mints=1}={}){
-  if(Date.now()-this.state.registryAt>this.registryIntervalMs&&Date.now()-(this.state.registryAttemptAt||0)>(this.state.registryRetryMs||5*60000)){
+  if(Date.now()-this.state.registryAt>this.registryIntervalMs&&Date.now()-(this.state.registryAttemptAt||0)>(this.state.registryRetryMs??0)){
    this.state.registryAttemptAt=Date.now();const validatedBefore=registryPdas.size;
-   try{await this.refresh({signal});this.state.registryError=null;this.state.registryRetryMs=5*60000;}
+   try{await this.refresh({signal});this.state.registryError=null;this.state.registryRetryMs=0;}
    catch(error){this.state.registryError=String(error.message).slice(0,240);this.state.registryRetryMs=error.message==='catalog_refresh_timeout'&&registryPdas.size>validatedBefore?60000:5*60000;if(!this.state.registry.length||signal?.aborted){this.save();throw error;}}
   }
   for(let i=0;i<Math.min(mints,this.state.registry.length);i++){
@@ -124,11 +124,11 @@ export class TargetCatalog {
  async refreshTargets({signal}={}){
   // Same program-wide record scan used by the SDK's getANTStates. Restricted
   // to volunteer nodes; normal clients still read only the requested name.
-  if(Date.now()-this.state.registryAt>6*3600000)await this.refresh({signal});
+  if(Date.now()-this.state.registryAt>this.registryIntervalMs)await this.refresh({signal});
   const slot=Math.max(this.state.slot,this.state.targetScanSlot||0,...Object.values(this.state.targets).map(t=>t.slot));
-  const response=await this.rpc(this.endpoint,'getProgramAccounts',[MAINNET_PROGRAM_IDS.ant,{encoding:'base64',commitment:'finalized',withContext:true,minContextSlot:slot,filters:[filter(ANT_RECORD_DISCRIMINATOR)]}],{signal,timeout:25000,maxBytes:8*1024*1024});
+  const response=await this.rpc(this.endpoint,'getProgramAccounts',[MAINNET_PROGRAM_IDS.ant,{encoding:'base64',commitment:'finalized',withContext:true,minContextSlot:slot,filters:[filter(ANT_RECORD_DISCRIMINATOR)]}],{signal,timeout:25000,maxBytes:16*1024*1024});
   if(!Number.isSafeInteger(response?.context?.slot)||response.context.slot<slot||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_ant_catalog_scan');
-  const namesByMint=new Map(),targets={};let unregistered=0;
+  const namesByMint=new Map(),targets=Object.fromEntries(Object.entries(this.state.targets).filter(([,r])=>r.antProgram&&r.antProgram!==MAINNET_PROGRAM_IDS.ant));let unregistered=0;
   for(const r of this.state.registry){if(!namesByMint.has(r.mint))namesByMint.set(r.mint,[]);namesByMint.get(r.mint).push(r.name);}
   for(const row of response.value){
    signal?.throwIfAborted();
@@ -141,8 +141,9 @@ export class TargetCatalog {
    if(ant.undername!=='@'&&!/^[a-z0-9-]{1,63}$/.test(ant.undername))continue;
    for(const baseName of bases){
     const name=ant.undername==='@'?baseName:ant.undername+'_'+baseName;
+    if(targets[name]?.antProgram!==undefined&&targets[name].antProgram!==MAINNET_PROGRAM_IDS.ant)continue;
     if(Object.hasOwn(targets,name))throw new Error('duplicate_ant_catalog_record');
-    targets[name]={baseName,mint,dataId:ant.transactionId,slot:response.context.slot,observedAt:Date.now(),ttlSeconds:ant.ttlSeconds,trust:'rpc-observation-not-inclusion-proof'};
+    targets[name]={baseName,mint,antProgram:MAINNET_PROGRAM_IDS.ant,dataId:ant.transactionId,slot:response.context.slot,observedAt:Date.now(),ttlSeconds:ant.ttlSeconds,trust:'rpc-observation-not-inclusion-proof'};
    }
   }
   if(Object.keys(targets).length>this.maxTargets)throw new Error('catalog_target_limit');

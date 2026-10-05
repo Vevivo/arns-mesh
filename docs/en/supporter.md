@@ -56,7 +56,7 @@ MESH_ENV
 
 | Setting | Meaning |
 |---|---|
-| `ARNS_PREPARE_MAX_SITES` | Maximum automatically managed site records; 32 here, hard cap 256 |
+| `ARNS_PREPARE_MAX_SITES` | Maximum automatically managed site records; 32 here, hard cap 20,000 |
 | `ARNS_CACHE_MIB` | Automatic content cache allowance |
 | `ARNS_SAVED_MIB` | Pinned/saved content allowance |
 | `ARNS_NAMES_DAILY_MIB` | Separate daily budget for name preparation |
@@ -85,7 +85,7 @@ To start after boot and remain available after logout, an administrator can enab
 sudo loginctl enable-linger "$(id -un)"
 ```
 
-The supplied service limits CPU to 25% and memory to 512 MiB where cgroups enforce them; the launcher uses a 384 MiB Node heap. These are limits, not measured minimum hardware requirements.
+The supplied service limits CPU to 25% and memory to 768 MiB where cgroups enforce them; the launcher uses a 384 MiB Node heap. These are limits, not measured minimum hardware requirements.
 
 ## 4. Confirm external reachability and discovery
 
@@ -134,3 +134,5 @@ Logs: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Stop: `system
 For an update, stop this supporter, privately back up its data and launcher, review the chosen revision, rerun the installer and restart. Preserve the matching old application and data for rollback. Keep identities and signing keys private; never clone one identity onto several active peers.
 
 [Peer discovery details](shared-network.md) · [Status and limits](status.md) · [Operations reference](supporter-advanced.md)
+
+[Continuous preparation and larger-server settings](continuous-preparation.md).

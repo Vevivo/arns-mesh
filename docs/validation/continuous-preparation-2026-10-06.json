@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-05T23:22:52.031Z",
+  "name": "cubetwist",
+  "dataId": "kRITIGM3-RgivRLAUVHhrAE10_HA4ekqgiUL-78Z0bE",
+  "emptyInitialMesh": true,
+  "preinstalledRoutingHint": false,
+  "automaticPreparation": {
+    "enabled": true,
+    "at": "2026-10-05T23:22:50.425Z",
+    "lastPassAt": "2026-10-05T23:22:50.424Z",
+    "knownHints": 2,
+    "completed": 2,
+    "dayResponseBytes": 564,
+    "maxDailyResponseBytes": 67108864,
+    "budgetExhausted": false,
+    "lastError": null,
+    "running": true,
+    "processError": null
+  },
+  "signedBytesVerified": true,
+  "source": "online-prepared-index",
+  "manifestBytes": 194907,
+  "manifestPaths": 3263,
+  "mainContentId": "EPNbHZaUjYLiPK5PFhBUYaR4pRLDRVRVjS6MrlMOTdw",
+  "mainContentBytes": 7026,
+  "mainContentSHA256": "09b085476ae3b422120006994fbb892236a50849d2f2e6186c888d91fa0dbc13",
+  "cachedReadAfterPreparation": "local",
+  "elapsedMs": 11238,
+  "networkBytesManifest": 893587
+}

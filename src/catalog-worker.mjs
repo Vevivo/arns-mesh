@@ -9,24 +9,27 @@ import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export function catalogDailyBudget(env=process.env){
  const mib=env.ARNS_CATALOG_DAILY_MIB===undefined?64:Number(env.ARNS_CATALOG_DAILY_MIB);
- if(!Number.isSafeInteger(mib)||mib<8||mib>1024)throw new Error('invalid_catalog_daily_mib');
+ if(!Number.isSafeInteger(mib)||mib<8||mib>65536)throw new Error('invalid_catalog_daily_mib');
  return mib*1024*1024;
 }
 
 export function nameDailyBudget(env=process.env){
  const mib=Number(env.ARNS_NAMES_DAILY_MIB??64);
- if(!Number.isSafeInteger(mib)||mib<8||mib>1024)throw new Error('invalid_names_daily_mib');
+ if(!Number.isSafeInteger(mib)||mib<8||mib>65536)throw new Error('invalid_names_daily_mib');
  return mib*1024*1024;
 }
 
 // Demand is observed from ArNS/ANT records and signed manifests/text, never from a
 // curated list. Discovery failures must not starve work already in the queue.
 export class CatalogWorker {
- constructor({dataDir,peer,endpoint,client,dailyBytes=catalogDailyBudget(),nameDailyBytes=nameDailyBudget(),intervalMs=60000,mintsPerPass=16,bulkScan=false,
-  passTimeoutMs=60000,catalogTimeoutMs=30000,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32}){
+ constructor({dataDir,peer,endpoint,client,dailyBytes=catalogDailyBudget(),nameDailyBytes=nameDailyBudget(),intervalMs=60000,mintsPerPass=16,bulkScan=false,independentNames=false,namesIntervalMs=5000,registryIntervalMs=15*60000,bulkIntervalMs=6*3600000,
+  passTimeoutMs=60000,catalogTimeoutMs=30000,maxPassBytes=8*1024*1024,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32}){
   if(!Number.isSafeInteger(dailyBytes)||dailyBytes<1||!Number.isSafeInteger(passTimeoutMs)||passTimeoutMs<2||!Number.isSafeInteger(catalogTimeoutMs)||catalogTimeoutMs<1)throw new Error('invalid_catalog_budget');
   if(!Number.isSafeInteger(maxJobs)||maxJobs<4||maxJobs>32768)throw new Error('invalid_catalog_queue_budget');
-  if(!Number.isSafeInteger(jobsPerPass)||jobsPerPass<1||jobsPerPass>16||!Number.isSafeInteger(maxPreparedSites)||maxPreparedSites<0||maxPreparedSites>256)throw new Error('invalid_preparation_budget');
+  if(!Number.isSafeInteger(jobsPerPass)||jobsPerPass<1||jobsPerPass>16||!Number.isSafeInteger(maxPreparedSites)||maxPreparedSites<0||maxPreparedSites>20000)throw new Error('invalid_preparation_budget');
+  if(!Number.isSafeInteger(namesIntervalMs)||namesIntervalMs<1||!Number.isSafeInteger(bulkIntervalMs)||bulkIntervalMs<1)throw new Error('invalid_names_interval');
+  this.independentNames=independentNames;this.namesIntervalMs=namesIntervalMs;this.bulkIntervalMs=bulkIntervalMs;this.namesRunning=null;this.namesTimer=null;
+  if(!Number.isSafeInteger(maxPassBytes)||maxPassBytes<1||maxPassBytes>128*1024*1024)throw new Error('invalid_catalog_pass_budget');this.maxPassBytes=maxPassBytes;
   this.jobsPerPass=jobsPerPass;this.pinner=pinner;this.maxPreparedSites=maxPreparedSites;this.snapshotStore=snapshotStore;
   this.maxJobs=maxJobs;this.rootSlots=Math.floor(maxJobs*0.75);this.maxWorkBytes=16*1024*1024;
   if(!Number.isSafeInteger(nameDailyBytes)||nameDailyBytes<1)throw new Error('invalid_names_budget');
@@ -35,7 +38,7 @@ export class CatalogWorker {
   this.passTimeoutMs=passTimeoutMs;this.catalogTimeoutMs=Math.min(catalogTimeoutMs,Math.floor(passTimeoutMs/2));this.fetchContent=fetchContent;
   this.mintsPerPass=Math.max(1,Math.min(32,mintsPerPass));this.bulkScan=bulkScan;
   this.client=client??createSwarmMeshClient({excludeWitnesses:[peer.witnessPeerId].filter(Boolean)});
-  this.catalog=new TargetCatalog({file:path.join(dataDir,'target-catalog.json'),endpoint,snapshotStore,hasContent:id=>Boolean(peer.contentStore.has?.(id))});
+  this.catalog=new TargetCatalog({file:path.join(dataDir,'target-catalog.json'),endpoint,snapshotStore,registryIntervalMs,hasContent:id=>Boolean(peer.contentStore.has?.(id))});
   this.file=path.join(dataDir,'catalog-work.json');this.state={day:'',bytes:0,jobs:[],seen:{},completed:0,failed:0,lastError:null};
   try{if(fs.statSync(this.file).size<=this.maxWorkBytes)this.state=JSON.parse(fs.readFileSync(this.file));}catch{}
   this.state.priorityJobs??=[];
@@ -82,19 +85,56 @@ export class CatalogWorker {
   if(this.running)return this.running;
   this.running=this._pass().finally(()=>this.running=null);return this.running;
  }
+ async refreshNames(parentSignal){
+  if(this.namesRunning)return this.namesRunning;
+  this.namesRunning=this._refreshNames(parentSignal).finally(()=>this.namesRunning=null);return this.namesRunning;
+ }
+ async _refreshNames(parentSignal){
+  const day=new Date().toISOString().slice(0,10);
+  if(this.state.nameDay!==day){this.state.nameDay=day;this.state.nameBytes=0;}
+  const left=Math.max(0,this.nameDailyBytes-(this.state.nameBytes||0));
+  const controller=this.namesController=new AbortController();
+  const abort=()=>controller.abort(parentSignal.reason);
+  parentSignal?.addEventListener('abort',abort,{once:true});if(parentSignal?.aborted)abort();
+  const timer=setTimeout(()=>controller.abort(new Error('catalog_refresh_timeout')),this.catalogTimeoutMs);
+  const previous=new Map(Object.entries(this.catalog.state.targets).map(([name,r])=>[name,r.dataId]));
+  try{
+   if(!left)throw new Error('name_daily_budget_reached');
+   const result=await withByteBudget(Math.min(left,(this.bulkScan?32:16)*1024*1024),controller,async()=>{
+    if(this.bulkScan&&Date.now()-(this.catalog.state.targetScanAt||0)>this.bulkIntervalMs&&Date.now()-(this.state.bulkAttemptAt||0)>this.bulkIntervalMs){
+     this.state.bulkAttemptAt=Date.now();
+     try{await this.catalog.refreshTargets({signal:controller.signal});this.state.bulkError=null;}
+     catch(error){this.state.bulkError=String(error.message).slice(0,240);controller.signal.throwIfAborted();}
+    }
+    await this.catalog.step({mints:this.mintsPerPass,signal:controller.signal});
+   });
+   this.state.nameBytes+=result.bytes;this.state.catalogError=null;
+  }catch(error){this.state.nameBytes+=(error.receivedBytes||0);this.state.catalogError=String(error.message).slice(0,400);this.state.catalogFailures=(this.state.catalogFailures||0)+1;}
+  finally{
+   clearTimeout(timer);parentSignal?.removeEventListener('abort',abort);
+   this.state.namesPassAt=new Date().toISOString();
+   // Newly discovered targets get a separate bounded priority lane, including
+   // while an unrelated download is blocked. Existing retry backoff is kept.
+   for(const [name,row] of Object.entries(this.catalog.state.targets)){
+    if(previous.get(name)===row.dataId||this.peer.contentStore.has?.(row.dataId)||this.state.priorityJobs.filter(j=>!j.demand).length>=192)continue;
+    if(this.state.priorityJobs.some(j=>j.id===row.dataId))continue;
+    const job=this.state.jobs.find(j=>j.id===row.dataId);if(job===this.activeJob&&job)continue;
+    if(job)this.state.jobs.splice(this.state.jobs.indexOf(job),1);
+    this.state.priorityJobs.push(job||{id:row.dataId,attempt:0,after:0});this.queuedIds.add(row.dataId);
+   }
+   this.save();
+  }
+  return this.status();
+ }
  async _pass(){
   const day=new Date().toISOString().slice(0,10);if(this.state.day!==day){this.state.day=day;this.state.bytes=0;}
   if(this.state.nameDay!==day){this.state.nameDay=day;this.state.nameBytes=0;}
   const left=Math.max(0,this.dailyBytes-this.state.bytes),nameLeft=Math.max(0,this.nameDailyBytes-(this.state.nameBytes||0));
   this.state.lastPassAt=new Date().toISOString();
   if(!left&&!nameLeft){this.state.lastError='content_daily_budget_reached';this.state.catalogError='name_daily_budget_reached';this.save();return this.status();}
-  const passBudget=Math.min(left,8*1024*1024);let used=0;
+  const passBudget=Math.min(left,this.maxPassBytes);let used=0;
   const controller=this.controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(new Error('catalog_pass_timeout')),this.passTimeoutMs);
-  const catalogController=new AbortController();
-  const abortCatalog=()=>catalogController.abort(controller.signal.reason);
-  controller.signal.addEventListener('abort',abortCatalog,{once:true});
-  const catalogTimer=setTimeout(()=>catalogController.abort(new Error('catalog_refresh_timeout')),this.catalogTimeoutMs);
   // Independent daily quotas include failed responses. Exhausting downloads
   // must not stop registry observations.
   const phase=async(budget,control,work,names=false)=>{
@@ -103,17 +143,7 @@ export class CatalogWorker {
    catch(error){charge(error.receivedBytes||0);throw error;}
   };
   try{
-   try{
-    if(!nameLeft)throw new Error('name_daily_budget_reached');
-    await phase(Math.min(nameLeft,8*1024*1024),catalogController,async()=>{
-     if(this.bulkScan&&Date.now()-(this.catalog.state.targetScanAt||0)>6*3600000&&Date.now()-(this.state.bulkAttemptAt||0)>6*3600000){
-      this.state.bulkAttemptAt=Date.now();
-      try{await this.catalog.refreshTargets({signal:catalogController.signal});this.state.bulkError=null;}
-      catch(error){this.state.bulkError=String(error.message).slice(0,240);catalogController.signal.throwIfAborted();await this.catalog.step({mints:this.mintsPerPass,signal:catalogController.signal});}
-     }else await this.catalog.step({mints:this.mintsPerPass,signal:catalogController.signal});
-    },true);this.state.catalogError=null;
-   }catch(error){this.state.catalogError=String(error.message).slice(0,400);this.state.catalogFailures=(this.state.catalogFailures||0)+1;}
-   finally{clearTimeout(catalogTimer);controller.signal.removeEventListener('abort',abortCatalog);}
+   if(!this.independentNames)await this.refreshNames(controller.signal);
    // Even a partial catalog refresh can have produced usable observations.
    if(this.maxJobs>=256)this.prioritizeRoots();
    this.enqueueRoots();
@@ -178,7 +208,7 @@ export class CatalogWorker {
    }finally{this.activeJob=null;}
    }
   }finally{
-   clearTimeout(timer);clearTimeout(catalogTimer);controller.signal.removeEventListener('abort',abortCatalog);
+   clearTimeout(timer);
    for(const [id,until] of Object.entries(this.state.seen))if(until<=Date.now())delete this.state.seen[id];
    const keys=Object.keys(this.state.seen);for(const id of keys.slice(0,Math.max(0,keys.length-50000)))delete this.state.seen[id];
    this.save();
@@ -205,7 +235,9 @@ export class CatalogWorker {
    this.state.lastPreparation={name,target:snapshot.txId,status:result.status,at:new Date().toISOString()};return;
   }
  }
- status(){return {catalog:this.catalog.status(),preparation:{maxSites:this.maxPreparedSites,last:this.state.lastPreparation||null,error:this.state.preparationError||null},queued:this.state.jobs.length+this.state.priorityJobs.length,priorityQueued:this.state.priorityJobs.length,maxQueued:this.maxJobs+256,deferredRoots:this.state.deferredRoots||0,pendingGraphs:[...this.state.jobs,...this.state.priorityJobs].filter(j=>j.graphPending).length,completed:this.state.completed,meshReplicated:this.state.meshReplicated||0,locationsReplicated:this.state.locationsReplicated||0,lastSuccess:this.state.lastSuccess||null,failed:this.state.failed,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,lastPassAt:this.state.lastPassAt||null,contentBudgetExhausted:this.state.bytes>=this.dailyBytes,nameSync:{dayResponseBytes:this.state.nameBytes||0,maxDailyResponseBytes:this.nameDailyBytes,budgetExhausted:(this.state.nameBytes||0)>=this.nameDailyBytes},byteScope:'HTTP response bodies and Mesh response streams; excludes UDP discovery/control overhead',lastError:this.state.lastError,catalogError:this.state.catalogError||null,catalogFailures:this.state.catalogFailures||0,lastGraphError:this.state.lastGraphError||null,generalCoverage:false};}
- start(){if(!this.stopped)return;this.stopped=false;const loop=async()=>{if(this.stopped)return;await this.pass().catch(e=>{this.state.lastError=e.message;});if(!this.stopped){this.timer=setTimeout(loop,this.intervalMs);this.timer.unref?.();}};void loop();}
- stop(){this.stopped=true;clearTimeout(this.timer);this.controller?.abort(new Error('catalog_stopped'));}
+ status(){return {catalog:this.catalog.status(),preparation:{maxSites:this.maxPreparedSites,last:this.state.lastPreparation||null,error:this.state.preparationError||null},queued:this.state.jobs.length+this.state.priorityJobs.length,priorityQueued:this.state.priorityJobs.length,maxQueued:this.maxJobs+256,deferredRoots:this.state.deferredRoots||0,pendingGraphs:[...this.state.jobs,...this.state.priorityJobs].filter(j=>j.graphPending).length,completed:this.state.completed,meshReplicated:this.state.meshReplicated||0,locationsReplicated:this.state.locationsReplicated||0,lastSuccess:this.state.lastSuccess||null,failed:this.state.failed,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,lastPassAt:this.state.lastPassAt||null,contentBudgetExhausted:this.state.bytes>=this.dailyBytes,nameSync:{independent:this.independentNames,lastPassAt:this.state.namesPassAt||null,intervalMs:this.namesIntervalMs,bulkIntervalMs:this.bulkScan?this.bulkIntervalMs:null,bulkError:this.state.bulkError||null,dayResponseBytes:this.state.nameBytes||0,maxDailyResponseBytes:this.nameDailyBytes,budgetExhausted:(this.state.nameBytes||0)>=this.nameDailyBytes},byteScope:'HTTP response bodies and Mesh response streams; excludes UDP discovery/control overhead',lastError:this.state.lastError,catalogError:this.state.catalogError||null,catalogFailures:this.state.catalogFailures||0,lastGraphError:this.state.lastGraphError||null,generalCoverage:false};}
+ start(){if(!this.stopped)return;this.stopped=false;
+  if(this.independentNames){const namesLoop=async()=>{if(this.stopped)return;await this.refreshNames().catch(e=>{this.state.catalogError=e.message;});if(!this.stopped){this.namesTimer=setTimeout(namesLoop,this.namesIntervalMs);this.namesTimer.unref?.();}};void namesLoop();}
+  const loop=async()=>{if(this.stopped)return;await this.pass().catch(e=>{this.state.lastError=e.message;});if(!this.stopped){this.timer=setTimeout(loop,this.intervalMs);this.timer.unref?.();}};void loop();}
+ stop(){this.stopped=true;clearTimeout(this.timer);clearTimeout(this.namesTimer);this.namesController?.abort(new Error('catalog_stopped'));this.controller?.abort(new Error('catalog_stopped'));}
 }

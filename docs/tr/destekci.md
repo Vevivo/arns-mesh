@@ -56,7 +56,7 @@ MESH_ENV
 
 | Ayar | Anlamı |
 |---|---|
-| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 256 |
+| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 20.000 |
 | `ARNS_CACHE_MIB` | Otomatik içerik önbelleği bütçesi |
 | `ARNS_SAVED_MIB` | Saklanması seçilmiş içerik bütçesi |
 | `ARNS_NAMES_DAILY_MIB` | İsim hazırlığı için ayrı günlük bütçe |
@@ -85,7 +85,7 @@ Oturum kapandığında ve sunucu yeniden açıldığında da çalışması için
 sudo loginctl enable-linger "$(id -un)"
 ```
 
-Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 512 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
+Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 768 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
 
 ## 4. Dış erişimi ve keşfi doğrulayın
 
@@ -134,3 +134,5 @@ Günlükler: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Durdur
 Güncellemede bu destekçiyi durdurun; verisini ve başlatıcısını özel olarak yedekleyin; seçilen sürümü inceleyip kurucuyu yeniden çalıştırın. Geri dönüş için eşleşen eski uygulamayı ve veriyi koruyun. Kimlikleri ve imza anahtarlarını paylaşmayın; aynı kimliği farklı aktif sunuculara kopyalamayın.
 
 [Keşif ayrıntıları](paylasilan-ag.md) · [Durum ve sınırlar](durum.md) · [İşletim başvurusu](destekci-ayrintili.md)
+
+[Sürekli hazırlık ve daha güçlü sunucu ayarları](surekli-hazirlik.md).
