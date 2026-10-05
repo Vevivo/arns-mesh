@@ -1,0 +1,220 @@
+{
+  "schema": "arns-mesh-windows-upstream-outage/v1",
+  "startedAt": "2026-10-05T22:49:20.691Z",
+  "version": "0.5.0",
+  "realPublicContent": true,
+  "freshReader": true,
+  "osFirewall": true,
+  "sameMachineReplica": true,
+  "pages": [
+    {
+      "name": "vevivo",
+      "opened": true,
+      "elapsedMs": 3467,
+      "url": "ar://vevivo/",
+      "title": "vevivo",
+      "textLength": 78,
+      "images": [
+        {
+          "complete": true,
+          "width": 467,
+          "src": "[embedded image]"
+        }
+      ],
+      "proof": "Address       ar://vevivo/\nData ID       HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk\nArweave TX    -\nSHA-256       2f448209ce7a6955035b081d8e51b13c166eb16abb621f2488fcc7011cfc863c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 · stake link not verified\nObserved at: 2026-10-05T22:48:38.597Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "bilolbabagate",
+      "opened": true,
+      "elapsedMs": 2970,
+      "url": "ar://bilolbabagate/",
+      "title": "ArNS - Arweave Name System",
+      "textLength": 269,
+      "images": [
+        {
+          "complete": true,
+          "width": 503,
+          "src": "https://arweave.net/0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        }
+      ],
+      "proof": "Address       ar://bilolbabagate/\nData ID       -k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI\nArweave TX    -k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI\nSHA-256       208db3139757754716deacbfba036354c62675d06b356c7822bf8e9c7900281d\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 · stake link not verified\nObserved at: 2026-10-05T21:30:26.128Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "bionica",
+      "opened": true,
+      "elapsedMs": 2920,
+      "url": "ar://bionica/",
+      "title": "ArNS - Arweave Name System",
+      "textLength": 263,
+      "images": [
+        {
+          "complete": true,
+          "width": 503,
+          "src": "https://arweave.net/0gKVk4wKDtPdgRwXt8ypIDH7Xj870i59n7kxeoAroOc"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        },
+        {
+          "complete": true,
+          "width": 19,
+          "src": "https://arweave.net/DOwkxvmB8-6CthRSS1LsLP-0hAXHjYcS0y5EexyxOGs"
+        }
+      ],
+      "proof": "Address       ar://bionica/\nData ID       UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk\nArweave TX    UyC5P5qKPZaltMmmZAWdakhlDXsBF6qmyrbWYFchRTk\nSHA-256       75b0a3fee15d9962f30393128214884b850f33090c43a5a05e57918a44e98f00\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 · stake link not verified\nObserved at: 2026-10-05T21:30:30.300Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    },
+    {
+      "name": "ardrive-logo-2026",
+      "opened": true,
+      "elapsedMs": 2705,
+      "url": "ar://ardrive-logo-2026/",
+      "title": "ardrive-logo-2026 (750×750)",
+      "textLength": 0,
+      "images": [
+        {
+          "complete": true,
+          "width": 750,
+          "src": "ar://ardrive-logo-2026/"
+        }
+      ],
+      "proof": "Address       ar://ardrive-logo-2026/\nData ID       u6QLHxUOV3uncbdZM20ChM393lziN2AEgeDptEwPoso\nArweave TX    -\nSHA-256       571043ccfdf9911ff44b02b2f210e276c96b04232c14b3437c9aaa700298e04c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 · stake link not verified\nObserved at: 2026-10-05T21:12:36.373Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+    }
+  ],
+  "limitations": [
+    "Same-machine isolated supporter, not independent-provider failover",
+    "Pre-retained public sites; this is not all ArNS coverage"
+  ],
+  "firewall": {
+    "programCount": 2,
+    "profiles": [
+      {
+        "enabled": true,
+        "name": "Domain"
+      },
+      {
+        "enabled": true,
+        "name": "Private"
+      },
+      {
+        "enabled": true,
+        "name": "Public"
+      }
+    ],
+    "globalDnsPortsBlocked": true,
+    "dnsCacheServiceBlocked": true,
+    "ipv6Blocked": true,
+    "activeBlockRules": 9
+  },
+  "packaged-browserControls": {
+    "at": "2026-10-05T22:49:25.205Z",
+    "checks": [
+      {
+        "label": "mesh",
+        "kind": "mesh",
+        "ok": true,
+        "value": true
+      },
+      {
+        "label": "dns",
+        "kind": "dns",
+        "ok": false,
+        "error": "ETIMEOUT"
+      },
+      {
+        "label": "rpc",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "original-peer",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      }
+    ]
+  },
+  "supporterControls": {
+    "at": "2026-10-05T22:49:27.299Z",
+    "checks": [
+      {
+        "label": "mesh",
+        "kind": "mesh",
+        "ok": true,
+        "value": true
+      },
+      {
+        "label": "dns",
+        "kind": "dns",
+        "ok": false,
+        "error": "ETIMEOUT"
+      },
+      {
+        "label": "rpc",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "arweave",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      },
+      {
+        "label": "original-peer",
+        "kind": "tcp",
+        "ok": false,
+        "error": "EACCES"
+      }
+    ]
+  },
+  "lastNavigation": {
+    "name": "ardrive-logo-2026",
+    "stages": "Resolve name\n2\nFind sources\nLocate content\nDownload\nVerify\nOpen page",
+    "proof": "Address       ar://ardrive-logo-2026/\nData ID       u6QLHxUOV3uncbdZM20ChM393lziN2AEgeDptEwPoso\nArweave TX    -\nSHA-256       571043ccfdf9911ff44b02b2f210e276c96b04232c14b3437c9aaa700298e04c\nName trust    saved-observation\nRPC sources   0\nVote sigs     0 · stake link not verified\nObserved at: 2026-10-05T21:12:36.373Z\nCurrent name state was not checked. This mapping was accepted in the past.\nTrusts the name observation of your selected peer operator.\nThe file identity and signature are checked separately."
+  },
+  "renderTargets": [
+    "arnsui://app/index.html",
+    "arnsui://app/welcome.html",
+    "ar://vevivo/",
+    "ar://bilolbabagate/",
+    "ar://bionica/",
+    "ar://ardrive-logo-2026/"
+  ],
+  "passed": true,
+  "firewallCleanup": {
+    "cleared": true,
+    "previousProfileSettingsRestored": true
+  }
+}
