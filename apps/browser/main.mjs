@@ -391,7 +391,7 @@ async function start(){
   searchCatalog=new SearchCatalog(path.join(runtime.dataDir,'search-cache.json'));
   network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{cache.clear();reloadHomes();lastSearchSync=0;void syncSearch().catch(()=>{});send();}});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
-  win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef'});
+  win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef',icon:path.join(here,'ui',process.platform==='win32'?'mesh.ico':'mesh.png')});
   toolbar=new WebContentsView({webPreferences:{session:uiSession,preload:path.join(here,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});
   toolbar.webContents.setWindowOpenHandler(()=>({action:'deny'}));toolbar.webContents.on('will-navigate',e=>e.preventDefault());
   win.contentView.addChildView(toolbar);shortcuts(toolbar.webContents);attachContextMenu(toolbar.webContents,Menu,()=>win);win.on('resize',layout);

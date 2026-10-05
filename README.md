@@ -2,7 +2,7 @@
 
 **Desktop monitor:** see responding Mesh endpoints, RPC/raw Arweave observations, current document origin and session traffic. [What each indicator means](docs/connection-monitor.md).
 
-Home now also offers **topic search** across a small, signed catalogue of verified cached entry pages. Searches run locally; downloaded catalogues remain searchable during outages. This is a preview.11 candidate feature, not in the published preview.8 ZIP and not a complete Web/ArNS index. [How search works and its limits](docs/topic-search.md).
+Home now also offers **topic search** across a small, signed catalogue of verified cached entry pages. Searches run locally; downloaded catalogues remain searchable during outages. This is a preview.12 candidate feature, not in the published preview.8 ZIP and not a complete Web/ArNS index. [How search works and its limits](docs/topic-search.md).
 
 
 **A desktop browser for opening ArNS names through verified peer and raw Arweave content, without redirecting to a gateway domain.**
@@ -11,7 +11,7 @@ The aim is continued access when ordinary domains, DNS or gateways are unavailab
 
 **Current public preview: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Download Windows x64](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Türkçe](README.tr.md)
 
-**Development candidate: preview.11** adds automatic outage recovery, dated name observations, atomic preparation of site versions and a local provider dashboard. It is separate from the published preview.8 ZIP. See [behavior, budgets and acceptance plan](docs/resilient-access.md). Two physical PCs and independent-provider failover remain pending.
+**Development candidate: preview.12** adds automatic outage recovery, dated name observations, atomic preparation of site versions and a local provider dashboard. It is separate from the published preview.8 ZIP. See [behavior, budgets and acceptance plan](docs/resilient-access.md). Two physical PCs and independent-provider failover remain pending.
 
 This is an experimental, independent community project, not an official AR.IO, Arweave or Solana release. Live name resolution still depends on numeric-IP Solana RPC observations. Universal first discovery and independent-host failover remain unfinished.
 
