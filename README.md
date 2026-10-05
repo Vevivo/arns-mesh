@@ -10,7 +10,7 @@ The goal is to share the work of keeping sites reachable. Supporters contribute 
 
 ## Current supporter update
 
-Supporters can now import signed AR.IO r84 indexes and answer content-location requests from local disk. This improves the content discovery step; it does not replace ArNS resolution or store the websites themselves. Existing preview.13 readers can use an updated supporter. [Setup and limits](docs/shared-index.md).
+Supporters can now import signed AR.IO r84 indexes and answer content-location requests from local disk. This improves the content discovery step; it does not replace ArNS resolution or store the websites themselves. Existing preview.13 readers can use an updated supporter. [Setup and limits](docs/shared-index.md). [Live rollout evidence](docs/validation/index-sharing-2026-10-05.md).
 
 ## Choose your path
 

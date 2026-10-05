@@ -10,7 +10,7 @@ Amaç, erişimi sürdürme yükünü paylaşmaktır. Destekçiler VPS veya Raspb
 
 ## Güncel destekçi geliştirmesi
 
-Destekçiler, imzalı AR.IO r84 indekslerini indirip içerik konumlarını yerel diskten Mesh kullanıcılarına sunabilir. Bu, dosyanın yerini bulmayı geliştirir; ArNS isim çözümünün veya site dosyalarını saklamanın yerine geçmez. Mevcut preview.13 kullanıcıları güncellenmiş destekçiden yararlanabilir. [Kurulum ve sınırlar](docs/shared-index.md).
+Destekçiler, imzalı AR.IO r84 indekslerini indirip içerik konumlarını yerel diskten Mesh kullanıcılarına sunabilir. Bu, dosyanın yerini bulmayı geliştirir; ArNS isim çözümünün veya site dosyalarını saklamanın yerine geçmez. Mevcut preview.13 kullanıcıları güncellenmiş destekçiden yararlanabilir. [Kurulum ve sınırlar](docs/shared-index.md). [Canlı kurulum ve test sonuçları](docs/validation/index-sharing-2026-10-05.md).
 
 ## Nereden başlamalıyım?
 
