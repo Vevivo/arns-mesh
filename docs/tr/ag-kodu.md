@@ -12,7 +12,7 @@ Bu yol **preview.8 ve üzerindeki** masaüstü ve peer içindir. Eski peer'ler i
 | Ağ daveti (`mesh1.…`) | Ağa katılmak için açık ağ anahtarı ve başlangıç adresleri |
 | Bağlantı profili (`mesh-connect.json`) | Eski/elle kullanılan kaynak ayarı; site dosyası değildir |
 
-**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılır, bugün için erişilebilir adresinizi ağ yöneticisine ekletirsiniz. Yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. Otomatik duyuru [planlanıyor](paylasilan-ag.md).
+**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılırsınız. Preview.13 erişilebilir içerik adresini otomatik duyurur; yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. [İşleyiş ve sınırlar](paylasilan-ag.md).
 
 Aşağıdaki bölümler bugünkü bağlantı mekanizmasını ve gelişmiş sağlayıcı işlemlerini anlatır. Hedef üründe kod gelişmiş/kurtarma yolu olarak kalabilir; normal kullanıcı hazırlanmış bağlantılı indirmeyle başlayacaktır. Bugünkü standart ZIP'lerde bağlantı ayarı hâlâ gerekir.
 
@@ -64,7 +64,7 @@ bash scripts/install-peer.sh --network 'SAGLAYICIDAN_ALDIGIM_MESH1_KODU'
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Tırnak içindeki örneği gerçek kodun tamamıyla değiştir. Sunucu bu ağın kaynak listesini edinir ve güncel tutar. **Ağ listesine otomatik kaydolmuş olmaz.** Ağ yetkilisi yeni sunucunun erişimini ve faydalı içeriğini kontrol ederek onu kullanıcı profiline ekler, `publish` komutunu aynı anahtar/veri diziniyle tekrar çalıştırır.
+Tırnak içindeki örneği gerçek kodun tamamıyla değiştir. Sunucu bu ağın kaynak listesini edinir ve güncel tutar. Preview.13'te erişilebilir içerik adresini otomatik duyurur; yeni sürüm peer ve okuyucular bunu öğrenir. İmzalı yetkili listesi değişmez, isim yetkisi verilmez. Eski sürümler için yönetici adresi listeye ekleyip `publish` ile yeniden yayımlar. [Yeni davranış ve sınırlar](paylasilan-ag.md).
 
 Güncelleme kurulumu mevcut kaynak ayarlarını korur. Mevcut sunucuyu bilinçli olarak başka ağa geçirmek için peer'i durdur, veriyi yedekle, ardından `node scripts/network.mjs join 'GERCEK_KOD' --data VERI_DIZINI` çalıştır ve yeniden başlat. Bu komut kaynağı değiştirir; masaüstündeki gibi ikinci bir onay ekranı göstermez.
 

@@ -1,40 +1,38 @@
-# Status and evidence
+# Release status and evidence
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-Checked **5 October 2026**. Runtime on `main` and latest published release: **preview.8**. Latest tested development candidate: **preview.12**, source [cbd55a7](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e), [unmerged PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Documentation publication does not publish that candidate's code or a new binary.
+Documentation reviewed on **6 October 2026**. This is a community preview, not a declaration of a complete stable release.
 
-## Available, candidate, planned
+## Which version?
 
-| Capability | Status |
-|---|---|
-| Desktop ArNS navigation and verified Mesh/raw bytes | Published; coverage is incomplete |
-| Connection invitation and signed source-list updates | Published preview.8 |
-| Included-network automatic startup | Implemented packaging option; standard public ZIPs do not include an invitation |
-| Bounded retained-name recovery and atomic site preparation | Preview.12 candidate, introduced in preview.9 |
-| Local topic search and desktop connection monitor | Preview.12 candidate; catalogue scope and observed endpoint counts are limited |
-| New compact Home and custom Mesh window icon | Preview.12 candidate |
-| Self-announcing new supporters and automatic peer exchange | Planned; no user-facing enrollment button |
-| Per-content measured source selection and automatic replica placement/repair | Planned |
-| Desktop storage sharing | Not implemented; reader has no public serving listener |
-| Full Arweave/CDB64 replica, universal name coverage | Not provided |
-| Raspberry Pi hardware acceptance, independent-provider failover | Pending |
+- **Windows:** [v0.5.0-preview.13](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13), source `94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b`. The existing ZIP is unchanged.
+- **Updated supporter:** the [installation guide](supporter.md) pins `37d51c79614c389b515b43d4a3bd92f9bd5083d2`, including R84 integration and preparation fixes.
+- **Default branch:** `main` still has the earlier preview.8 runtime. These docs do not merge the feature branch or deploy code.
 
-## Reproducible evidence
+## Demonstrated
 
-| Build | Evidence | Boundary |
+| Evidence | Result | Scope |
 |---|---|---|
-| Preview.12 | [Run 37259769203](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203): 168 source tests on Linux/Windows, 10 Windows UI checks from extracted candidate ZIP | Signed synthetic documents and controlled loopback services; not independent infrastructure or a new OS-level outage test |
-| Preview.8 | [Connection acceptance](../network-join.md): join, list update after first directory process loss, included-network startup, saved reopen/restart | Directory processes shared one host; live sources stayed available |
-| Preview.7 | [Resource/outage evidence](../arweave-resources.md): four public main documents and supported media under Windows DNS/gateway restrictions | Existing Mesh and numeric-IP RPC remained reachable |
-| Earlier replica experiment | [Detailed outage report](../disaster-network.md) | Same-machine replicas and available remote raw nodes are not independent-provider failover |
+| Published preview.13 CI | 175 source tests on Linux/Windows and 12 packaged Windows UI checks | Controlled discovery, restart, invalid data and original catalogue relay; see [release evidence](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) |
+| R84 integration | 189 Linux source tests; three real content samples fetched and verified | [5 October rollout](../validation/index-sharing-2026-10-05.md); earlier integration also ran Linux/Windows/package CI |
+| Read-only live inspection | 70,909,101 usable index entries, three of five bands, 13,220 retained name records and 1,322 stored content objects | Point-in-time server report at 2026-10-05 21:25 UTC; [record](../validation/read-only-status-2026-10-06.md) |
+| Windows-to-supporter cached-object check | All three named samples returned signed name records and verified original content | Direct numeric-IP requests with `cacheOnly=true`; not a whole-site or OS-isolated outage test |
 
-Candidate ZIP: [windows-preview artifact](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323968857). UI evidence: [windows-search-ui artifact](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323719745). These are time-limited Actions artifacts (14-day retention), not permanent release assets; GitHub sign-in may be required.
+These counts are not global coverage, unique website counts, or a promise of current name freshness. The reference service had 22 ready records out of 32 prepared site records; readiness is scoped and names can share files.
 
-## Remaining work before the shared network claim
+## Remaining release work
 
-Use the [agreed design and acceptance conditions](shared-network.md). Test real independent hosts with actual prepared copies, new-peer discovery by an existing reader, original-provider loss and simultaneous RPC/raw outages. Exercise missing/stale/invalid data, announce flooding, capacity limits and expired authority lists. Record which peers held which versions before the outage; an empty server is not a backup.
+- Real independent-provider loss with prepared replicas and surviving name authority/entry points.
+- Automatic placement and repair of independent replicas.
+- Full acceptance on real Raspberry Pi hardware and public/home NAT configurations.
+- Wider verification of complete site resources, external dependencies and newly registered names.
+- Operator handling of index publisher 402/429/504 responses, quotas and finite storage.
 
-The owner's two-PC test is deferred until those machines are available. Two browser installs alone are not two serving peers. Full egress packet capture and real Pi performance are pending. Application HTTP logs and “responding” indicators have narrower meanings.
+At the live inspection, content preparation had exhausted its daily budget, the R84 import was incomplete, and the reference supporter reported no learned additional supporters. Those are operational findings, not claims that a redundant multi-provider deployment exists.
 
-Keep released, candidate, controlled-fixture and real-network evidence separate. A successful compile or green source CI does not establish disaster readiness or global coverage. [Architecture](architecture.md) · [Candidate recovery](../resilient-access.md).
+## What “final” would need to mean
+
+Define the supported sites, environments and failure cases, then meet their [acceptance procedure](resilience.md). Keep evidence of actual copies on separate hosts and reader recovery after losing the original source. A documentation refresh, a high index count or a passing source test cannot establish that alone.
+
+[User guide](user.md) · [Supporter guide](supporter.md) · [Developer guide](developer.md).

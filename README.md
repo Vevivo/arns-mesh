@@ -1,81 +1,69 @@
 # ArNS Mesh
 
-**Open ArNS sites through reachable peers, even when ordinary domain and gateway access is disrupted.**
+**Open ArNS websites through a network of supporters.**
 
-ArNS Mesh is an independent community project with a Windows browser and a separate Linux supporter service. Enter `ar://name`: Mesh finds the name's content, retrieves available files and verifies their identity and signatures before displaying the page. The runtime uses numeric-IP sources rather than redirecting the reader to a gateway domain.
+[Windows download](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip) · [Start using Mesh](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
-The goal is to share the work of keeping sites reachable. Supporters contribute storage, name observations and content-location records on a VPS or Raspberry Pi. If raw Arweave and Solana RPC become unreachable, previously retained name records and actual content copies can provide a recovery path. **Working connectivity to a useful copy is still required. An index is not the file itself.**
+## What is Mesh?
 
-[Türkçe](README.tr.md) · [Use the browser](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/user.md) · [Run a supporter](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/supporter.md) · [Network design](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/shared-network.md)
+ArNS Mesh is an independent community project for reading ArNS websites. Type `ar://name` into the Windows browser. Mesh finds the name's content, retrieves available files and checks their identity and signatures before displaying them.
 
-## Current supporter update
+Its purpose is to keep useful copies and routes available when ordinary domain or gateway access is disrupted. The reader uses numeric-IP sources; it does not redirect the page to `name.ar.io` or another gateway domain. Internet connectivity to a useful source is still required.
 
-Supporters can now import signed AR.IO r84 indexes and answer content-location requests from local disk. This improves the content discovery step; it does not replace ArNS resolution or store the websites themselves. Existing preview.13 readers can use an updated supporter. [Setup and limits](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/shared-index.md). [Live rollout evidence](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/validation/index-sharing-2026-10-05.md).
+## Choose how to participate
 
-## Choose your path
-
-| I want to… | What I need | Start here |
+| I want to… | What I need | Guide |
 |---|---|---|
-| Open ArNS sites | Windows x64 browser and a working network connection configuration | [Download and first start](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/user.md) |
-| Help store and serve sites | Reachable Linux VPS or 64-bit Raspberry Pi, disk and bandwidth | [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/supporter.md) |
-| Report a problem or suggest an improvement | Version, failed step and a clear description | [Feedback](CONTRIBUTING.md) |
+| Try Mesh and browse sites | Windows x64, the application ZIP and an operator's connection code | [User guide](docs/en/user.md) |
+| Contribute storage and bandwidth | A reachable Linux VPS or a 64-bit Raspberry Pi | [Supporter guide](docs/en/supporter.md) |
+| Understand or develop the software | The matching source revision and an isolated development environment | [Developer guide](docs/en/developer.md) |
 
-A supporter does not need to write code. One person can browse and operate a supporter. Ordinary desktop users do not need a server, wallet, Node.js or their own index. Installing the browser does not automatically share their storage.
+A browser installation is a **reader**. A supporter runs a separate service on a server or Pi. Installing two browsers does not create two content-serving supporters.
 
-## Downloads and actual status
+## How it works
 
-| Track | Available now | Download / source |
-|---|---|---|
-| **Published preview.8** | Desktop browsing, saved copies, reusable network invitations and signed source-list updates | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Release and checksums](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8) |
-| **Published preview.13 prerelease** | Earlier recovery/search features + automatic supporter announcements, peer exchange and verified-source switching | [Windows x64 ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip) · [Source](https://github.com/Vevivo/arns-mesh/tree/94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b) · [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) |
-| **Next work** | Automatic placement and repair of independent content replicas | [Implemented behavior and limits](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/shared-network.md) |
+1. **Find the name:** obtain its target from available RPC observations or an accepted, dated record.
+2. **Find the content:** use Mesh supporters, stored location records and reachable raw Arweave sources.
+3. **Verify and open:** check the retrieved content, then display the page and supported resources.
 
-Status checked on **5 October 2026**. `main` still has the preview.8 runtime; the tested preview.13 Windows ZIP is published as a prerelease. New supporter source is on `feat/resilient-access`; the published ZIP has not been replaced. Use the permanent release link above. Neither standard ZIP includes an operator invitation. A separately prepared **Connected ZIP** can join its included network automatically on a fresh installation; this packaging capability already exists, but these standard downloads are not Connected packages.
+Supporters retain three different things: **name-to-content records, content locations, and actual files**. All three have a role. A large location index does not itself contain the websites.
 
-## Use Mesh today
+### The R84 improvement
 
-1. Download a **Windows application ZIP**, not GitHub's **Source code (zip)**.
-2. Extract the whole folder and open `Mesh-Browser.exe`.
-3. With a Connected package, let the included network connect. With a standard package, obtain a complete `mesh1.` invitation from a trusted operator and use **Settings → Mesh connection code → Check code → Join this network**. [Ask for connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if needed; availability is not guaranteed.
-4. Enter an ArNS name in Mesh's address bar. The candidate Home search additionally searches a downloaded, limited catalogue by topic.
-5. Use **Save current page** to retain supported files. Check whether the save is complete. Bookmarks only remember addresses.
+The supporter can read signed indexes introduced by AR.IO Release 84 from its own disk. This makes more content locations available without waiting for each website to be downloaded in the background. The existing preview.13 browser can use these replies.
 
-The intended everyday experience is **download, open, browse without entering a code**. Codes currently provide network identity and initial addresses; they are not licenses, passwords or paid activation. [Full user guide](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/user.md).
+The separate index updater uses HTTPS while preparing files; ordinary Mesh navigation reads the installed index through the supporter. Users do not download this large index. [How to add R84 indexes to a supporter](docs/shared-index.md).
 
-## How a name becomes a page
+## Download and first use
 
-1. **Find sources.** Use the included/imported configuration and previously accepted addresses. In preview.13, joined readers also learn identity-checked peer addresses automatically; publisher trust remains operator-managed.
-2. **Find the name's target.** When available, read Solana RPC observations over numeric IP and check the expected account structure. The candidate can use an accepted, dated local/provider observation after an availability failure.
-3. **Find the files.** Use retained content, Mesh peers and raw Arweave sources as available. Location records help find data; they do not contain that data.
-4. **Verify and display.** Check content identity and signatures, then open the page and supported assets. Historical name access is labelled; content verification alone does not prove the latest name mapping.
+1. Download the **[Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.13/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.13.zip)**.
+2. Extract the entire ZIP and open `Mesh-Browser.exe`.
+3. Obtain a complete `mesh1.` connection code from a trusted operator. Open **Settings → Mesh connection code → Check code → Join this network**.
+4. Enter an ArNS address such as `ar://vevivo` in Mesh's address bar.
 
-The client does not silently switch to a gateway domain. External APIs, ordinary domain-based services and non-Arweave CDN dependencies can remain unavailable. Supported immutable Arweave resource URLs in a page can be routed internally through Mesh/raw content. [Technical explanation](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/architecture.md).
+The standard public ZIP contains no connection code. Existing installations keep their connection settings. Codes are reusable network invitations; no wallet, payment or activation licence is needed. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
 
-## Why run a supporter?
+You do not need to operate a server or store the shared index to browse. The current browser does keep local settings, browsing state and a content cache; manually saving pages retains additional files. There is no zero-storage mode in this preview. [Storage details](docs/en/user.md#storage-on-your-computer).
 
-A useful supporter gives readers another reachable copy and shares indexing/storage work. It retains three different things: **dated name-to-content records**, **location hints**, and **verified content bytes**. With adequate preparation, another supporter can answer requests when the initial operator is unavailable.
+## Keeping access alive when a supporter stops
 
-A new empty server is not a backup. Relevant copies must exist on separate machines before an outage, and surviving peers need sufficient disk, memory and upload capacity. The candidate has bounded content preparation and measured routing to learned peers; it does not automatically assign or repair independent replicas.
+Preview.13 learns reachable supporters after joining the network and can switch content sources. To help during an outage, another independent machine must already hold the relevant files and accepted name records, and readers must know a reachable route to it.
 
-[Install on a VPS or Raspberry Pi](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/supporter.md). The quick path joins an existing network. Creating a separate network and distributing new codes is an advanced operator task, not a requirement for each supporter.
+**Discovery is implemented; automatic placement and repair of independent replicas are not.** A new empty server does not become a complete backup merely by joining. Follow the [preparation and failover guide](docs/en/resilience.md) before describing a supporter as a backup.
 
-## Automatic supporter discovery in preview.13
+## Current release and evidence
 
-A supporter joins with the existing invitation and signs an announcement of its public IP/port. Another peer connects back to verify its identity. Joined desktops learn and retain these routes about once a minute; users need no new code or profile when a supporter arrives. Requests prefer useful, responsive sources and reject invalid bytes. A new peer gains no name authority; it can relay original trusted publishers' signed records.
+**Windows: v0.5.0-preview.13, a community prerelease.** This documentation does not declare a stable 1.0 release or replace the published application.
 
-**Participating supporters and the desktop must be upgraded for this feature.** Initial contact, reachable ports and prepared real files are still required. The standard ZIP does not include an invitation. Automatic replica placement is not implemented. [Behavior and limits](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/shared-network.md).
+The server guide pins the source revision containing the deployed R84 integration. The source on `main` still has the older preview.8 runtime; use the pinned commands in the guide when installing a new supporter. [Release notes and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) · [Evidence and remaining work](docs/en/status.md).
 
-## What has been tested?
+Supported sites still depend on available name records and files. External APIs/CDNs can be unavailable, and verified historical content may not represent the latest name target.
 
-- **Preview.13:** 175 source tests on Linux/Windows and 12 real Windows UI checks passed. [Run](https://github.com/Vevivo/arns-mesh/actions/runs/37268859233). Controlled tests cover late enrollment, transfer after seed loss, restart, invalid announcement/content rejection and original name-signature relay. [Current test status](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/status.md).
+## Documentation
 
-- **Preview.12 candidate:** 168 source tests passed on Linux and Windows; 10 real Windows UI checks passed from the extracted ZIP. These used controlled services and signed test documents. [Exact run](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203).
-- **Published preview.8:** network joining, signed list updates, included-network startup and saved reopening were exercised in Windows. Directory replicas shared one host. [Evidence](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/network-join.md).
-- **Earlier preview.7:** four public main documents opened during a Windows DNS/gateway blocking experiment; supported media played. Existing Mesh and IP-based RPC remained available. [Evidence and limits](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/arweave-resources.md).
-- **Still pending:** independent-provider loss with real replicas, the owner's two-PC acceptance and Raspberry Pi hardware validation. Public multi-host discovery and NAT acceptance remain pending.
+- **Use:** [Windows](docs/en/user.md) · [Network monitor](docs/connection-monitor.md)
+- **Support:** [Start here](docs/en/supporter.md) · [VPS](docs/en/vps.md) · [Raspberry Pi](docs/en/raspberry-pi.md) · [R84 indexes](docs/shared-index.md) · [Failover preparation](docs/en/resilience.md)
+- **Develop:** [Source and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Peer discovery](docs/en/shared-network.md)
+- **Project:** [Status](docs/en/status.md) · [Feedback](CONTRIBUTING.md) · [Privacy](docs/en/privacy.md) · [Security](SECURITY.md) · [Licence](LICENSE)
 
-Mesh is not an official AR.IO, Arweave or Solana distribution. There is no universal site-coverage, instant-update or unlimited-offline-access guarantee. Direct Mesh/RPC HTTP is not an anonymity or encrypted-transport service. [Status](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/status.md) · [Privacy](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/privacy.md).
-
-## More information
-
-[Supporter setup](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/supporter.md) · [Connection terms and advanced network operations](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/network-code.md) · [Candidate recovery](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/resilient-access.md) · [Topic search](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/topic-search.md) · [Monitor indicators](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/connection-monitor.md) · [Source development](https://github.com/Vevivo/arns-mesh/blob/feat/resilient-access/docs/en/developer.md) · [Security](SECURITY.md) · [Apache-2.0](LICENSE) · [Attribution](NOTICE.txt)
+ArNS Mesh is not an official AR.IO, Arweave or Solana distribution.

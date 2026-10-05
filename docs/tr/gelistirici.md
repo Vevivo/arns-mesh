@@ -1,17 +1,25 @@
-# Kaynağı geliştirenler
+# ArNS Mesh geliştirme
 
-Depolama/indeks desteği vermek için kod değiştirmeniz gerekmez: [Destekçi kurulumu](destekci.md) yeterlidir. [Ortak ağ tasarımı](paylasilan-ag.md) planlanan otomatik katılım ve kopyalamayı anlatır; bunlar henüz uygulanmadı.
+[English](../en/developer.md) · [Ana sayfa](../../README.tr.md) · [Kod yazmadan destekçi olma](destekci.md)
 
-`main` yayımlanmış preview.8 kodudur. Test edilen preview.12 için [PR #9](https://github.com/Vevivo/arns-mesh/pull/9) içindeki `cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e` commit'ini ayrı kaynak/veri dizininde kullanın. Katkı tabanını seçerken PR durumunu kontrol edin. Gelişmiş paketleme [ağ davetini içeren Connected ZIP](ag-kodu.md) oluşturabilir.
+## Doğru kaynak sürümünü seçin
 
+| Amaç | Sürüm |
+|---|---|
+| Yayımlanmış Windows preview.13 dosyası | `94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b` |
+| R84 ve belgelenmiş hazırlık düzeltmelerini içeren destekçi | `feat/resilient-access` üzerindeki `37d51c79614c389b515b43d4a3bd92f9bd5083d2` |
+| Varsayılan dal | `main` hâlâ preview.8 uygulama kodunu içerir; belgeleri preview.13 kullanım yolunu anlatır |
 
-Bağlantı kodu protokolü, işletmeci araçları ve kodu içinde bulunan paket: [ağ rehberi](ag-kodu.md). İmzalı liste testleri değiştirilmiş imza, eski sürüm, iptal ve ayrı süreçlerde başlangıç noktası kaybını kapsar; Windows akışı gerçek paket arayüzünü kullanır. Masaüstünden içerik sunma ve ücretli erişim eklenmedi.
+Sunucu değişikliği Windows ZIP'ini değiştirmez. Destekçi için sabitlenen sürüm sonraki belgeleri de içerir; yayımlanmış masaüstü dosyasının kaynak kimliği değildir.
 
-Sunucu kurmak isteyenler için [VPS/Pi destekçi rehberi](destekci.md) yeterlidir. Bu sayfa kod ve paketleme içindir.
+Uygulama geliştirmesinde uygun sürümden **ayrı klasör ve veri diziniyle** başlayın. Katkı tabanını seçmeden [geliştirme PR'ını](https://github.com/Vevivo/arns-mesh/pull/9) kontrol edin. Belge güncellemeleri uygulama değişikliklerini birleştirmeden `main` dalına yöneltilebilir.
 
-Node.js 24 LTS (CI: 24.19.0), npm ve Git kullan. Repoyu yeni geliştirme dizinine klonla veya [preview.8 kaynak ZIP’ini](https://github.com/Vevivo/arns-mesh/archive/refs/tags/v0.5.0-preview.8.zip) çıkar ve bu dizine gir. Kaynak ZIP’i hazır masaüstü uygulaması değildir. Katkı için `main`, yayımlanan kaynağı yeniden üretmek için `v0.5.0-preview.8` etiketini kullan. Lockfile’ı değiştirmeden kur:
+## Kaynak kontrolleri
 
-```sh
+```bash
+git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-development
+cd arns-mesh-development
+git checkout --detach 37d51c79614c389b515b43d4a3bd92f9bd5083d2
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 npm run check:public
 npm test
@@ -19,21 +27,47 @@ node scripts/doctor.mjs examples/network-profile.example.json
 bash scripts/test-install.sh
 ```
 
-Son komut Linux/Bash'te geçici dizinde kurulum/güncelleme kontrolüdür; bağımlılık indiricisi test çiftiyle değiştirilir. CI gerçek bağımlılık kurulumunu ayrıca yapar. Örnek bağlantı profili yapısal olarak geçerlidir ama adresleri çalışmaz.
+Node.js 24 LTS kullanın; CI tabanı 24.19.0'dır. Son komut POSIX içindir ve kurucu testinde npm taklidi kullanır. CI ayrıca gerçek bağımlılık kurulumu yapar. Örnek profil çalışan sunucu adresi içermez. Üretim verisi gerekmez.
 
-`apps/browser` masaüstü ve İngilizce arayüz, `apps/helper` ortak çekirdek/profil, `apps/peer` arayüzsüz destekçi, `src` ağ/doğrulama/indeks kodudur. `apps/helper` son kullanıcıya ayrı uygulama kurdurmak anlamına gelmez.
+## Katmanlar
 
-Geliştirme için işletim sistemine uygun resmî Electron 44.4.3 kullan; sürümü sessizce değiştirme. `npm start`, PATH içinde Electron gerektirir. `ARNS_MESH_USER_DATA` ile ayrı test verisi seç; üretim verisine geliştirme kodu çalıştırma.
+Akış: **isim gözlemi → içerik kimliği → konum veya saklanmış kopya → içerik doğrulama → sayfa**.
 
-Windows paketi:
+R84 güncelleyicisi ayrı HTTPS sürecidir; doğrulanmış indeks bölümlerini destekçinin diskine hazırlar. Çalışan Mesh bunlardan konum bilgisi okur. İndeks ne dosyanın kendisidir ne de isim otoritesidir.
 
-```sh
+| Alan | Kaynak |
+|---|---|
+| Masaüstü ve yerel veri | `apps/browser` |
+| Profil, davet ve çalışma ayarları | `apps/helper` |
+| Sunucu | `apps/peer/main.mjs`, `apps/peer/embedded-peer.mjs` |
+| Doğrudan IP protokolü | `src/direct-peer.mjs` |
+| Keşif ve isim aktarımı | `src/peer-discovery.mjs`, `src/peer-directory.mjs`, `src/snapshot-relay.mjs` |
+| İçerik doğrulama ve saklama | `src/content-store.mjs`, `src/ans104.mjs` |
+| Hazırlık ve kotalar | `src/catalog-worker.mjs`, `src/site-pinner.mjs` |
+| R84 | `src/index-publication.mjs`, `scripts/configure-shared-index.mjs`, `scripts/sync-shared-index.mjs` |
+| Yerel durum | `src/operator-status.mjs`, `scripts/operator.mjs` |
+
+Yollar sabitlenmiş destekçi kaynağına aittir. Güncelleyiciyi tarayıcı veya kısıtlanmış destekçi sürecinin içine eklemeyin. Yeni destekçi içerik sunabilir; isimleri yeniden tanımlama yetkisi otomatik kazanmaz.
+
+## Masaüstü ve paketleme
+
+Projenin sabitlediği Electron'u kullanın; çalıştırmak için rastgele Electron sürümü eklemeyin. Geliştirme verisini `ARNS_MESH_USER_DATA` ile ayırın.
+
+Ayrı derleme makinesinde:
+
+```bash
 python scripts/download-electron.py --out ../electron-runtime
 python scripts/package-windows.py --runtime ../electron-runtime --out dist
 ```
 
-İndirici sabit resmî runtime SHA-256 değerini kontrol eder. CI kaynakları Linux/Windows'ta test eder, Windows paketi oluşturur ve aynı sürüm yoksa inceleme için **taslak önizleme sürümü** hazırlar. Repoyu public yapmaz, önceki sürüm dosyasını değiştirmez. Paketleme gerçek Windows sayfa kabulü değildir.
+Son destekçi kaynağından paket üretmek, yayımlanmış preview.13 ZIP'ini yeniden üretmek değildir. Yayımlanmış masaüstünün tabanı üstteki ayrı commit'tir. Connected paket, işletmecinin bilerek eklediği ağ davetini içerebilir; standart paket içermez. [Ağ ve paketleme](ag-kodu.md).
 
-Öncelikli katkılar: bağımsız konum üretimi, isim güncelliğini içerik kotasından ayırma, katalog RPC yedek geçişi, çok peer kopyalama, gerçek Windows/Pi ve tam ağ testi, büyük dosya akışı. Başarısız ismi başlangıç listesine ekleyerek kapsamı başarılı gösterme.
+## Doğrulama kapsamını koruyun
 
-Her deneyde gözlenen hata, kanıtlı neden/hipotez, alternatifler, seçilen deney, ölçülen sonuç ve sonraki adımı kaydet. Özel IP ve anahtarları kanıt diye yayımlama. [Ayrıntılı geliştirici rehberi](../en/developer.md), [gizlilik](gizlilik.md).
+Kaynak testi, aynı sunucuda ayrı süreç testi, Windows arayüz testi, saklanan nesneyi okuma ve bağımsız kesinti deneyi ayrı kanıtlardır. Birini diğerinin yerine koymayın.
+
+“Hazır” durumu kaydın belirtilen kapsamıyla sınırlıdır: tek HTML, dinamik sitenin tamamının arşivi değildir. Mevcut tarayıcı yerel veri yazar; disksiz modu yoktur. Bağımsız kopya yerleştirme/onarımı ve gerçek çok sağlayıcılı/Pi kabulü açık işlerdir.
+
+Yayımlamadan önce `npm run check:public` çalıştırın ve değişen dosyaları inceleyin. Canlı profil, kimlik, davet, günlük ve arşivleri repoya koymayın.
+
+[Ayrıntılı mimari (EN)](../en/architecture.md) · [Keşif](paylasilan-ag.md) · [R84](paylasilan-indeks.md) · [Kanıtlar](durum.md).

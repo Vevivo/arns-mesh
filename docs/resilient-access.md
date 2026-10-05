@@ -1,6 +1,6 @@
-# Resilient access — preview.12 source candidate
+# Resilient access — current supporter source
 
-This describes the **preview.12 candidate**, not the published preview.8 runtime on `main`. [Tested candidate source](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e).
+This describes the recovery features and the 5 October supporter queue update on `feat/resilient-access`. The published preview.13 Windows ZIP predates this server update; `main` still has the preview.8 runtime.
 The project owner operates the initial service. Ordinary desktop users read sites; they do not run a public peer. A supporter voluntarily runs another peer and stores useful copies. A developer can work on the code without hosting anything. The owner dashboard is local service administration, not a new public gateway.
 
 ## What survives which outage?
@@ -22,11 +22,21 @@ A machine that never received a name can obtain its dated mapping from a trusted
 
 ## Preparing useful copies
 
-The provider catalog periodically discovers registry names and rechecks each name/mint binding before storing a dated snapshot. Existing catalog targets alone are not promoted to trusted snapshots. Registry refresh is attempted at roughly 15-minute intervals, with a five-minute failure backoff. ANT targets are scanned incrementally, eight mints per pass, roughly once per minute plus work time. A full sweep can therefore take hours. Budgets, RPC limitations and timeouts extend this. **There is no promise to capture a change immediately or before an unexpected outage.**
+The provider catalog periodically discovers registry names and rechecks each name/mint binding before storing a dated snapshot. Existing catalog targets alone are not promoted to trusted snapshots. Registry refresh is attempted at roughly 15-minute intervals, with a five-minute failure backoff. If local validation times out after making progress, its next attempt can resume after one minute using bounded cached PDA derivations; account owner, name hash, expiry and binding checks still run. ANT targets are scanned incrementally, eight mints per pass, roughly once per minute plus work time. A full sweep can therefore take hours. Budgets, RPC limitations and timeouts extend this. **There is no promise to capture a change immediately or before an unexpected outage.**
 
 Optional preparation follows verified manifests and detectable immutable Arweave references. A candidate version is staged separately. Only after all discovered files are pinned does it replace the published prepared binding. Failure, restart or failed metadata publication preserves the old complete version. Superseded staging pins are cleaned up. Failed automatically selected candidates can rotate out after five minutes when the site limit is reached; complete versions and explicitly saved sites are retained.
 
 A document being saved is not evidence that every dynamic API, external CDN, computed URL, video or backend function was archived. Status reports document / manifest / detected references and missing files. Sites exceeding object, file-count, transfer or disk budgets remain incomplete. Index hints are not the files themselves. This candidate does not download a complete CDB64 corpus or all Arweave data.
+
+## Queue recovery update — 5 October 2026
+
+Name observations and content downloads use separate, persisted daily meters, including bytes received by failed requests. Each pass has a 60-second deadline and reserves up to 30 seconds for name validation, allowing a full registry check on a CPU-limited provider. Upgrading does not reset the existing content meter. Newly registered or rebound names get a rotating priority turn alongside normal registry scanning. A full registry sweep still takes time.
+
+The content scheduler alternates a persistent priority lane and the existing asset queue. It reserves 64 of 256 priority slots for bounded live reader requests; catalog roots use the remaining slots. Repeated requests retain backoff. Verified content remains mandatory. Request admission uses the existing per-peer limits; it is not an unbounded remote download API.
+
+Site preparation pins already verified local content while the download queue fills gaps. The raw scanner adds a bounded recent-block lane alongside catch-up, history and retries. It keeps earlier progress across restart; this does not produce a complete current index or guarantee any requested ID will be located.
+
+The local dashboard exposes both daily meters, priority objects and quota pauses. Process liveness alone is not evidence that names or downloads are progressing. Check registry time, retained observations, last successful content transfer and prepared versions separately.
 
 ## Provider configuration
 
@@ -39,7 +49,8 @@ Use the existing [VPS/Pi installation guide](en/supporter.md). The Windows reade
 | `ARNS_PREPARE_MAX_SITES` | 32 | Maximum site entries admitted by automatic preparation; explicit pins are separate |
 | `ARNS_CACHE_MIB` | 256 | Evictable verified content quota |
 | `ARNS_SAVED_MIB` | 512 | Shared pinned-content quota, including staged updates |
-| `ARNS_CATALOG_DAILY_MIB` | 64 | Catalog HTTP/Mesh response-body allowance per UTC day |
+| `ARNS_CATALOG_DAILY_MIB` | 64 | Content HTTP/Mesh response-body allowance per UTC day |
+| `ARNS_NAMES_DAILY_MIB` | 64 | Independent registry/ANT HTTP response-body allowance per UTC day |
 | `ARNS_INDEX_DAILY_MIB` | 64 | Separate raw-index discovery allowance |
 | `ARNS_OPERATOR_PORT` | off | Local read-only dashboard, e.g. 49742 |
 | `ARNS_UPSTREAM_FETCH` | 1 | Set 0 for a replica serving its existing data without background RPC/raw discovery or content warming |

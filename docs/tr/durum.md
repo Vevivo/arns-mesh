@@ -1,40 +1,38 @@
-# Durum ve test kanıtları
+# Sürüm durumu ve kanıtlar
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-**5 Ekim 2026** tarihinde kontrol edildi. `main` çalışma kodu ve son yayımlanmış sürüm: **preview.8**. Test edilmiş geliştirme adayı: **preview.12**, kaynak [cbd55a7](https://github.com/Vevivo/arns-mesh/tree/cbd55a7dfd5b754a4d3ac06e4c67dc4c83a4011e), [henüz birleştirilmemiş PR #9](https://github.com/Vevivo/arns-mesh/pull/9). Belgelerin yayımlanması aday kodu veya yeni uygulama paketini yayımlamaz.
+Belgeler **6 Ekim 2026** tarihinde gözden geçirildi. Proje topluluk ön sürümüdür; eksiksiz kararlı sürüm ilanı değildir.
 
-## Mevcut, aday ve planlanan
+## Hangi sürüm?
 
-| Özellik | Durum |
-|---|---|
-| ArNS gezintisi ve doğrulanmış Mesh/ham dosyalar | Yayımlandı; kapsam eksik |
-| Ağ daveti ve imzalı kaynak güncellemeleri | Yayımlanmış preview.8 |
-| İçinde ağ bulunan paketin otomatik katılımı | Paketleme seçeneği var; standart ZIP'lerde davet yok |
-| Tarihli isimle kurtarma, yeni sürümü ayrı hazırlama | Preview.12 adayı; preview.9'da eklendi |
-| Yerel konu araması ve bağlantı izleme | Preview.12 adayı; katalog kapsamı ve adres sayıları sınırlı |
-| Sade ana ekran ve Mesh pencere simgesi | Preview.12 adayı |
-| Yeni destekçinin kendini duyurması, otomatik adres paylaşımı | Planlandı; mevcut katılım düğmesi yok |
-| İçerik başına ölçülen kaynak seçimi, otomatik kopya yerleştirme/tamamlama | Planlandı |
-| Masaüstünden dosya sunma | Yok; okuyucu genel dinleyici açmaz |
-| Tam Arweave/CDB64 kopyası, bütün isimlere erişim | Sağlanmıyor |
-| Gerçek Pi testi, bağımsız sağlayıcı kaybı | Bekliyor |
+- **Windows:** [v0.5.0-preview.13](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13), kaynak `94ce5d293e3c97a78d1034b83ccbf1e21a2ee86b`. Mevcut ZIP değişmedi.
+- **Güncellenmiş destekçi:** [Kurulum rehberi](destekci.md), R84 ve hazırlık düzeltmelerini içeren `37d51c79614c389b515b43d4a3bd92f9bd5083d2` sürümünü sabitler.
+- **Varsayılan dal:** `main` eski preview.8 kodunu içerir. Belgeler özellik dalını birleştirmez veya sunucuya kod dağıtmaz.
 
-## Kanıtlar
+## Gösterilmiş sonuçlar
 
-| Sürüm | Ölçüm | Sınır |
+| Kanıt | Sonuç | Kapsam |
 |---|---|---|
-| Preview.12 | [37259769203](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203): Linux/Windows'ta 168 kaynak testi, gerçek ZIP'ten 10 Windows arayüz kontrolü | İmzalı test belgeleri ve kontrollü yerel servisler; bağımsız altyapı veya yeni ağ seviyesinde kesinti testi değil |
-| Preview.8 | [Bağlantı kabulü](../network-join.md): katılım, ilk liste süreci kaybından sonra güncelleme, hazır ağla başlangıç, kayıtlı yeniden açılış | Liste süreçleri aynı makinede, canlı kaynaklar erişilebilirdi |
-| Preview.7 | [Kaynak/kesinti kanıtı](../arweave-resources.md): Windows DNS/gateway kısıtları altında dört gerçek ana belge ve desteklenen medya | Mevcut Mesh ve IP tabanlı RPC erişilebilirdi |
-| Önceki kopya deneyi | [Ayrıntılı kesinti raporu](../disaster-network.md) | Aynı makinedeki kopyalar ve erişilebilir uzak ham kaynaklar bağımsız sağlayıcı kaybı kanıtı değildir |
+| Yayımlanmış preview.13 CI | Linux/Windows'ta 175 kaynak testi, paketlenmiş Windows'ta 12 arayüz kontrolü | Kontrollü keşif, yeniden başlatma, geçersiz veri ve orijinal katalog aktarımı; [sürüm kanıtı](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.13) |
+| R84 entegrasyonu | Linux'ta 189 kaynak testi; üç gerçek içerik alınıp doğrulandı | [5 Ekim uygulaması](../validation/index-sharing-2026-10-05.md); önceki entegrasyon sürümü Linux/Windows/paket CI'dan da geçti |
+| Canlı okuma kontrolü | 70.909.101 kullanılabilir konum kaydı, beş bölümden üçü, 13.220 saklanmış isim kaydı, 1.322 içerik nesnesi | 6 Ekim 00.25 Türkiye saati / 5 Ekim 21.25 UTC ölçümü; [kayıt](../validation/read-only-status-2026-10-06.md) |
+| Windows'tan destekçiye saklanmış nesne kontrolü | Üç örnekte de imzalı isim kaydı ve doğrulanmış asıl içerik alındı | Doğrudan sayısal IP ve `cacheOnly=true`; tüm site veya işletim sistemi düzeyinde yalıtılmış kesinti testi değil |
 
-[Aday ZIP](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323968857) · [Arayüz kanıtı](https://github.com/Vevivo/arns-mesh/actions/runs/37259769203/artifacts/11323719745). Actions dosyaları 14 gün tutulur; kalıcı sürüm dosyası değildir ve GitHub oturumu gerekebilir.
+Bu sayılar genel kapsam, tekil site sayısı veya bütün isimlerin güncellik garantisi değildir. Referans hizmette 32 hazırlanmış site kaydının 22'si kendi kapsamında hazırdı; birden fazla isim aynı dosyayı paylaşabilir.
 
-## Ortak ağı hazır saymadan önce
+## Açık işler
 
-[Kararlaştırılan tasarım ve kabul koşulları](paylasilan-ag.md) izlenir. Gerçek bağımsız cihazlarda hazırlanan kopyalarla; eski kullanıcının yeni peer'i öğrenmesi, ilk sağlayıcının kapanması ve RPC/ham Arweave'in birlikte kesilmesi denenir. Eksik/eski/hatalı kayıt, duyuru bombardımanı, kapasite sınırı ve süresi dolan listeler ölçülür. Kesintiden önce hangi sürümün hangi peer'de olduğu kaydedilir; boş sunucu yedek değildir.
+- Hazırlanmış bağımsız kopyalarla gerçek sağlayıcı kaybı; ayakta kalan isim otoritesi ve ilk bağlantı noktaları.
+- Bağımsız kopyaların otomatik yerleştirilmesi ve onarımı.
+- Gerçek Raspberry Pi donanımı ve ev/genel NAT koşullarında kabul.
+- Site kaynaklarının tamamı, haricî bağımlılıklar ve yeni isimlerde daha geniş doğrulama.
+- İndeks yayıncısının 402/429/504 yanıtlarının, kotaların ve sonlu depolamanın işletimi.
 
-Sahibin iki PC testi cihazlar kullanılabilir olana kadar ertelendi. İki tarayıcı kurulumu iki veri sunan peer oluşturmaz. Tam ağ paketi yakalama ve gerçek Pi performansı bekliyor. Uygulama HTTP kaydı ve “yanıt veriyor” göstergelerinin kapsamı daha dardır.
+Canlı kontrolde içerik hazırlığının günlük bütçesi dolmuştu; R84 indirmesi tamamlanmamıştı; referans destekçi öğrenilmiş ek destekçi bildirmiyordu. Bu ölçüm, bağımsız sağlayıcılarda yedekli kurulum var anlamına gelmez.
 
-Yayımlanmış sürüm, aday, test düzeneği ve gerçek ağ kanıtları ayrı tutulur. Yeşil kaynak testi felaket hazırlığı veya genel kapsam kanıtı değildir. [İşleyiş](../en/architecture.md) · [Adayda kurtarma](dayanikli-erisim.md).
+## “Final” için gereken
+
+Desteklenen siteleri, ortamları ve kesinti durumlarını tanımlayıp [kabul işlemini](dayaniklilik.md) karşılamak gerekir. Ayrı makinelerde gerçek kopyalar ve ilk kaynağın kaybından sonra okuyucu kurtarması ölçülmelidir. Belge yenilemek, yüksek indeks sayısı veya kaynak testinin geçmesi bunları tek başına kanıtlamaz.
+
+[Kullanıcı rehberi](kullanici.md) · [Destekçi rehberi](destekci.md) · [Geliştirici rehberi](gelistirici.md).

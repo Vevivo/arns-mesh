@@ -12,7 +12,7 @@ Requires **preview.8 or newer** on the desktop and peers publishing network list
 | Network invitation (`mesh1.…`) | A public network key and initial addresses used to join |
 | Connection profile (`mesh-connect.json`) | Legacy/manual source settings; not website files |
 
-**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). You join with the existing invitation and currently ask its operator to add your reachable address. You do not need to create another network or distribute your own codes. The automatic announcement flow is [planned](shared-network.md).
+**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. Preview.13 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
 
 The sections below document today's connection mechanism and advanced operator actions. Codes remain an optional advanced/recovery mechanism in the intended product; normal users should eventually receive a prepared connected download. Current standard ZIPs still need connection setup.
 
@@ -57,7 +57,7 @@ bash scripts/install-peer.sh --network 'COMPLETE_MESH1_CODE_FROM_OPERATOR'
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Replace the quoted placeholder. The peer follows that network's sources, but is **not automatically added to its published list**. The authority checks the new peer, adds its reachable address to the reader profile and republishes using the same authority data directory.
+Replace the quoted placeholder. In preview.13 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
 
 Updates preserve existing configuration. To deliberately join an existing installation, stop its peer, back up its data, run `node scripts/network.mjs join 'REAL_CODE' --data DATA_DIRECTORY`, then restart. The CLI invocation is explicit trust and does not show a second confirmation screen.
 
