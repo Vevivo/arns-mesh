@@ -89,3 +89,11 @@ test('legacy discovery targets queue missing retained names without manufacturin
  assert.equal(requested.length,2);assert.equal(resumed.state.cursor,1);assert.equal(writes,0);
  assert.equal(resumed.state.errors.length,2);assert.deepEqual(resumed.state.pendingNames,['missing','updated']);
 });
+
+test('broad default-program scans preserve migrated targets for fresh per-mint verification',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'catalog-migrated-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const catalog=new TargetCatalog({file:path.join(dir,'catalog.json'),rpc:async()=>({context:{slot:200},value:[await row('@','A'.repeat(43))]})});
+ catalog.state.registry=[{name:'migrated',mint}];catalog.state.registryAt=Date.now();catalog.state.slot=100;
+ catalog.state.targets.migrated={baseName:'migrated',mint,antProgram:mint,dataId:'B'.repeat(43),slot:101};
+ await catalog.refreshTargets();assert.equal(catalog.state.targets.migrated.dataId,'B'.repeat(43));
+});

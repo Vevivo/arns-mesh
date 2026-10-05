@@ -19,6 +19,16 @@ async function registryPda(name){
  if(registryPdas.size>=50000)registryPdas.delete(registryPdas.keys().next().value);
  registryPdas.set(name,value);return value;
 }
+// Derived addresses only. Each observation still validates owner, discriminator,
+// mint, raw name binding and slot; caching cannot promote source trust.
+const antPdas=new Map();
+async function antPda(mint,undername,program=MAINNET_PROGRAM_IDS.ant){
+ const key=program+'|'+mint+'|'+undername;
+ if(antPdas.has(key))return antPdas.get(key);
+ const [pda]=await getAntRecordPDA(mint,undername,program),value=String(pda);
+ if(antPdas.size>=50000)antPdas.delete(antPdas.keys().next().value);
+ antPdas.set(key,value);return value;
+}
 export async function decodeRegistry(response,{signal}={}){
  if(!Number.isSafeInteger(response?.context?.slot)||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_registry_response');
  const records=[],quarantine=[];
@@ -105,7 +115,7 @@ export class TargetCatalog {
      signal?.throwIfAborted();
      if(row.account.owner!==antProgram.programId)throw new Error('ant_owner_mismatch');
      const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
-     const ant=deserializeAntRecord(raw),[pda]=await getAntRecordPDA(record.mint,ant.undername,antProgram.programId);
+     const ant=deserializeAntRecord(raw),pda=await antPda(record.mint,ant.undername,antProgram.programId);
      if(String(pda)!==row.pubkey||String(ant.mint)!==record.mint)throw new Error('ant_binding_mismatch');
      if(ant.targetProtocol!==0||!validId(ant.transactionId))continue;
      if(ant.undername!=='@'&&!/^[a-z0-9-]{1,63}$/.test(ant.undername))continue;
@@ -134,7 +144,7 @@ export class TargetCatalog {
    signal?.throwIfAborted();
    if(row.account.owner!==MAINNET_PROGRAM_IDS.ant)throw new Error('ant_owner_mismatch');
    const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
-   const ant=deserializeAntRecord(raw),mint=String(ant.mint),[pda]=await getAntRecordPDA(mint,ant.undername);
+   const ant=deserializeAntRecord(raw),mint=String(ant.mint),pda=await antPda(mint,ant.undername);
    if(String(pda)!==row.pubkey)throw new Error('ant_binding_mismatch');
    const bases=namesByMint.get(mint);if(!bases){unregistered++;continue;}
    if(ant.targetProtocol!==0||!validId(ant.transactionId))continue;

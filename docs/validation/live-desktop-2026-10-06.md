@@ -57,3 +57,7 @@ The supporter served 15 requests, eight content chunks and 1,011,072 content byt
 6. Test independent-supporter takeover before promising that losing the current server is transparent.
 
 Production code, firewall and service configuration were not changed during this audit. Final publication remains pending these readiness gaps.
+
+## Follow-up: continuous preparation deployed
+
+The missing-location case for `cubetwist` was fixed by automatic server preparation. After the supporter upgrade, the same Windows application rendered its image with all access stages complete, one verified resource and no unavailable resources or script errors. See [the follow-up evidence](continuous-preparation-2026-10-06.md). The earlier ArDrive application-shell finding remains a separate compatibility observation; no successful full ArDrive application test is claimed here.

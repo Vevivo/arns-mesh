@@ -35,7 +35,7 @@ export class CatalogWorker {
   if(!Number.isSafeInteger(nameDailyBytes)||nameDailyBytes<1)throw new Error('invalid_names_budget');
   this.nameDailyBytes=nameDailyBytes;
   this.peer=peer;this.dailyBytes=dailyBytes;this.intervalMs=intervalMs;this.timer=null;this.stopped=true;this.running=null;
-  this.passTimeoutMs=passTimeoutMs;this.catalogTimeoutMs=Math.min(catalogTimeoutMs,Math.floor(passTimeoutMs/2));this.fetchContent=fetchContent;
+  this.passTimeoutMs=passTimeoutMs;this.catalogTimeoutMs=independentNames?Math.max(120000,catalogTimeoutMs):Math.min(catalogTimeoutMs,Math.floor(passTimeoutMs/2));this.fetchContent=fetchContent;
   this.mintsPerPass=Math.max(1,Math.min(32,mintsPerPass));this.bulkScan=bulkScan;
   this.client=client??createSwarmMeshClient({excludeWitnesses:[peer.witnessPeerId].filter(Boolean)});
   this.catalog=new TargetCatalog({file:path.join(dataDir,'target-catalog.json'),endpoint,snapshotStore,registryIntervalMs,hasContent:id=>Boolean(peer.contentStore.has?.(id))});
