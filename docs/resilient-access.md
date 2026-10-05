@@ -18,7 +18,7 @@ Automatic access first checks the live name. Only source availability failures a
 
 A retained binding is **an RPC observation or an explicitly trusted operator's assertion**, not a native account inclusion proof. Files are independently checked against their IDs and signatures. Page information and the mode badge distinguish historical access. Child `ar://` resources use the displayed page's binding so a name update does not mix two versions within one page.
 
-A machine that never received a name can obtain its dated mapping from a trusted reachable provider. A network authority can distribute the public witness IDs using a signed extension bound to its exact connection list. New readers verify it using the invitation's authority key. The normal v1 list is unchanged for preview.8 readers. Mirrors can copy both signed records without receiving the private key. An expired list cannot be newly joined; previously accepted addresses and witness identities remain available during outages. An isolated, fresh machine still needs a connection code/profile and a reachable initial peer.
+A machine that never received a name can obtain its dated mapping from a trusted reachable provider. A network authority can distribute the public witness IDs using a signed extension bound to its exact connection list. New readers verify it using the invitation's authority key. Mirrors can copy both signed records without receiving the private key. An expired list cannot be newly joined; previously accepted addresses and witness identities remain available during outages. An isolated, fresh machine still needs a connection code/profile and a reachable initial peer.
 
 ## Preparing useful copies
 

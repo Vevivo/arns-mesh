@@ -14,7 +14,7 @@ Her durumda Mesh peer'lerine ulaşan IP bağlantısı gerekir. Kopyası olmayan 
 
 Yeni kod, bağlantı sorunu olduğunda uygun kayıtlı sürüme otomatik geçer. Yeni hedefin dosyaları tamamlanmadıysa önceki hazırlanmış sürüm korunur. Yeni sürüm ayrı hazırlanır; gerekli bulunan dosyalar tamamlanmadan eskisinin yerini almaz. Sayfanın alt kaynakları da aynı tarihli isim eşleşmesini kullanır. İmza/isim yetkisi hataları güncel doğrulama başarılıymış gibi gösterilmez.
 
-Sağlayıcı, ağ kodunun imzalayan anahtarıyla hangi peer kimliklerinin tarihli isim kayıtlarına güvenileceğini bildirebilir. Kullanıcı dosya/anahtar taşımaz; ağın bağlantı bilgileriyle birlikte bu açık kimlikleri alır. Gizli anahtar paylaşılmaz. Preview.8'in bağlantı listesini okuyabilmesi korunur; yeni kurtarma bilgisi yeni sürüm içindir.
+Sağlayıcı, ağ kodunun imzalayan anahtarıyla hangi peer kimliklerinin tarihli isim kayıtlarına güvenileceğini bildirebilir. Kullanıcı dosya/anahtar taşımaz; ağın bağlantı bilgileriyle birlikte bu açık kimlikleri alır. Gizli anahtar paylaşılmaz.
 
 Sunucu güncel isimleri izleyip tarihli kayıtlar ve sınırlı sayıda hazırlanmış site tutabilir. Registry listesi yaklaşık 15 dakikada yenilenmeye çalışılır; hedefler her turda sekiz isim grubuyla artımlı taranır. Tüm tarama saatler sürebilir; kota ve hatalar süreyi uzatır. Bir isim değiştiği anda yakalama veya bütün ArNS sitelerini saklama garantisi yoktur. Otomatik hazırlık varsayılan olarak kapalıdır; sağlayıcı açar ve kotasını belirler. Bu çalışma bütün CDB64 indeksini indirmez.
 

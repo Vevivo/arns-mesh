@@ -14,10 +14,13 @@ import {applyProfile,validateProfile} from '../../apps/helper/network-profile.mj
 import {peerIdFromPublicKey} from '../../src/common.mjs';
 const dir=path.resolve(process.env.QA_OUTPUT),mode=process.argv[2];
 const names=['vevivo','bilolbabagate','bionica','ardrive-logo-2026'];
+const privateEndpoints=[];
+process.on('uncaughtException',error=>{let message=String(error.stack||error);for(const value of privateEndpoints)message=message.split(value).join('[operator-endpoint]');console.error(message);process.exit(1);});
 process.env.ARNS_MESH_DIRECT_ONLY='1';
 if(mode==='seed'){
  fs.mkdirSync(dir,{recursive:true});
  const profile=validateProfile(JSON.parse(process.env.MESH_QA_PROFILE));delete process.env.MESH_QA_PROFILE;
+ privateEndpoints.push(...[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).filter(Boolean).sort((a,b)=>b.length-a.length));
  assert.ok(profile.trustedPeers?.length,'The private QA profile must contain accepted name publishers');
  const peers=profile.directPeers.flatMap(parsePeerAddresses),envelopes=[],rows=[];
  const store=new VerifiedContentStore(path.join(dir,'provider','content'));

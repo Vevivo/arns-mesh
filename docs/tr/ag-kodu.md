@@ -2,7 +2,7 @@
 
 [Ana sayfa](../../README.tr.md) · [VPS / Pi kurulumu](destekci.md) · [English](../en/network-code.md)
 
-Bu yol **preview.8 ve üzerindeki** masaüstü ve peer içindir. Eski peer'ler içerik sunmaya devam edebilir; bağlantı listesi yayımlamak için güncellenmeleri gerekir. Yazılım güncellemesi çalışan sunucunu kendiliğinden değiştirmez.
+Masaüstü ve destekçi için **Mesh 0.5.0** kullanın. Masaüstünü güncellemek sunucudaki kurulumu değiştirmez.
 
 ## Hangisine ihtiyacım var?
 

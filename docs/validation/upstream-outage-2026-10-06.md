@@ -14,6 +14,8 @@ This test checks whether the production access engine can open real ArNS content
 
 The working service was not stopped, restarted or isolated.
 
+[Machine-readable results](upstream-outage-2026-10-06.json) from the 0.5.0 source run.
+
 ## Results
 
 | Result | Count |
