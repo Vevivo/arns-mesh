@@ -19,7 +19,9 @@ process.on('uncaughtException',error=>{let message=String(error.stack||error);fo
 process.env.ARNS_MESH_DIRECT_ONLY='1';
 if(mode==='seed'){
  fs.mkdirSync(dir,{recursive:true});
- const profile=validateProfile(JSON.parse(process.env.MESH_QA_PROFILE));delete process.env.MESH_QA_PROFILE;
+ const supplied=JSON.parse(process.env.MESH_QA_PROFILE);
+ if(!supplied.trustedPeers?.length&&process.env.QA_ACCEPTED_PUBLISHERS)supplied.trustedPeers=process.env.QA_ACCEPTED_PUBLISHERS.split(',').filter(Boolean);
+ const profile=validateProfile(supplied);delete process.env.MESH_QA_PROFILE;
  privateEndpoints.push(...[...profile.directPeers,...profile.rpcSources,...profile.arweavePeers].flatMap(x=>[x,x.slice(0,x.lastIndexOf(':'))]).filter(Boolean).sort((a,b)=>b.length-a.length));
  assert.ok(profile.trustedPeers?.length,'The private QA profile must contain accepted name publishers');
  const peers=profile.directPeers.flatMap(parsePeerAddresses),envelopes=[],rows=[];

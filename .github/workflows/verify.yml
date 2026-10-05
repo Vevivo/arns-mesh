@@ -68,6 +68,9 @@ jobs:
       - name: Prepare real public content for upstream outage acceptance
         env:
           MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}
+          # Public publisher identity already accepted by the operator's reader.
+          # It is a QA trust anchor, not a private key or application default.
+          QA_ACCEPTED_PUBLISHERS: '1330e51e4fc65597312fb9252cf457bf6e0efedf1075bd5d3e977f6dff239d7a'
           QA_OUTPUT: ${{ runner.temp }}/mesh-upstream-outage
         run: node qa/desktop/outage-peer.mjs seed
       - name: Open real ArNS sites with DNS, RPC and Arweave blocked for reader and supporter
