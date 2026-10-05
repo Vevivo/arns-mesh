@@ -19,6 +19,8 @@ Tested the user's existing Windows preview.13 application with its existing prof
 
 For cubetwist, a separate read-only metadata query to Turbo GraphQL found a manifest of 194,907 bytes, at block 2,015,157, with bundle parent `qNqsv2QORER5NH_MByRDLqG2KRDXkf20VwexInXMN9Y`. The installed shared-index lookup returned no hint. This metadata query did not alter the desktop transport or import unverified content into production.
 
+A subsequent isolated, read-only direct retrieval used that parent as an untrusted routing hint and verified the actual signed data item through raw Arweave peers. It succeeded in approximately nine seconds: 861,125 response bytes, 194,907 payload bytes, SHA-256 `724424ab41ec429d8e02f8cad4054b7b43d8e84f3afe637469a533efa836396c`. The manifest contained 3,263 paths. This establishes a location-freshness gap for this example, not loss of the manifest; it does not prove that every referenced file is available or fix the live application's failed navigation. No item or special-case hint was injected into production.
+
 ## Server observation
 
 At 2026-10-05 22:54 UTC (6 October locally):
