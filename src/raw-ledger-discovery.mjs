@@ -7,6 +7,7 @@ import {saveDiscoveredLocations} from './discovery-store.mjs';
 import {LocationIndex} from './location-index.mjs';
 import {withNetworkAudit} from './network-audit.mjs';
 import {indexPartition} from './index-partition.mjs';
+import {ChunkCache} from './resource-budget.mjs';
 const valid=id=>/^[A-Za-z0-9_-]{43}$/.test(id);
 const decode=s=>Buffer.from(String(s||''),'base64url').toString('utf8');
 const atomic=(file,data)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(data));fs.renameSync(file+'.tmp',file);};
@@ -40,7 +41,7 @@ export class RawLedgerDiscovery extends EventEmitter{
   if(!lanes.includes(this.state.nextLane))this.state.nextLane='retry';
   this.state.laneAttempts??={retry:0,history:0,live:0};
   this.state.retries=this.state.retries.slice(0,4096);this.state.queue=this.state.queue.slice(0,512);
-  this.sessionBytes=0;this.bundleChunks=new Map();this.current={phase:'idle',bytesThisPass:0,requestsThisPass:0,activeHeight:null};
+  this.sessionBytes=0;this.bundleChunks=new ChunkCache(4*1024*1024);this.current={phase:'idle',bytesThisPass:0,requestsThisPass:0,activeHeight:null};
   this.index=new LocationIndex(locationsFile);
  }
  status(){const {retries,queue,activeBlocks,...s}=this.state;const activeBlock=activeBlocks[this.current.lane];const frame=activeBlock?.work?.cursor?.frames?.at(-1);return {...s,laneAttempts:{...s.laneAttempts},...this.current,retryCount:retries.length,pendingBundleScans:retries.filter(x=>x.error==='nested_scan_pending').length,queuedBlocks:queue.length,pendingTailBlocks:Math.max(0,(this.state.observedTip??this.state.tip??0)-(this.state.tip??0)),historyActiveHeight:activeBlocks.history?.height??null,liveActiveHeight:activeBlocks.live?.height??null,activeTransaction:activeBlock?.position||0,activeBlockTransactions:activeBlock?.txIds?.length||0,activeBundleDepth:frame?.path.length||0,activeBundleItem:frame?.next??null,activeBundleItems:frame?.total??null,allHistoryCovered:false,byteBudgetPerPass:this.budgetBytes,sessionBytes:this.sessionBytes,dailyBudgetBytes:this.dailyBudgetBytes};}

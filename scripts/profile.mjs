@@ -12,8 +12,8 @@ export function run(args){
   const p=loadProfile(args[1]);console.log(JSON.stringify({valid:true,meshPeers:p.directPeers.length,rpcSources:p.rpcSources.length,rawArweavePeers:p.arweavePeers.length}));return;
  }
  const p={schema:profileSchema,directPeers:[],rpcSources:[],arweavePeers:[]};let output;
- for(let i=0;i<args.length;i+=2){const key=args[i],value=args[i+1];if(!value)throw new Error('Missing option value');if(key==='--peer')p.directPeers.push(value);else if(key==='--rpc')p.rpcSources.push(value);else if(key==='--arweave')p.arweavePeers.push(value);else if(key==='--output')output=value;else throw new Error('Unknown option: '+key);}
- if(!output)throw new Error('Usage: node scripts/profile.mjs --peer IP:PORT --rpc IP:PORT [--arweave IP:PORT] --output network-profile.private.json');
+ for(let i=0;i<args.length;i+=2){const key=args[i],value=args[i+1];if(!value)throw new Error('Missing option value');if(key==='--peer')p.directPeers.push(value);else if(key==='--rpc')p.rpcSources.push(value);else if(key==='--arweave')p.arweavePeers.push(value);else if(key==='--trust-peer')(p.trustedPeers??=[]).push(value);else if(key==='--output')output=value;else throw new Error('Unknown option: '+key);}
+ if(!output)throw new Error('Usage: node scripts/profile.mjs --peer IP:PORT --rpc IP:PORT [--arweave IP:PORT] [--trust-peer PUBLIC_WITNESS_ID] --output network-profile.private.json');
  fs.writeFileSync(output,JSON.stringify(validateProfile(p),null,2)+'\n',{mode:0o600,flag:'wx'});console.log('Created '+output+'. Share only the service addresses you intend recipients to use.');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){try{run(process.argv.slice(2));}catch(e){console.error(e.message);process.exitCode=1;}}

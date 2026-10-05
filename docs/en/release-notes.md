@@ -1,3 +1,11 @@
+# ArNS Mesh 0.5.0-preview.9 — candidate
+
+Automatic access now treats RPC and raw Arweave availability independently. It can use dated local or explicitly trusted provider observations when live name sources are unavailable, and a previously prepared version when the newest target cannot be fetched. Historical access remains labelled and content signatures are checked. Verification failures and explicit proof requirements are not treated as permission to downgrade name trust.
+
+Providers can retain rechecked catalog name observations, prepare bounded site copies, and keep the previous complete version while an update is incomplete. Transfers, parsed location shards, raw chunks and proof caches have tighter resource limits. Optional local-only monitoring shows preparation, queue errors and actual resources. Signed recovery witness extensions preserve the legacy connection-list format.
+
+See [configuration and precise limits](../resilient-access.md). Source tests cover the four upstream combinations with local HTTP fixtures, atomic version replacement, signed recovery trust, restart and expired lists. This candidate has not completed the owner's two-PC test, a new Windows OS-level outage acceptance or independent-provider failover. Desktop serving and a full replicated Arweave/CDB64 index are not added. Keep the published preview.8 package available while testing.
+
 # ArNS Mesh 0.5.0-preview.8
 
 Readers can now join an operator's network using a reusable connection code. The settings screen checks the signed list, shows its identity and sources, and asks the reader to join. An operator can also build a Connected ZIP with one invitation included for automatic joining on a fresh start. Existing configured sources are preserved.

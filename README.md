@@ -6,6 +6,8 @@ The aim is continued access when ordinary domains, DNS or gateways are unavailab
 
 **Current public preview: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Download Windows x64](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [Türkçe](README.tr.md)
 
+**Development candidate: preview.9** adds automatic outage recovery, dated name observations, atomic preparation of site versions and a local provider dashboard. It is separate from the published preview.8 ZIP. See [behavior, budgets and acceptance plan](docs/resilient-access.md). Two physical PCs and independent-provider failover remain pending.
+
 This is an experimental, independent community project, not an official AR.IO, Arweave or Solana release. Live name resolution still depends on numeric-IP Solana RPC observations. Universal first discovery and independent-host failover remain unfinished.
 
 ## Start here

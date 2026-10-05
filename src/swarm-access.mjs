@@ -12,6 +12,8 @@ import { detectConsensusEra } from './consensus-era.mjs';
 import { loadAndVerifyJournal, verifyJournal } from './transition-journal.mjs';
 import {withNetworkAudit,networkAuditSnapshot} from './network-audit.mjs';
 import {shareQuery} from './query-work.mjs';
+import {resolveWithRecovery} from './resilient-access.mjs';
+import {resolvePreparedName,validateSnapshot} from './name-snapshots.mjs';
 
 export function parseInput(raw){
   const value=String(raw||'').trim();
@@ -41,24 +43,27 @@ function memoState(name,quorum,run,signal){
   if(stateCache.size>128)stateCache.delete(stateCache.keys().next().value);return result;
  },{signal});
 }
-async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUORUM||2),onProgress=()=>{},contentStore=null,snapshotStore=null,accessPolicy='live',trustedPeers=[],signal}={}){
+async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUORUM||2),onProgress=()=>{},contentStore=null,snapshotStore=null,accessPolicy='live',trustedPeers=[],signal,contentSources='all',fixedSnapshot=null,nameTimeoutMs=15000}={}){
   signal?.throwIfAborted();
   const {name,requestedPath}=parseInput(raw);
   const progress=event=>onProgress({phase:'content',...event});
   if(!name) throw new Error('ArNS name required');
+  if(fixedSnapshot){validateSnapshot(fixedSnapshot,name);if(fixedSnapshot.provenance?.kind!=='local-rpc'&&!(fixedSnapshot.provenance?.kind==='trusted-peer'&&trustedPeers.includes(fixedSnapshot.provenance.witnessPeerId)))throw new Error('untrusted_snapshot_peer');}
   const client=createSwarmMeshClient({quorum});client.setName(name);
   let resolvedState=null;
 
-  const fetchById=dataId=>fetchMeshContent(dataId,{client,contentStore,onProgress:progress,signal:signal?AbortSignal.any([signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000)});
-  if(accessPolicy==='saved'){try{return await resolveSavedContent({name,requestedPath,snapshotStore,client,trustedPeers,fetchById,onProgress,signal});}finally{await client.stop();}}
+  const fetchById=dataId=>fetchMeshContent(dataId,{client,contentStore,contentSources,onProgress:progress,signal:signal?AbortSignal.any([signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000)});
+  if(accessPolicy==='saved'||fixedSnapshot){try{return await resolveSavedContent({name,requestedPath,snapshotStore,client,trustedPeers,fetchById,onProgress,signal,snapshot:fixedSnapshot});}finally{await client.stop();}}
   const deepProofs=process.env.MESH_DEEP_PROOFS==='1'||['CHAIN_PROOF_REQUIRED','ANT_UPDATE_PROOF_REQUIRED','TRANSITION_JOURNAL_REQUIRED'].some(k=>process.env[k]==='1');
 
   try{
     let witness=null,witnessError=null,live=null,liveError=null,stateEvidence=null,stateEvidenceError=null,authorizedUpdateProof=null,authorizedUpdateProofError=null,consensusEra=null,remoteProofBundles=null,transitionJournal=null,transitionJournalError=null,acceptedAnt=null,acceptedChain=null,acceptedJournal=null;
     onProgress({phase:'resolving',stage:'name',status:'active',message:'Reading name record from a Solana RPC IP…'});
     const snapshot=await memoState(name,quorum,async workSignal=>{
-      const [w,e]=await Promise.allSettled([deepProofs?client.resolve(name,{signal:workSignal}):Promise.resolve(null),buildArNSStateEvidence(name,{signal:workSignal}).then(r=>{onProgress({phase:'resolving',stage:'name',status:'done',message:'Name account read; locating content…'});return r;})]);
-      if(e.status==='rejected')throw new Error('current_name_state_unavailable: '+e.reason);
+      const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(Object.assign(new Error('name_source_timeout'),{code:'NAME_SOURCE_UNAVAILABLE'})),nameTimeoutMs);
+      const nameSignal=AbortSignal.any([workSignal,timeout.signal]);
+      let w,e;try{[w,e]=await Promise.allSettled([deepProofs?client.resolve(name,{signal:nameSignal}):Promise.resolve(null),buildArNSStateEvidence(name,{signal:nameSignal})]);}finally{clearTimeout(timer);}
+      if(e.status==='rejected'){const error=new Error('current_name_state_unavailable: '+e.reason);error.code=e.reason?.code;throw error;}
       return {witness:w.status==='fulfilled'?w.value:null,witnessError:w.status==='rejected'?String(w.reason):null,stateEvidence:e.value};
     },signal);
     ({witness,witnessError,stateEvidence}=snapshot);
@@ -255,6 +260,7 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
     };
     return {
       name,requestedPath,record,verification,consensusEra,snapshotSaveError,
+      accessSnapshot:{schema:'arns-mesh-name-snapshot/v1',name,txId:record.txId,antId:record.antId,observedAt:stateEvidence.generatedAt,slot:observed.slot,ttlSeconds:record.ttlSeconds,provenance:{kind:'local-rpc'}},
       arnsValidation:validation,
       chainStateProof,
       transitionJournal:transitionJournal?.result||null,transitionJournalError,
@@ -285,4 +291,19 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
   }
 }
 
-export function resolveAndFetchSwarm(raw,options={}){return withNetworkAudit(String(raw),()=>resolveAndFetchSwarmInner(raw,options));}
+export function resolveAndFetchSwarm(raw,options={}){return withNetworkAudit(String(raw),async()=>{
+ if(options.accessPolicy!=='auto'||options.fixedSnapshot)return resolveAndFetchSwarmInner(raw,options);
+ // Explicit strong-proof requirements never silently become historical access.
+ if(['CHAIN_PROOF_REQUIRED','ANT_UPDATE_PROOF_REQUIRED','TRANSITION_JOURNAL_REQUIRED'].some(k=>process.env[k]==='1'))return resolveAndFetchSwarmInner(raw,{...options,accessPolicy:'live'});
+ return resolveWithRecovery({signal:options.signal,onProgress:options.onProgress,
+  live:()=>resolveAndFetchSwarmInner(raw,{...options,accessPolicy:'live'}),
+  saved:()=>resolveAndFetchSwarmInner(raw,{...options,accessPolicy:'saved'}),
+  prepared:async()=>{
+   const {name}=parseInput(raw),client=createSwarmMeshClient();client.setName(name);
+   try{
+    const snapshot=await resolvePreparedName(name,{store:options.preparedSnapshotStore,client,trustedPeers:options.trustedPeers,signal:options.signal});
+    return resolveAndFetchSwarmInner(raw,{...options,accessPolicy:'saved',fixedSnapshot:snapshot});
+   }finally{await client.stop();}
+  }
+ });
+});}

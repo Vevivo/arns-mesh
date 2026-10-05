@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {decodeInvitation,validateInvitation,verifyNetwork,networkId,networkRecordHash,profileHash,MAX_NETWORK_BYTES} from '../../src/network-invitation.mjs';
+import {decodeInvitation,validateInvitation,verifyNetwork,networkId,connectionRecordHash,connectionProfile,verifyNetworkRecovery,profileHash,MAX_NETWORK_BYTES} from '../../src/network-invitation.mjs';
 import {parsePeerAddresses} from '../../src/direct-peer.mjs';
 import {requestIpJson} from '../../src/ip-transport.mjs';
 import {applyProfile,readProfile} from './network-profile.mjs';
@@ -14,11 +14,12 @@ export async function findNetwork(invitation,{signal,current=null,query=requestI
   bounded.throwIfAborted();const endpoint=seeds[cursor++];
   try{
    const peer=parsePeerAddresses(endpoint)[0];
-   const reply=await query({...peer,path:'/mesh/v1/query',method:'POST',body:{op:'network'},purpose:'mesh-peer',maxBytes:MAX_NETWORK_BYTES+256,timeout:3000,signal:bounded});
+   const reply=await query({...peer,path:'/mesh/v1/query',method:'POST',body:{op:'network',recovery:true},purpose:'mesh-peer',maxBytes:MAX_NETWORK_BYTES+4096,timeout:3000,signal:bounded});
    if(!reply?.ok||!reply.network)throw new Error('This peer does not publish network connections.');
    const payload=verifyNetwork(reply.network,invite,{now});
+   const trustedPeers=verifyNetworkRecovery(reply.recovery,reply.network,invite,{now});
    if(current&&payload.revision<current.revision)throw new Error('Older network revision rejected.');
-   results.push({payload,envelope:reply.network,endpoint});
+   results.push({payload,envelope:reply.network,recovery:reply.recovery||null,profile:connectionProfile(payload,trustedPeers),endpoint});
   }catch(error){errors.push(String(error.message).slice(0,180));}
  }}
  const work=await Promise.allSettled([worker(),worker()]);
@@ -27,7 +28,7 @@ export async function findNetwork(invitation,{signal,current=null,query=requestI
  // considering them; caller cancellation must never apply a late result.
  controller.abort();
  const hashes=new Map();
- for(const item of results){const hash=networkRecordHash(item.envelope);const known=hashes.get(item.payload.revision);if(known&&known!==hash)throw new Error('Conflicting signed lists for the same network revision.');hashes.set(item.payload.revision,hash);}
+ for(const item of results){const hash=connectionRecordHash(item.envelope,item.recovery);const known=hashes.get(item.payload.revision);if(known&&known!==hash)throw new Error('Conflicting signed lists for the same network revision.');hashes.set(item.payload.revision,hash);}
  if(current?.recordHash&&hashes.has(current.revision)&&hashes.get(current.revision)!==current.recordHash)throw new Error('A signed network revision was changed without increasing its revision.');
  results.sort((a,b)=>b.payload.revision-a.payload.revision);
  if(!results.length)throw new Error(errors[0]||work.find(r=>r.status==='rejected')?.reason?.message||'No network starting peer responded.');
@@ -42,7 +43,8 @@ export class NetworkConnection{
    const state=JSON.parse(fs.readFileSync(this.file));
    if(state?.schema==='arns-mesh-membership/v1'){
     const payload=verifyNetwork(state.envelope,state.invitation,{now:this.now(),allowExpired:true});
-    if(state.recordHash!==networkRecordHash(state.envelope)||state.profileHash!==profileHash(payload.profile))throw new Error('Invalid saved network membership.');
+    const profile=connectionProfile(payload,verifyNetworkRecovery(state.recovery,state.envelope,state.invitation,{now:this.now(),allowExpired:true}));
+    if(state.recordHash!==connectionRecordHash(state.envelope,state.recovery)||state.profileHash!==profileHash(profile))throw new Error('Invalid saved network membership.');
     this.state={...state,payload};
     if(profileHash(readProfile(dataDir))!==state.profileHash){this.state=null;this.error='Connections were changed manually. Automatic network updates are paused.';}
    }
@@ -63,7 +65,7 @@ export class NetworkConnection{
   const work=(async()=>{
    const current=this.state?.invitation.key===invitation.key?{...this.state.payload,recordHash:this.state.recordHash}:null;
    const found=await findNetwork(invitation,{signal:bounded,current,query:this.query,now:this.now()});
-   if(found.payload.revision!==expectedRevision||networkRecordHash(found.envelope)!==expectedHash)throw new Error('The connection list changed. Review the network again before joining.');
+   if(found.payload.revision!==expectedRevision||connectionRecordHash(found.envelope,found.recovery)!==expectedHash)throw new Error('The connection list changed. Review the network again before joining.');
    bounded.throwIfAborted();if(epoch!==this.epoch)throw new Error('Network connection cancelled.');
    this.commit(invitation,found);return this.status();
   })();
@@ -72,9 +74,10 @@ export class NetworkConnection{
   finally{if(this.running===work){this.running=null;this.controller=null;}}
  }
  commit(invitation,found){
-  const {payload,envelope}=found;
-  const state={schema:'arns-mesh-membership/v1',invitation,envelope,recordHash:networkRecordHash(envelope),profileHash:profileHash(payload.profile)};
-  applyProfile(this.dataDir,payload.profile,{networkState:state});
+  const {payload,envelope,recovery}=found;
+  const profile=found.profile||payload.profile;
+  const state={schema:'arns-mesh-membership/v1',invitation,envelope,...(recovery?{recovery}:{}),recordHash:connectionRecordHash(envelope,recovery),profileHash:profileHash(profile)};
+  applyProfile(this.dataDir,profile,{networkState:state});
   this.state={...state,payload};this.error=null;this.lastChecked=this.now();this.onChange(this.status());
  }
  async refresh({signal}={}){

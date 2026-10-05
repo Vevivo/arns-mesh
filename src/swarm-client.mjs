@@ -138,10 +138,10 @@ export function createSwarmMeshClient({
       lastName=n;
       return r;
     },
-    async snapshot(name,{trustedPeers=[],signal}={}){
+    async snapshot(name,{trustedPeers=[],signal,prepared=false}={}){
       const n=String(name).toLowerCase();
-      const candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
-        semanticKey:(record,env)=>{if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');}});
+      const candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n,...(prepared?{prepared:true}:{})},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
+        semanticKey:(record,env)=>{if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');if(prepared&&record.prepared!==true)throw new Error('prepared_snapshot_required');const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');}});
       candidates.sort((a,b)=>b.record.slot-a.record.slot);
       const winner=candidates[0];if(candidates.some(x=>x.record.slot===winner.record.slot&&(x.record.txId!==winner.record.txId||x.record.antId!==winner.record.antId)))throw new Error('snapshot_conflict');
       knownPeers=[...new Set([...knownPeers,...winner.providers.map(p=>p.noisePublicKey).filter(Boolean)])];return winner;
@@ -154,7 +154,7 @@ export function createSwarmMeshClient({
       });
     },
     async locate(dataId){return (await this.locateCandidates(dataId))[0];},
-    async content(dataId,{onProgress=()=>{},signal}={}){
+    async content(dataId,{onProgress=()=>{},signal,cacheOnly:requestCacheOnly=cacheOnly}={}){
       const excluded=[];let failure;
       for(let attempt=0;attempt<4;attempt++){
       const providers=new Set();
@@ -162,7 +162,7 @@ export function createSwarmMeshClient({
       const parts=[];let offset=0,total=null,hash=null;
       do{
         signal?.throwIfAborted();
-        const r=await ask({mode:'topic',topics:[contentTopic(dataId),...(lastName?[swarmTopic('name',lastName)]:[])],peerKeys:knownPeers,request:{op:'content',dataId,offset,...(cacheOnly?{cacheOnly:true}:{})},quorum:1,timeoutMs:5000,bootstrapFile,signal,excludeWitnesses:excluded,semanticKey:x=>[x.dataId,x.offset,x.total,x.sha256].join('|')});
+        const r=await ask({mode:'topic',topics:[contentTopic(dataId),...(lastName?[swarmTopic('name',lastName)]:[])],peerKeys:knownPeers,request:{op:'content',dataId,offset,...(requestCacheOnly?{cacheOnly:true}:{})},quorum:1,timeoutMs:5000,bootstrapFile,signal,excludeWitnesses:excluded,semanticKey:x=>[x.dataId,x.offset,x.total,x.sha256].join('|')});
         for(const p of r.providers)providers.add(p.witnessPeerId);
         knownPeers=[...new Set([...knownPeers,...r.providers.map(p=>p.noisePublicKey).filter(Boolean)])];
         const c=r.record;

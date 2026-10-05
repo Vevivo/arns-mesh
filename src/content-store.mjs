@@ -26,7 +26,7 @@ export class VerifiedContentStore extends EventEmitter{
   pinnedIds(){return new Set(Object.values(this.pins).flat());}
   savePins(){fs.writeFileSync(this.pinsFile+'.tmp',JSON.stringify(this.pins),{mode:0o600});fs.renameSync(this.pinsFile+'.tmp',this.pinsFile);}
   async pin(id,group){
-    if(!/^[a-z0-9_-]{1,255}$/.test(group))throw new Error('invalid_pin_group');
+    if(!/^[a-z0-9_-]{1,255}$/.test(group)&&!/^site:[a-f0-9]{64}:[A-Za-z0-9_-]{43}$/.test(group))throw new Error('invalid_pin_group');
     const raw=this.get(id);await verifyStoredContent(raw,id);
     const wanted=this.pinnedIds();wanted.add(id);const bytes=this.stats().files.filter(f=>wanted.has(f.dataId)).reduce((sum,f)=>sum+f.size,0);
     if(bytes>this.maxPinnedBytes)throw new Error('pin_budget_exceeded');

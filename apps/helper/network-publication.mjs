@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {signNetwork,verifyNetwork,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,MAX_NETWORK_BYTES,MAX_NETWORK_AGE} from '../../src/network-invitation.mjs';
+import {signNetwork,verifyNetwork,signNetworkRecovery,verifyNetworkRecovery,connectionProfile,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,MAX_NETWORK_BYTES,MAX_NETWORK_AGE} from '../../src/network-invitation.mjs';
 import {validateProfile} from './network-profile.mjs';
 
 function readJson(file,max=MAX_NETWORK_BYTES){if(fs.statSync(file).size>max)throw new Error('Network file is too large.');return JSON.parse(fs.readFileSync(file,'utf8'));}
@@ -13,6 +13,9 @@ export function readNetworkPublication(dataDir){
   return record.envelope;
  }catch(error){if(error.code==='ENOENT')return null;throw new Error('Invalid local network publication: '+error.message);}
 }
+export function readNetworkRecovery(dataDir){
+ try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true});return record.recovery||null;}catch(error){if(error.code==='ENOENT')return null;throw error;}
+}
 export function publishNetwork({dataDir,profile,name,seeds=profile.directPeers.slice(0,8),local=false,days=14,now=Date.now()}){
  const p=validateProfile(profile);if(!Number.isInteger(days)||days<1||days>MAX_NETWORK_AGE/86400000)throw new Error('Choose 1 to 30 days for a connection-list publication.');
  fs.mkdirSync(dataDir,{recursive:true,mode:0o700});
@@ -22,19 +25,21 @@ export function publishNetwork({dataDir,profile,name,seeds=profile.directPeers.s
   try{identity=readJson(keyFile,4096);}catch(error){if(error.code!=='ENOENT')throw error;identity={schema:'arns-mesh-network-authority/v1',privateKey:crypto.generateKeyPairSync('ed25519').privateKey.export({format:'pem',type:'pkcs8'}),revision:0};}
   if(identity.schema!=='arns-mesh-network-authority/v1'||!Number.isSafeInteger(identity.revision)||identity.revision<0)throw new Error('Invalid network authority state.');
   const invitation=validateInvitation({version:1,key:networkPublicKey(identity.privateKey),seeds,local});
-  const payload={schema:'arns-mesh-network/v1',name,revision:identity.revision+1,issuedAt:now,expiresAt:now+days*86400000,profile:p};
+  const {trustedPeers,...legacyProfile}=p;
+  const payload={schema:'arns-mesh-network/v1',name,revision:identity.revision+1,issuedAt:now,expiresAt:now+days*86400000,profile:legacyProfile};
   const envelope=signNetwork(payload,identity.privateKey,{local,now});
+  const recovery=trustedPeers?.length?signNetworkRecovery(envelope,trustedPeers,identity.privateKey):null;
   // Persist the sequence first; a crash may skip a revision, never reuse one.
   identity.revision=payload.revision;writeJson(keyFile,identity);
-  writeJson(path.join(dataDir,'network-announcement.json'),{invitation,envelope});
+  writeJson(path.join(dataDir,'network-announcement.json'),{invitation,envelope,...(recovery?{recovery}:{})});
   return {name:payload.name,revision:payload.revision,expiresAt:payload.expiresAt,code:encodeInvitation(invitation)};
  }finally{fs.rmdirSync(lock);}
 }
-export function mirrorNetwork(dataDir,invitation,envelope){
- verifyNetwork(envelope,invitation);fs.mkdirSync(dataDir,{recursive:true,mode:0o700});
+export function mirrorNetwork(dataDir,invitation,envelope,recovery=null){
+ verifyNetwork(envelope,invitation);verifyNetworkRecovery(recovery,envelope,invitation);fs.mkdirSync(dataDir,{recursive:true,mode:0o700});
  const file=path.join(dataDir,'network-announcement.json');
  try{const old=readJson(file,MAX_NETWORK_BYTES+4096);const previous=verifyNetwork(old.envelope,invitation,{allowExpired:true});const next=verifyNetwork(envelope,invitation);if(next.revision<previous.revision||next.revision===previous.revision&&old.envelope.recordJson!==envelope.recordJson)throw new Error('Older or conflicting network publication rejected.');}catch(error){if(error.code!=='ENOENT')throw error;}
- writeJson(file,{invitation,envelope});
+ writeJson(file,{invitation,envelope,...(recovery?{recovery}:{})});
 }
 export function bundledNetworks(coreRoot){
  let rows;try{rows=readJson(path.join(coreRoot,'resources','networks.json'),32768);}catch(error){if(error.code==='ENOENT')return [];throw error;}
@@ -52,5 +57,6 @@ export function renewNetworkPublication(dataDir,{now=Date.now()}={}){
  if(payload.expiresAt-now>3*86400000)return null;
  const identity=readJson(keyFile,4096);
  if(networkPublicKey(identity.privateKey)!==record.invitation.key)throw new Error('A mirror cannot renew another network authority’s list.');
- return publishNetwork({dataDir,profile:payload.profile,name:payload.name,seeds:record.invitation.seeds,local:record.invitation.local,days:14,now});
+ const trustedPeers=verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true,now});
+ return publishNetwork({dataDir,profile:connectionProfile(payload,trustedPeers),name:payload.name,seeds:record.invitation.seeds,local:record.invitation.local,days:14,now});
 }

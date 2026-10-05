@@ -35,7 +35,7 @@ function createIdentity(file){
 }
 
 export class MeshPeer {
-  constructor({dataDir,bootstrapFile,locationsFile=process.env.ARNS_LOCATIONS,snapshotStore=null,allowRemoteFetch=true,maxTopics=Infinity}){
+  constructor({dataDir,bootstrapFile,locationsFile=process.env.ARNS_LOCATIONS,snapshotStore=null,allowRemoteFetch=true,maxTopics=256,storageLimits={}}){
     this.allowRemoteFetch=allowRemoteFetch;this.maxTopics=maxTopics;
     this.dataDir=dataDir;this.snapshotStore=snapshotStore;
     this.bootstrapFile=bootstrapFile;
@@ -55,7 +55,7 @@ export class MeshPeer {
     this.dht=null;
     this.identity=null;
     this.witnessPeerId=null;
-    this.contentStore=new VerifiedContentStore(path.join(dataDir,'content'),{maxFiles:allowRemoteFetch?Infinity:2048});
+    this.contentStore=new VerifiedContentStore(path.join(dataDir,'content'),{maxFiles:allowRemoteFetch?Infinity:2048,...storageLimits});
     this.contentStore.on('stored',id=>this._announceTopic('content:'+id,contentTopic(id)).catch(()=>{}));
     this.historyLookups=new Map();this.historyStarts=[];
   }
@@ -97,7 +97,7 @@ export class MeshPeer {
       if(req.cacheOnly!==true)this._warmLocation(id);
       return {ok:false,error:'content_not_cached'};
     }
-    if(req.op==='snapshot'){const name=String(req.name||'').toLowerCase();if(!validArName(name))return {ok:false,error:'invalid_arns_name'};const row=this.snapshotStore?.exportLocal(name);return row?this._envelope(row):{ok:false,error:'snapshot_not_found'};}
+    if(req.op==='snapshot'){const name=String(req.name||'').toLowerCase();if(!validArName(name))return {ok:false,error:'invalid_arns_name'};const row=req.prepared===true?this.pinner?.readySnapshot(name):this.snapshotStore?.exportLocal(name);return row&&(!row.provenance||row.provenance.kind==='local-rpc')?this._envelope({...row,...(req.prepared===true?{prepared:true}:{})}):{ok:false,error:'snapshot_not_found'};}
     if(req.op==='resolve'){
       const name=String(req.name||'').toLowerCase();
       if(!validArName(name)) return {ok:false,error:'invalid_arns_name'};
@@ -164,7 +164,6 @@ export class MeshPeer {
     await d.flushed();
   }
   _trimCache(){
-    if(this.allowRemoteFetch)return;
     for(const [key,limit] of [['records',256],['proofs',256],['locations',2048]]){
       const rows=this.cache[key]||{};this.cache[key]=Object.fromEntries(Object.entries(rows).slice(-limit));
     }
@@ -174,7 +173,7 @@ export class MeshPeer {
   async start(){
     if(this.swarm) return this.status();
     ensureDir(this.dataDir);
-    if(this.allowRemoteFetch||!fs.existsSync(this.cacheFile)||fs.statSync(this.cacheFile).size<=4*1024*1024)this.cache=readJson(this.cacheFile,this.cache);
+    if(!fs.existsSync(this.cacheFile)||fs.statSync(this.cacheFile).size<=4*1024*1024)this.cache=readJson(this.cacheFile,this.cache);
     this._trimCache();
     this.identity=createIdentity(this.identityFile);
     this.witnessPeerId=peerIdFromPublicKey(this.identity.publicKeyPem);
@@ -213,7 +212,7 @@ export class MeshPeer {
         socket.end();
       });
     });
-    for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-(this.allowRemoteFetch?Infinity:16)))this._announce(name).catch(()=>{});
+    for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-this.maxTopics))this._announce(name).catch(()=>{});
     if(this.allowRemoteFetch)this._announceTopic('index',locationIndexTopic()).catch(()=>{});
     for(const item of this.contentStore.stats().files.slice(-this.maxTopics)){const id=item.dataId;this._announceTopic('content:'+id,contentTopic(id)).catch(()=>{});}
     this.startedAt=new Date().toISOString();

@@ -14,7 +14,7 @@ import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from
 import {checkConnections} from '../helper/connection-check.mjs';
 import {NetworkConnection} from '../helper/network-connection.mjs';
 import {bundledNetworks} from '../helper/network-publication.mjs';
-import {networkId,networkRecordHash} from '../../src/network-invitation.mjs';
+import {networkId,connectionRecordHash} from '../../src/network-invitation.mjs';
 import crypto from 'node:crypto';
 import {ResponseCache} from '../helper/response-cache.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
@@ -30,7 +30,7 @@ import {recordPageIssue,consoleIssue,updatePageHealth} from './page-health.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url)),WELCOME='arnsui://app/welcome.html';
 const tabs=new Tabs(),cache=new ResponseCache(),requests=new WorkBudget({active:2,pending:128}),inflight=new Map();
 let win,toolbar,runtime,store,pinner,library,related,settingsFile,timer,panelOpen=false,shuttingDown=false;
-let accessPolicy='live',trustedPeers=[],witnessQuorum=2;
+let accessPolicy='auto',trustedPeers=[],witnessQuorum=2;
 let connectionCheck=null,network=null,networkPreview=null,networkInspection=null,networkJoining=false;
 process.chdir(coreRoot);
 process.env.ARNS_MESH_DIRECT_ONLY='1';
@@ -76,8 +76,9 @@ function filterSession(ses,{ui=false,tab=null}={}){
     cb({cancel:!allowed});
   });
 }
-async function resolveForTab(tab,raw,{signal,onProgress=()=>{}}={}){
-  return requests.run(()=>resolveArUrl(raw,{quorum:witnessQuorum,contentStore:store,snapshotStore:accessPolicy==='saved'?pinner.snapshotStore({trustedPeers}):runtime.snapshots,accessPolicy,trustedPeers,signal,onProgress}),{signal});
+function effectiveTrustedPeers(){return [...new Set([...trustedPeers,...(readProfile(runtime.dataDir).trustedPeers||[])])];}
+async function resolveForTab(tab,raw,{signal,onProgress=()=>{},fixedSnapshot=null}={}){
+  return requests.run(()=>resolveArUrl(raw,{quorum:witnessQuorum,contentStore:store,snapshotStore:accessPolicy==='saved'?pinner.snapshotStore({trustedPeers:effectiveTrustedPeers()}):runtime.snapshots,preparedSnapshotStore:pinner.preparedStore({trustedPeers:effectiveTrustedPeers()}),accessPolicy,trustedPeers:effectiveTrustedPeers(),signal,onProgress,fixedSnapshot}),{signal});
 }
 async function resourceHandler(tab,request){
   // Catch every HTTPS request in this session. Never forward a URL, redirect,
@@ -91,7 +92,7 @@ async function resourceHandler(tab,request){
     signal.throwIfAborted();let result=cache.get(key);
     if(!result){
       result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>resolveArweaveResource(request.url,{
-       contentStore:store,localOnly:accessPolicy==='saved',signal:shared,requestWork:work=>requests.run(work,{signal:shared}),
+       contentStore:store,localOnly:false,signal:shared,requestWork:work=>requests.run(work,{signal:shared}),
        onMissing:accessPolicy==='saved'?undefined:async({dataId,client,signal})=>{
         if(!tabs.isCurrent(tab,epoch)||!tab.relatedPage)throw new Error('related_page_unavailable');
         await related.find(tab.relatedPage.dataId,[dataId,...tab.relatedPage.ids],{client,signal,onProgress:state=>{
@@ -118,14 +119,14 @@ async function resourceHandler(tab,request){
 async function arHandler(tab,request){
   if(!['GET','HEAD'].includes(request.method))return new Response('ArNS content is read-only.',{status:405,headers:{allow:'GET, HEAD'}});
   const raw=normalizeAddress(request.url).split('#')[0],epoch=tab.epoch,signal=AbortSignal.any([tab.controller.signal,request.signal,AbortSignal.timeout(90000)]);
-  const top=raw===tab.url.split('#')[0],key=accessPolicy+'|'+raw;
+  const top=raw===tab.url.split('#')[0],fixedSnapshot=!top&&tab.meta?.accessSnapshot?.name===new URL(raw).hostname?tab.meta.accessSnapshot:null,key=accessPolicy+'|'+raw+'|'+(fixedSnapshot?.txId||'');
   tab.resources.pending++;send();
   try{
     signal.throwIfAborted();
     if(accessPolicy==='live'&&!JSON.parse(fs.readFileSync(runtime.rpcFile)).length)throw new Error('Connection setup needed. Open Settings and connect with a Mesh connection code or profile.');
     let result=cache.get(key);
     if(!result||Date.now()-result.at>3000){
-      result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>resolveForTab(tab,raw,{signal:shared,onProgress:event=>{
+      result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>resolveForTab(tab,raw,{signal:shared,fixedSnapshot,onProgress:event=>{
         if(top&&tabs.isCurrent(tab,epoch)){tab.progress.event(event);if(event.nameResolution)tab.meta={...tab.meta,nameResolution:event.nameResolution};if(event.message)tab.message=event.message;send();}
       }}),{signal});
       signal.throwIfAborted();if(tabs.isCurrent(tab,epoch))cache.set(key,result);
@@ -134,7 +135,7 @@ async function arHandler(tab,request){
     const response=contentResponse(result,request);
     if(tabs.isCurrent(tab,epoch)){
       tab.resources.verified++;
-      if(top){tab.meta=result.meta;tab.relatedPage={dataId:result.meta.dataId,ids:discoverArweaveReferences({payload:result.body,tags:[{name:'Content-Type',value:result.contentType}]}).ids.slice(0,32)};tab.phase='rendering';tab.progress.finish();tab.message='Content verified · Opening the page…';}
+      if(top){tab.meta=result.meta;tab.relatedPage={dataId:result.meta.dataId,ids:discoverArweaveReferences({payload:result.body,tags:[{name:'Content-Type',value:result.contentType}]}).ids.slice(0,32)};tab.phase='rendering';tab.progress.finish();tab.message=result.meta.recovery?'Retained version · '+new Date(result.meta.recovery.observedAt).toLocaleString():'Content verified · Opening the page…';}
     }
     return response;
   }catch(error){
@@ -257,8 +258,8 @@ handle('inspect-network',async code=>{
   const controller=networkInspection=new AbortController();
   try{
     const preview=await network.inspect(code,{signal:controller.signal});controller.signal.throwIfAborted();
-    networkPreview={ticket:crypto.randomBytes(18).toString('base64url'),code,expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope)};
-    return {ticket:networkPreview.ticket,name:preview.payload.name,id:networkPreview.expectedId,revision:preview.payload.revision,expiresAt:preview.payload.expiresAt,profile:preview.payload.profile,local:preview.invitation.local};
+    networkPreview={ticket:crypto.randomBytes(18).toString('base64url'),code,expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:connectionRecordHash(preview.envelope,preview.recovery)};
+    return {ticket:networkPreview.ticket,name:preview.payload.name,id:networkPreview.expectedId,revision:preview.payload.revision,expiresAt:preview.payload.expiresAt,profile:preview.profile,local:preview.invitation.local};
   }finally{if(networkInspection===controller)networkInspection=null;}
 });
 handle('join-network',async ticket=>{
@@ -310,7 +311,7 @@ handle('save-settings',data=>{
   }finally{fs.rmSync(rpcTemp,{force:true});fs.rmSync(peerTemp,{force:true});}
 });
 async function setAccessPolicy(value){
-  if(!['live','saved'].includes(value))throw new Error('invalid_access_policy');
+  if(!['auto','live','saved'].includes(value))throw new Error('invalid_access_policy');
   for(const tab of tabs.rows.values())stop(tab);accessPolicy=value;
   if(value==='saved'){networkInspection?.abort();networkPreview=null;network.stop();}else{network.start();void network.refresh().catch(()=>{});}
   savePrefs();cache.clear();send();
@@ -318,7 +319,7 @@ async function setAccessPolicy(value){
 }
 handle('set-access-policy',setAccessPolicy);
 handle('open-saved',async raw=>{for(const tab of tabs.rows.values())stop(tab);accessPolicy='saved';networkInspection?.abort();networkPreview=null;network.stop();savePrefs();cache.clear();return navigate(raw);});
-handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name,{accessPolicy,trustedPeers}).then(()=>send()).catch(error=>report(error));send();return true;});
+handle('pin-site',()=>{if(!tabs.active.url)throw new Error('Open a site first.');const name=new URL(tabs.active.url).hostname;void pinner.start(name,{accessPolicy,trustedPeers:effectiveTrustedPeers(),snapshot:tabs.active.meta?.accessSnapshot}).then(()=>send()).catch(error=>report(error));send();return true;});
 handle('unpin-site',name=>{pinner.remove(name);send();});
 async function saveDocument(){
   const tab=tabs.active;if(!tab.url)throw new Error('Open an ArNS page first.');const url=tab.url;
@@ -339,7 +340,7 @@ async function start(){
   runtime=configureRuntime(coreRoot,app.getPath('userData'),{role:'client'});store=new VerifiedContentStore(path.join(runtime.dataDir,'content'));
   related=new RelatedResources({file:path.join(runtime.dataDir,'related-discovery-quota.json'),contentStore:store,locationsFile:process.env.ARNS_LOCATIONS});
   library=new BrowserState(path.join(runtime.dataDir,'browser-state.json'));settingsFile=path.join(runtime.dataDir,'preferences.json');
-  try{const saved=JSON.parse(fs.readFileSync(settingsFile));accessPolicy=saved.accessPolicy==='saved'?'saved':'live';trustedPeers=parseTrustedPeers((saved.trustedPeers||[]).join('\n'));witnessQuorum=saved.witnessQuorum===1?1:2;}catch{}
+  try{const saved=JSON.parse(fs.readFileSync(settingsFile));accessPolicy=saved.accessPolicy==='saved'?'saved':'auto';trustedPeers=parseTrustedPeers((saved.trustedPeers||[]).join('\n'));witnessQuorum=saved.witnessQuorum===1?1:2;}catch{}
   pinner=new SitePinner({file:path.join(runtime.dataDir,'saved-sites.json'),snapshots:runtime.snapshots,contentStore:store});
   network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{cache.clear();send();}});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
@@ -350,7 +351,7 @@ async function start(){
   win.on('closed',()=>{shuttingDown=true;for(const tab of [...tabs.rows.values()]){tabs.close(tab.id);tab.view?.webContents.close();}toolbar.webContents.close();app.quit();});
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
   timer=setInterval(()=>send(),1000);send();
-  if(accessPolicy==='live'){
+  if(accessPolicy!=='saved'){
     network.start();
     if(network.status().joined)void network.refresh().catch(()=>{});
     if(!connectionConfigured()){
@@ -360,11 +361,11 @@ async function start(){
         void (async()=>{
           const preview=await network.inspect(offered[0].code,{signal:controller.signal});
           controller.signal.throwIfAborted();
-          await network.join(offered[0].code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:networkRecordHash(preview.envelope),signal:controller.signal});
-          if(accessPolicy==='live')network.start();
+          await network.join(offered[0].code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:connectionRecordHash(preview.envelope,preview.recovery),signal:controller.signal});
+          if(accessPolicy!=='saved')network.start();
         })().catch(error=>{network.error=String(error.message).slice(0,240);}).finally(()=>{
           if(networkInspection===controller)networkInspection=null;networkJoining=false;send();
-          if(!shuttingDown&&accessPolicy==='live'&&!connectionConfigured())send({command:'settings'});
+          if(!shuttingDown&&accessPolicy!=='saved'&&!connectionConfigured())send({command:'settings'});
         });
       }else send({command:'settings'});
     }

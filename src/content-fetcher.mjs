@@ -18,10 +18,20 @@ function sourceError(error,depth=0){
  return detail;
 }
 
-export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),replicateLocation=false,meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||0))}={}){
+export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()=>{},locationsFile=process.env.ARNS_LOCATIONS||'locations.json',signal=AbortSignal.timeout(45000),replicateLocation=false,contentSources='all',meshHeadStartMs=Math.max(0,Math.min(10000,Number(process.env.ARNS_MESH_HEAD_START_MS)||750))}={}){
+ if(!['all','mesh-only','local-only'].includes(contentSources))throw new Error('invalid_content_sources');
  if(!/^[A-Za-z0-9_-]{43}$/.test(dataId))throw new Error('invalid_data_id');
  const cached=contentStore?.get(dataId);
- if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
+ if(cached){try{const direct=await verifyStoredContent(cached,dataId);onProgress({stage:'verify',status:'done',dataId,source:'Local copy'});const locationReplication=replicateLocation&&contentSources==='all'?await replicateLocationHint(dataId,{client,contentStore,locationsFile,signal}):undefined;return {loc:null,direct:{...direct,peer:{host:'local-cache',port:0},rootTxId:direct.rootTxId||null},storageKind:direct.storageKind,...(locationReplication?{locationReplication}:{})};}catch{}}
+ if(contentSources!=='all'){
+  try{
+   if(contentSources==='local-only')throw new Error('content_not_saved');
+   const direct=await withTransferBudget(()=>client.content(dataId,{onProgress,signal,cacheOnly:true}),signal);
+   const result={loc:null,direct,storageKind:direct.storageKind||'ans104'};
+   try{if(contentStore)await contentStore.put(dataId,direct.storedBytes||direct.rawItem);}catch(error){result.cacheError=String(error.message);}
+   return result;
+  }catch(error){signal?.throwIfAborted();throw new Error('content_location_unavailable: '+error.message);}
+ }
  const attempts=[],index=new LocationIndex(locationsFile),historical=getHistoricalIndex(),hint=index.get(dataId);
  // Give the broader published index a short first opportunity. Launching 72
  // L1 probes and three older index lookups for every bundled asset caused
