@@ -20,7 +20,7 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  peerApp.on('message',message=>{if(message.request)peerRequests++;});
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('fixture peer startup timeout')),15000);peerApp.once('error',reject);peerApp.on('message',m=>{if(m.ready){clearTimeout(timer);resolve();}});});
  let {ui,home}=await launch();
- await home.locator('.refresh-catalogue').click();await home.locator('.catalogue-status').filter({hasText:'1 indexed sites'}).waitFor();
+ await home.locator('.refresh-catalogue').click();await home.locator('.catalogue-status').filter({hasText:'1 indexed site'}).waitFor();
  await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();await pause(100);
  assert.ok(fs.existsSync(path.join(data,'search-cache.json')));report.checks.push('signed catalogue downloaded through real Home refresh');
  const before=peerRequests;await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();
@@ -30,8 +30,9 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await closeProvider();await close();
  fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'saved',trustedPeers:[],witnessQuorum:2}));
  ({ui,home}=await launch());await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();await home.screenshot({path:path.join(output,'03-offline-restart.png'),fullPage:true});report.checks.push('provider stopped; restarted Saved reader searches retained catalogue');
- await home.locator('.search-result h3 a').click();await home.locator('#script-status').filter({hasText:'Local JavaScript loaded'}).waitFor();assert.match(home.url(),/^ar:\/\/mesh-qa/);assert.match(await ui.locator('#address').inputValue(),/^ar:\/\/mesh-qa/);report.checks.push('result opens signed local page through existing ArNS renderer');
+ await home.locator('.search-result h3 a').click();await home.locator('#script-status').filter({hasText:'Local JavaScript loaded'}).waitFor();assert.match(home.url(),/^ar:\/\/mesh-qa/);await ui.waitForFunction(()=>document.getElementById('address').value.startsWith('ar://mesh-qa'));assert.match(await ui.locator('#address').inputValue(),/^ar:\/\/mesh-qa/);report.checks.push('result opens signed local page through existing ArNS renderer');
  await ui.locator('#home').click();await home.locator('#mesh-query').waitFor();await ui.locator('#address').fill('ar://mesh-qa/');await ui.locator('#open-address').click();await home.locator('#script-status').filter({hasText:'Local JavaScript loaded'}).waitFor();report.checks.push('upper address bar still opens a known ArNS name');
+ await ui.locator('#address').fill('unsent-draft');await pause(1200);assert.equal(await ui.locator('#address').inputValue(),'unsent-draft');report.checks.push('ordinary status updates preserve an unsent address draft');
  assert.deepEqual(report.errors,[]);report.passed=true;
  }catch(error){report.error=error.stack;console.error(error.stack);process.exitCode=1;}
  finally{await closeProvider();await close();fs.writeFileSync(path.join(output,'results.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));}

@@ -41,8 +41,8 @@ $('history-button').onclick=()=>showLibrary('history');$('bookmarks-button').onc
 $('clear-history').onclick=()=>run(async()=>{await api.clearHistory();await renderLibrary();});
 function empty(parent,text){const p=document.createElement('p');p.className='empty';p.textContent=text;parent.append(p);}
 api.onState(s=>{
- const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id;
- if(switched)uiError='';lastState=s;renderTabs(s);renderJourney(s);if(switched)$('address').value=s.url||'';
+ const switched=s.tabs?.find(t=>t.active)?.id!==lastState.tabs?.find(t=>t.active)?.id,addressChanged=s.url!==lastState.url;
+ if(switched)uiError='';lastState=s;renderTabs(s);renderJourney(s);if(switched||addressChanged)$('address').value=s.url||'';
  if(s.command==='close-panel')closePanel();if(s.command==='history')showLibrary('history');if(s.command==='bookmarks')showLibrary('bookmarks');if(s.command==='settings')run(showSettings);
  if(s.focusAddress){closePanel();$('address').focus();$('address').select();}
  if(document.activeElement!==$('address'))$('address').value=s.url||'';
