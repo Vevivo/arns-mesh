@@ -38,6 +38,7 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await ui.locator('#arweave-state').filter({hasText:'Responding'}).waitFor();
  await ui.locator('#monitor-check').filter({hasText:'Check now'}).waitFor();
  assert.equal(await ui.locator('#mesh-count').innerText(),'1 / 1');
+ assert.equal(await ui.locator('#monitor-panel').evaluate(e=>e.scrollTop),0);
  await capture('04-monitor-responding.png');report.checks.push('monitor shows three separately checked loopback services; actual native window captured');
  const uiSession=await ui.context().newCDPSession(ui);await uiSession.send('Emulation.setDeviceMetricsOverride',{width:850,height:600,deviceScaleFactor:1,mobile:false});
  assert.equal(await ui.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
