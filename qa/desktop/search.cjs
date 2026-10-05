@@ -28,6 +28,7 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await home.locator('.refresh-catalogue').click();await home.locator('.catalogue-status').filter({hasText:'1 indexed site'}).waitFor();
  await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();await pause(100);
  assert.ok(fs.existsSync(path.join(data,'search-cache.json')));report.checks.push('signed catalogue downloaded through real Home refresh');
+ await capture('09-home-automatic.png');
  const before=peerRequests;await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();
  assert.match(home.url(),/welcome.html\?q=verified$/);assert.equal(await home.locator('.search-result h3 a').innerText(),'Signed QA page');assert.equal(await ui.locator('#address').inputValue(),'');assert.equal(peerRequests,before);report.checks.push('GET form submits; topic query stays local; address bar remains empty');
  await home.screenshot({path:path.join(output,'01-search-results.png'),fullPage:true});

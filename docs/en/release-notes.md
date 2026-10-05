@@ -1,4 +1,6 @@
-# ArNS Mesh 0.5.0-preview.10 — candidate
+# ArNS Mesh 0.5.0-preview.11 — candidate
+
+Home now opens with a centered search field and a plain ArNS Mesh wordmark. The decorative Mesh graphic, promotional hero, introductory paragraphs and long usage guide have been removed from the desktop home. Catalogue details remain available on demand, and search results keep their dated availability labels.
 
 Adds a desktop connection strip and monitor: separately dated Mesh/RPC/raw observations, bounded panel-only protocol checks, verified main-document origin, session traffic and Saved-mode probe suspension. Endpoint counts are local observations, not global Mesh users. [Indicator semantics and test scope](../connection-monitor.md).
 

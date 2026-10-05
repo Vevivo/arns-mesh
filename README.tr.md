@@ -11,7 +11,7 @@ Amaç, domainler, DNS veya gateway hizmetleri kullanılamadığında **IP bağla
 
 **Güncel yayımlanmış önizleme: [0.5.0-preview.8](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0-preview.8)** · [Windows x64 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0-preview.8/ArNS-Mesh-Browser-Windows-x64-0.5.0-preview.8.zip) · [English](README.md)
 
-**Geliştirme adayı: preview.10**; kesintide otomatik kayıtlı sürüme geçiş, tarihli isim kayıtları, eski sürümü koruyan site hazırlığı ve sağlayıcı izleme ekranı ekler. Yayımlanmış preview.8 ZIP ayrı sürümdür. [İşleyiş, kapsam ve test planı](docs/tr/dayanikli-erisim.md). İki gerçek PC ve bağımsız sunucu kaybı kabulü bekliyor.
+**Geliştirme adayı: preview.11**; kesintide otomatik kayıtlı sürüme geçiş, tarihli isim kayıtları, eski sürümü koruyan site hazırlığı ve sağlayıcı izleme ekranı ekler. Yayımlanmış preview.8 ZIP ayrı sürümdür. [İşleyiş, kapsam ve test planı](docs/tr/dayanikli-erisim.md). İki gerçek PC ve bağımsız sunucu kaybı kabulü bekliyor.
 
 Deneysel, bağımsız bir topluluk projesidir; resmî AR.IO, Arweave veya Solana dağıtımı değildir. Canlı isim çözümü IP üzerinden Solana RPC gözlemlerine dayanır. Bütün içerikleri ilk kez bulma ve bağımsız sunucu kaybına dayanıklılık çalışmaları tamamlanmış değildir.
 
