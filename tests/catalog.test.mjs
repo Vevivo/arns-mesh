@@ -71,3 +71,19 @@ test('reused PDA derivations never bypass account owner, name-hash or binding va
  record.pubkey=String(pda);record.account.owner=mint;assert.equal((await decode()).quarantine[0].error,'owner_mismatch');
  record.account.owner=MAINNET_PROGRAM_IDS.arns;raw[8]^=1;record.account.data[0]=raw.toString('base64');assert.equal((await decode()).quarantine[0].error,'name_hash_mismatch');
 });
+
+test('legacy discovery targets queue missing retained names without manufacturing snapshots',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'catalog-retained-backfill-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const file=path.join(dir,'catalog.json'),old=new TargetCatalog({file});
+ old.state.registry=['ordinary','missing','complete','updated','rebound','new'].map(name=>({name,mint}));old.state.registryAt=Date.now();old.state.slot=100;
+ const target=(baseName,extra={})=>({baseName,mint,dataId:'A'.repeat(43),slot:100,...extra});
+ old.state.targets={missing:target('missing'),docs_missing:target('missing'),complete:target('complete'),updated:target('updated'),rebound:target('rebound',{mint:'invalid-old-mint'})};
+ old.state.pendingNames=['new'];old.save();
+ let writes=0;const requested=[];
+ const snapshots={get:name=>name==='complete'?{slot:100,txId:'A'.repeat(43),antId:mint}:name==='updated'?{slot:99,txId:'B'.repeat(43),antId:mint}:null,putMany:()=>writes++,names:()=>['complete','updated']};
+ const resumed=new TargetCatalog({file,snapshotStore:snapshots,rpc:async(_ep,method,params)=>{requested.push(params[0]);return {context:{slot:100},value:null};}});
+ assert.deepEqual(resumed.state.pendingNames,['new','missing','updated']);assert.equal(writes,0);
+ await resumed.step({mints:2});
+ assert.equal(requested.length,2);assert.equal(resumed.state.cursor,1);assert.equal(writes,0);
+ assert.equal(resumed.state.errors.length,2);assert.deepEqual(resumed.state.pendingNames,['missing','updated']);
+});

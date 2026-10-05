@@ -68,7 +68,7 @@ let relayRunning=false;const relayController=new AbortController();
 const mirrorSnapshots=async()=>{if(relayRunning||!upstream)return;relayRunning=true;try{await snapshotRelay.sync({names:[...new Set([...pinned,...runtime.snapshots.names()])],peers:loadDirectPeers().filter(p=>peerAddress(p)!==peerDiscovery.selfAddress()),signal:AbortSignal.any([relayController.signal,AbortSignal.timeout(15000)])});}catch(error){snapshotRelay.lastError=String(error.message).slice(0,160);}finally{relayRunning=false;}};
 void mirrorSnapshots();const relayTimer=setInterval(()=>void mirrorSnapshots(),60000);
 let catalog=null;
-const makeCatalog=endpoint=>new CatalogWorker({dataDir,peer,endpoint,snapshotStore:runtime.snapshots,pinner:process.env.ARNS_PREPARE_ENABLED==='1'?pinner:null,maxPreparedSites:Number(process.env.ARNS_PREPARE_MAX_SITES||32),jobsPerPass:8,mintsPerPass:8});
+const makeCatalog=endpoint=>new CatalogWorker({dataDir,peer,endpoint,snapshotStore:runtime.snapshots,pinner:process.env.ARNS_PREPARE_ENABLED==='1'?pinner:null,maxPreparedSites:Number(process.env.ARNS_PREPARE_MAX_SITES||32),jobsPerPass:8,mintsPerPass:Number(process.env.ARNS_CATALOG_MINTS_PER_PASS||8)});
 if(upstream&&process.env.ARNS_CATALOG_ENABLED==='1'){const seed=JSON.parse(fs.readFileSync(process.env.SOLANA_RPC_SEEDS))[0];catalog=makeCatalog('http://'+(seed.host.includes(':')?'['+seed.host+']':seed.host)+':'+seed.port);catalog.start();}
 peer.onContentDemand=id=>catalog?.enqueueDemand(id);
 // A background update changes the live profile. Recreate the catalog after its

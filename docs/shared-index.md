@@ -30,6 +30,10 @@ Set the **same absolute `ARNS_SHARED_INDEX_DIR`** in the supporter process envir
 
 Run the sync command periodically as a **separate** timer/cron job. Do not import or spawn it from the browser or locked-down peer. The default daily download ceiling is 4 GiB and the index disk ceiling is 50 GiB; use `ARNS_INDEX_DOWNLOAD_GIB` and `ARNS_INDEX_DISK_GIB` to change them. The bootstrap example explicitly permits up to 24 GiB that UTC day. This budget is additional to the existing website/name/raw-discovery budgets. HTTP 402/429 pauses the updater; it does not pay or bypass the publisher's limits. Temporary server failures have bounded retries. This implementation currently uses HTTP preparation, not BitTorrent.
 
+For an existing systemd sync service, a companion timer can use `OnBootSec=2min`, `OnCalendar=*:0/15`, `RandomizedDelaySec=30` and `Persistent=true`. Enable it with `systemctl enable --now arns-mesh-index-sync.timer`. Systemd does not start another copy while that service is still running. On the reference VPS the initial 24 GiB override is removed by `ExecStartPost` only after a successful complete sync; later runs return to 4 GiB/day. A failed run retains downloaded partitions and is retried by the timer.
+
+Retained name preparation is independent of these indexes. Missing retained bindings in an older catalog are now automatically queued for fresh registry/ANT validation. They are never copied directly from a discovery row into a trusted snapshot. `ARNS_CATALOG_MINTS_PER_PASS` may raise the reference service's name batch from 8 to 32 (the hard cap), within its existing time and byte budgets. This accelerates preparation but does not promise complete/current coverage during an outage.
+
 ## Check that it is being used
 
 `sync-status.json` reports installation progress, errors and download bytes. `installed.json` lists only fully validated bands. The supporter's loopback operator dashboard and `/status` show installed bands, indexed entries, local lookup/hit counts, publication date and errors. These counts describe index entries, not online users, complete websites or successful page loads.

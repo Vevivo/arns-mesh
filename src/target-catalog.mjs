@@ -42,6 +42,20 @@ export class TargetCatalog {
   this.file=file;this.endpoint=endpoint;this.rpc=rpc;this.maxTargets=maxTargets;this.maxBytes=maxBytes;
   this.state={schema:'mesh-target-catalog/v1',registry:[],targets:{},cursor:0,registryAt:0,slot:0,quarantine:[],errors:[]};
   try{if(fs.statSync(file).size<=maxBytes){const saved=JSON.parse(fs.readFileSync(file));if(saved.schema===this.state.schema)this.state=saved;}}catch{}
+  this.queueMissingSnapshots();
+ }
+ queueMissingSnapshots(){
+  if(!this.snapshotStore)return;
+  const current=new Map(this.state.registry.map(r=>[r.name,r.mint]));
+  const pending=new Set((this.state.pendingNames||[]).filter(name=>current.has(name)));
+  for(const [name,row] of Object.entries(this.state.targets)){
+   if(current.get(row.baseName)!==row.mint)continue;
+   const saved=this.snapshotStore.get(name);
+   if(!saved||(saved.slot<row.slot&&(saved.txId!==row.dataId||saved.antId!==row.mint)))pending.add(row.baseName);
+  }
+  // Discovery rows are only work hints. Re-observe the registry and ANT through
+  // step() before creating a retained binding; never promote old rows to proof.
+  this.state.pendingNames=[...pending].slice(0,50000);
  }
  save(){const body=JSON.stringify(this.state);if(Buffer.byteLength(body)>this.maxBytes)throw new Error('catalog_disk_budget');fs.mkdirSync(path.dirname(this.file),{recursive:true});fs.writeFileSync(this.file+'.tmp',body,{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  async refresh({signal}={}){
@@ -54,6 +68,7 @@ export class TargetCatalog {
   const current=new Map(decoded.records.map(r=>[r.name,r.mint]));
   // Removed/rebound names cannot remain current-looking entries in the catalog.
   for(const [name,row] of Object.entries(this.state.targets))if(current.get(row.baseName)!==row.mint)delete this.state.targets[name];
+  this.queueMissingSnapshots();
   this.state.cursor%=Math.max(1,decoded.records.length);this.save();return decoded;
  }
  async step({signal,mints=1}={}){
@@ -133,7 +148,7 @@ export class TargetCatalog {
   // leaves the previous table intact and the per-ANT path can continue.
   const next={...this.state,targets,targetScanAt:Date.now(),targetScanSlot:response.context.slot,targetScanAccounts:response.value.length,unregisteredAntRecords:unregistered};
   if(Buffer.byteLength(JSON.stringify(next))>this.maxBytes)throw new Error('catalog_disk_budget');
-  this.state=next;this.save();return this.status();
+  this.state=next;this.queueMissingSnapshots();this.save();return this.status();
  }
  status(){return {registeredNames:this.state.registry.length,observedTargets:Object.keys(this.state.targets).length,cursor:this.state.cursor,pendingNames:this.state.pendingNames?.length||0,registrySlot:this.state.slot,registryAt:this.state.registryAt,registryError:this.state.registryError||null,registryIntervalMs:this.registryIntervalMs,retainedNames:this.snapshotStore?.names().length||0,targetScanAt:this.state.targetScanAt||null,targetScanSlot:this.state.targetScanSlot||null,quarantined:this.state.quarantine.length,recentErrors:this.state.errors,complete:false,trust:'RPC observation; no account inclusion proof'};}
 }
