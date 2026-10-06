@@ -17,7 +17,7 @@ Cüzdan, ödeme, Node.js veya kendi sunucunuz gerekmez. Standart paket bağlant�
 
 ## Konuya göre site bulun
 
-Ana sayfadaki **orta arama kutusuna** müzik, oyun, sanat veya depolama gibi bir konu yazın. ArNS adresleri, varsa açıklamaları ve konu etiketleri listelenir. Sonuca tıklayıp siteyi açın. Bildiğiniz adresleri üst çubuğa yazmaya devam edin. [Arama rehberi](docs/tr/konu-aramasi.md).
+Ana sayfadaki **orta arama kutusuna** music, games, art veya storage gibi bir konu yazın. ArNS adresleri, varsa açıklamaları ve konu etiketleri listelenir. Sonuca tıklayıp siteyi açın. Bildiğiniz adresleri üst çubuğa yazmaya devam edin. [Arama rehberi](docs/tr/konu-aramasi.md).
 
 ## Solana RPC ve Arweave de kapanırsa?
 

@@ -13,7 +13,7 @@ const schema='arns-mesh-search/v1',topicSchema='arns-mesh-search/v2';
 export const TOPIC_LIMITS=Object.freeze({entries:20000,recordBytes:8*1024*1024,envelopeBytes:16*1024*1024});
 const limits=r=>r?.schema===topicSchema?TOPIC_LIMITS:SEARCH_LIMITS;
 const clean=cleanSearchText;
-const topicGroups=[['oyun','oyunlar','game','games','gaming'],['muzik','music'],['sanat','art'],['depolama','storage'],['fotograf','photography','photo'],['haber','news'],['egitim','education','learning'],['gelistirici','developer'],['yazilim','software'],['bilim','science'],['video','videos']];
+const topicGroups=[['game','games','gaming'],['art','arts'],['photo','photos','photography'],['education','learning'],['developer','developers'],['video','videos']];
 const relatedTerms=term=>topicGroups.find(group=>group.includes(term))||[term];
 const fold=s=>s.normalize('NFKD').toLowerCase().replace(/\p{M}/gu,'').replace(/ı/g,'i');
 const atomic=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(value),{mode:0o600});fs.renameSync(file+'.tmp',file);};

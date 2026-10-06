@@ -26,7 +26,7 @@ Katılmadan önce gösterilen ağı kontrol edin. Kod tekrar kullanılabilir bir
 
 **Üst adres çubuğuna** `ar://vevivo` veya ziyaret etmek istediğiniz başka bir ArNS ismini yazın. Örnek adresin her zaman açılacağı garanti edilmez.
 
-Alt isimlerde tam kayıtlı yazımı kullanın: örneğin `altisim_isim`. Ortadaki arama kutusuna müzik, oyun veya depolama gibi bir konu yazın. Sonuca tıklayıp ArNS sitesini açın; etikete tıklayıp o konuda arama yapın. [Arama rehberi](konu-aramasi.md).
+Alt isimlerde tam kayıtlı yazımı kullanın: örneğin `altisim_isim`. Ortadaki arama kutusuna music, games veya storage gibi bir konu yazın. Sonuca tıklayıp ArNS sitesini açın; etikete tıklayıp o konuda arama yapın. [Arama rehberi](konu-aramasi.md).
 
 Mesh ismi çözer, dosyaları bulur, doğrular ve sayfayı açar. **Page information**, eksik kaynakları ve tarihli isim kaydının kullanılıp kullanılmadığını gösterir. Domain üzerinden çalışan haricî API ve CDN'ler erişilemez kalabilir.
 

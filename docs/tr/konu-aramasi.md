@@ -3,7 +3,7 @@
 **Üstteki adres çubuğu site açar. Ortadaki arama kutusu site bulur.**
 
 1. Mesh ağınıza normal bağlantı kodunuzla katılın.
-2. Ana sayfadaki orta kutuya bir konu yazın: örneğin **oyun**, **müzik**, **sanat** veya **depolama**.
+2. Ana sayfadaki orta kutuya bir konu yazın: örneğin **games**, **music**, **art** veya **storage**.
 3. **Search Mesh** düğmesine basın.
 4. İlgili ArNS adresleri, varsa başlıkları, kısa açıklamaları ve konu etiketleri listelenir.
 5. Sonuca tıklayarak siteyi açın. Bir etikete tıklayarak aynı konudaki diğer sonuçları bulun.
@@ -14,7 +14,7 @@
 
 Sunucu, ArNS sahiplerinin girdiği açıklama ve anahtar kelimeleri toplar. Alt isimlerin kendi açıklama/etiketleri de kullanılabilir. Hazırlanmış sayfalardaki başlık, açıklama, HTML anahtar kelimeleri ve metinler aramayı destekler.
 
-Yaygın Türkçe ve İngilizce konular eşleştirilir: örneğin **müzik → music**, **oyun → game**, **depolama → storage**. Bu genel bir çeviri veya yapay zekâ araması değildir. Birden fazla kelime yazarsanız her kelimenin eşleşmesi gerekir.
+Mesh arayüzü ve arama örnekleri İngilizcedir. Aradığınız kelimeler site adı, açıklaması, etiketleri ve hazırlanmış metinleriyle eşleştirilir; otomatik çeviri yapılmaz. Örneğin **music**, **games** veya **storage** arayabilirsiniz. Birden fazla kelime yazarsanız her kelimenin eşleşmesi gerekir.
 
 Arama sonuçları sitenin kaydedildiği anlamına gelmez. **ArNS listing** yazan sonuçta isim bulunmuştur; sayfanın erişilebilirliği açılırken kontrol edilir. **Site copy reported by peer** ise destekçinin hazırladığını bildirdiği kopyayı gösterir. Dış servis isteyen uygulamaların her işlevi çalışmayabilir.
 

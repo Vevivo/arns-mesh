@@ -44,7 +44,7 @@ test('signatures, rollback, equal-revision conflicts and oversized data fail clo
 test('new signed target replaces old topic text atomically and storage source count stays bounded',t=>{
  const cache=new SearchCatalog(path.join(temp(t),'search.json')),authors=[identity(),identity(),identity()],trusted=authors.map(x=>x.id);
  cache.accept(authors[0].sign(record()),trusted);cache.accept(authors[0].sign(record([entry({targetId:'C'.repeat(43),title:'Space',description:'Planets',text:'Astronomy starts here'})],2)),trusted);
- assert.equal(cache.search('istanbul',trusted).total,0);assert.equal(cache.search('art',trusted).total,0,'art must not match starts');assert.equal(cache.search('planets',trusted).hits[0].targetId,'C'.repeat(43));
+ assert.equal(cache.search('muzik',trusted).total,0);assert.equal(cache.search('art',trusted).total,0,'art must not match starts');assert.equal(cache.search('planets',trusted).hits[0].targetId,'C'.repeat(43));
  for(const author of authors.slice(1))cache.accept(author.sign(record()),trusted);
  assert.equal(Object.keys(cache.sources).length,2);assert.equal(cache.records(trusted).length,2);
 });

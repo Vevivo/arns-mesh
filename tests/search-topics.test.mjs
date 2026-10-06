@@ -52,15 +52,15 @@ test('topic catalogue finds metadata-only names beyond legacy 256 entries and re
  const sign=r=>{const recordJson=JSON.stringify(r);return {ok:true,witnessPeerId:id,witnessPublicKeyPem:pub,recordJson,signature:signRecord(recordJson,priv)};};
  let names=Array.from({length:700},(_,i)=>'garden-'+i),updated=false,current=true;
  const snapshots={names:()=>names,exportLocal:()=>({txId:'A'.repeat(43),antId:mint,observedAt:now()})};
- const metadata={get:()=>({title:'Sound garden',description:updated?'Science lecture':'Independent concerts',keywords:updated?['astronomy']:['caz','İstanbul','music'],metadataAt:now()})};
+ const metadata={get:()=>({title:'Sound garden',description:updated?'Science lecture':'Independent concerts',keywords:updated?['astronomy']:['jazz','concerts','music'],metadataAt:now()})};
  const publisher=new TopicSearchPublisher({file:path.join(d,'published.json'),snapshots,documents:{record:{entries:[]}},metadata,current:()=>current,sign});
  publisher.pass();const e=publisher.reply();assert.equal(verifySearchEnvelope(e,[id]).entries.length,700);assert.ok(Buffer.byteLength(e.recordJson)<=TOPIC_LIMITS.recordBytes);
- const cache=new SearchCatalog(path.join(d,'cache.json'));cache.accept(e,[id]);assert.equal(cache.search('caz istanbul',[id]).total,700);assert.equal(cache.search('müzik',[id]).total,700);assert.equal(cache.search('caz',[id]).hits[0].availability,'metadata');
- assert.equal(new SearchCatalog(cache.file).search('istanbul',[id]).total,700);assert.equal(cache.search('caz',[]).total,0);
- updated=true;publisher.pass();cache.accept(publisher.reply(),[id]);assert.equal(cache.search('caz',[id]).total,0);assert.equal(cache.search('astronomy',[id]).total,700);
+ const cache=new SearchCatalog(path.join(d,'cache.json'));cache.accept(e,[id]);assert.equal(cache.search('jazz concerts',[id]).total,700);assert.equal(cache.search('music',[id]).total,700);assert.equal(cache.search('müzik',[id]).total,0,'queries are not translated');assert.equal(cache.search('jazz',[id]).hits[0].availability,'metadata');
+ assert.equal(new SearchCatalog(cache.file).search('concerts',[id]).total,700);assert.equal(cache.search('jazz',[]).total,0);
+ updated=true;publisher.pass();cache.accept(publisher.reply(),[id]);assert.equal(cache.search('jazz',[id]).total,0);assert.equal(cache.search('astronomy',[id]).total,700);
  current=false;publisher.pass();cache.accept(publisher.reply(),[id]);assert.equal(cache.search('astronomy',[id]).total,0);
 });
-test('HTML keywords are parsed as data and Turkish accents match without inventing translations',()=>{
+test('HTML keywords are parsed as data without executing page scripts',()=>{
  const r=extractSearchText('<title>Gallery</title><meta name="keywords" content="fotoğraf, sanat; İstanbul"><script>music</script>');
  assert.deepEqual(r.keywords,['fotoğraf','sanat','İstanbul']);assert.equal(r.text,'');
 });
@@ -79,7 +79,7 @@ test('large version 2 catalogue crosses numeric-IP transport while old requests 
  const server=await startDirectPeerServer({identity:{},requestsServed:0,_handleAsync:req=>req.version===2?topic:legacy},{host:'127.0.0.1',port:0});
  try{
   const peer={host:'127.0.0.1',port:server.address.port},cache=new SearchCatalog(path.join(dir,'reader.json'));
-  await cache.sync({peers:[peer],trustedPeers:[id]});assert.equal(cache.error,null);assert.equal(cache.search('müzik',[id]).total,3000);
+  await cache.sync({peers:[peer],trustedPeers:[id]});assert.equal(cache.error,null);assert.equal(cache.search('music',[id]).total,3000);
   assert.equal(verifySearchEnvelope(await queryDirectPeer(peer,{op:'catalog',witnessPeerId:id}),[id]).schema,'arns-mesh-search/v1');
   assert.equal(cache.mirror([id],id,1),null,'v2 is never returned to a legacy reader');
  }finally{await server.close();}

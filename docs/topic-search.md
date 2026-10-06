@@ -8,7 +8,7 @@ Search covers retained ArNS names and undernames, owner-supplied ANT description
 
 Join your normal Mesh network, open Home, type a topic and choose **Search Mesh**. Use **Refresh catalogue** if needed. The reader refreshes on startup and about every 15 minutes outside Saved mode. No search account or API key is needed.
 
-Common Turkish and English topic words are paired, including oyun/game, müzik/music, sanat/art, depolama/storage and eğitim/education. Accents and Turkish dotted/dotless I are normalized. Other terms match words or word prefixes, with every query term required. This is bounded keyword search, not general translation or AI semantic search. Exact names rank first; keyword matches have more weight than incidental body text. Up to 30 results are shown.
+The interface and search examples are English. English topic variants such as game/games/gaming are matched together. Search terms otherwise match words or word prefixes, with every query term required. International names and accents remain searchable, but queries are not translated. This is bounded keyword search, not AI semantic search. Exact names rank first; keyword matches have more weight than incidental body text. Up to 30 results are shown.
 
 Query words stay on the reader. The accepted catalogue remains searchable after a restart or provider outage. A fresh reader needs a reachable supporter to obtain a catalogue. Opening a result always uses the existing ArNS binding and content verification; search metadata cannot change a name target.
 
@@ -33,6 +33,6 @@ Search catalogue replication is separate from website file replication. Dates an
 
 ## Checks
 
-Tests cover account bindings, cleared keywords, changed targets, RPC failure, quota charging, 700 metadata-only results, Turkish/English matching, escaped labels, signed transport, offline restart and legacy compatibility. Windows package acceptance searches a topic found only in an ANT keyword, clicks its tag, restarts offline, and opens the result through the existing renderer.
+Tests cover account bindings, cleared keywords, changed targets, RPC failure, quota charging, 700 metadata-only results, English keyword matching without query translation, escaped labels, signed transport, offline restart and legacy compatibility. Windows package acceptance searches a topic found only in an ANT keyword, clicks its tag, restarts offline, and opens the result through the existing renderer.
 
 [Turkish guide](tr/konu-aramasi.md) · [ANT metadata specification](https://github.com/ar-io/specs/blob/main/arns/arns-token-1.md)

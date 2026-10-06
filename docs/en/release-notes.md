@@ -2,9 +2,9 @@
 
 Find ArNS sites by topic from the Home search box. Open known ArNS addresses in the upper address bar as before.
 
-This update adds owner-supplied ANT descriptions and keywords, optional undername metadata, clickable topic labels and common Turkish/English topic matches. The larger signed catalogue includes retained names even when their page has not yet been prepared; availability is clearly labelled. Search terms stay on the reader, and accepted catalogues remain searchable during outages.
+This update adds owner-supplied ANT descriptions and keywords, optional undername metadata, clickable topic labels and English topic keyword matching. The larger signed catalogue includes retained names even when their page has not yet been prepared; availability is clearly labelled. Search terms stay on the reader, and accepted catalogues remain searchable during outages.
 
-The 0.5.0 / preview.13 access path, R84 integration, continuous name/content preparation and signature verification are preserved. Older readers continue receiving the original small HTML catalogue.
+The established access path, R84 integration, continuous name/content preparation and signature verification are preserved. Older readers continue receiving the original small HTML catalogue.
 
 ## Use it
 
