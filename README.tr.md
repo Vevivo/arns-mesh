@@ -19,19 +19,23 @@ Cüzdan, ödeme, Node.js veya kendi sunucunuz gerekmez. Standart paket bağlant�
 
 Ana sayfadaki **orta arama kutusuna** music, games, art veya storage gibi bir konu yazın. ArNS adresleri, varsa açıklamaları ve konu etiketleri listelenir. Sonuca tıklayıp siteyi açın. Bildiğiniz adresleri üst çubuğa yazmaya devam edin. [Arama rehberi](docs/tr/konu-aramasi.md).
 
-## Solana RPC ve Arweave de kapanırsa?
+## İsimler ve siteler sürekli güncellenir
 
-**Mesh'te isim kaydı ve dosyaları bulunan içeriklere erişim devam eder.** Okuyucu, ulaşabildiği Mesh destekçisinden ismin kaydını ve doğrulanmış dosyaları alır. Bunun için okuyucunun siteyi daha önce açmış olması gerekmez.
+Otomatik hazırlama açık olan destekçi sunucular yeni ArNS kayıtlarını ve mevcut isimlerin içerik değişikliklerini arka planda düzenli olarak kontrol eder. Edindikleri isim kayıtlarını saklar; site dosyalarını indirir, doğrular ve sunmaya hazırlar. Solana RPC ve Arweave erişim yolları çalıştığı sürece kullanılmaya devam eder. Bu süreç sunucunun disk, trafik ve işlem sınırları içinde sürer. [Sürekli hazırlık nasıl çalışır?](docs/tr/surekli-hazirlik.md).
 
-6 Ekim 2026 testinde okuyucu ve destekçi dış ağdan birlikte ayrıldı. RPC, Arweave ve dış DNS adreslerine erişilemedi; boş okuyucu 35 isimden 29'unun ana içeriğini açtı. Önceden hazır işaretlenmiş 22 kaydın saklanan dosya setleri eksiksiz doğrulandı. [Testin ayrıntıları ve sonuçları](docs/validation/upstream-outage-2026-10-06.md).
+## Solana RPC veya Arweave erişim yolları kesilirse
 
-Gerekli dosya hiçbir ulaşılabilir Mesh destekçisinde yoksa kesinti sırasında getirilemez. Kesintide kullanılan isim kaydı, daha önce gözlenmiş sürümü gösterir.
+**Mesh, ulaşılabilir destekçi sunucular üzerinden alternatif bir erişim yolu sağlar.** Okuyucu Solana RPC'ye ulaşamıyorsa kabul edilen isim kaydını Mesh'ten alabilir. Arweave'e doğrudan erişemiyorsa ilgili doğrulanmış dosyaları Mesh'ten alabilir. Kullanıcının siteyi daha önce açmış olması gerekmez.
+
+Canlı kaynaklara hâlâ erişebilen bir destekçi güncellemeleri edinmeye devam edebilir. Hem okuyucu hem de ulaşabildiği destekçiler bu yolları kaybederse Mesh, önceden edindiği isim kayıtları ve dosyalarla erişimi sürdürür; son alınan sürüm kullanılır. İsim kaydı içeriğin adresini gösterir; sitenin tamamını açmak için ilgili dosyaların da ulaşılabilir bir kaynakta bulunması gerekir. R84 içeriğin yerini bulmaya yardım eder; dosyaları destekçiler ayrıca saklar ve sunar.
+
+Burada anlatılan durum, **dış hizmetlere giden erişim yollarının kesilmesidir**. 6 Ekim 2026'daki yalıtılmış okuyucu/destekçi testi, seçilmiş bir isim grubu üzerinde bu alternatif yolu doğruladı. Testteki isim sayısı, ağın toplam kataloğu veya kapasite sınırı değildir. [Testin kapsamı, sayıları ve sonuçları](docs/validation/upstream-outage-2026-10-06.md) · [Hazırlık durumu](docs/tr/durum.md).
 
 ## Mesh nasıl çalışır?
 
-- **Bağlantılar açıkken:** Destekçiler isim kayıtlarını ve içerikleri hazırlar. R84 indeksleri dosyaların Arweave'deki yerini bulmayı hızlandırır.
+- **Erişim yolları açıkken:** Destekçiler isimleri takip eder ve doğrulanmış içerikleri hazırlar. R84 indeksleri dosyaların Arweave'deki yerini bulmayı hızlandırır.
 - **Kullanıcı site açarken:** Mesh ulaşılabilir kaynaklardan dosyaları alır ve kimliklerini/imzalarını doğrular.
-- **Kaynaklar kesildiğinde:** Önceden hazırlanmış isim ve dosyalar Mesh üzerinden kullanılmaya devam eder.
+- **Dış erişim yolları kesildiğinde:** Ulaşılabilir Mesh destekçileri sakladıkları isimleri ve dosyaları sunar; dış kaynaklara erişebilen destekçiler güncellemeleri edinmeyi sürdürür.
 
 Büyük indeksler destekçi sunucularda tutulur. Windows okuyucusu sınırlı yerel önbellek ve ayarlar saklar. [Bilgisayarda tutulan veriler](docs/tr/kullanici.md#bilgisayarınızda-tutulan-veriler).
 

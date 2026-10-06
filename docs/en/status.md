@@ -4,15 +4,21 @@
 
 **0.5.1** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
 
-## Verified access
+## Continuous preparation
 
-**ArNS content opens without domains/DNS. When Solana RPC and Arweave are also unavailable, retained name records and files remain usable through Mesh.**
+The deployed 0.5.1 supporter keeps checking new registrations and existing name targets while its source routes are reachable. Name synchronization runs independently of content downloads. It retains observed name records and prepares verified files within configured budgets.
 
-Linux OS-isolation result, 6 October 2026:
+A read-only operator-status observation at **2026-10-06 11:26 UTC** reported **13,274 retained names**, including undernames and retained observations, with name synchronization active. The registry refresh timestamp advanced between successive checks. This is a dated observation of one supporter, not a fixed catalogue size or a count of completely archived sites. Name coverage and file readiness are measured separately. [Preparation, timing and limits](continuous-preparation.md).
+
+## Verified access when upstream routes are blocked
+
+**ArNS content opens without domains/DNS. If the reader loses Solana RPC or raw Arweave access, Mesh can provide accepted name records and verified files through a reachable supporter.** A supporter with working upstream access can continue preparing updates. When those routes are unavailable to both reader and supporter, retained versions remain usable.
+
+The Linux OS-isolation test on 6 October 2026 used a **selected sample of 35 names**. The counts below describe that test snapshot, not the continuously growing catalogue or the system's capacity:
 
 | Check | Result |
 |---|---|
-| External RPC, Arweave, DNS and HTTPS destinations | Unreachable at the OS network layer |
+| Routes to the configured RPC, raw Arweave, DNS and HTTPS destinations | Unreachable at the OS network layer |
 | Initially empty reader | Obtained accepted name records from Mesh |
 | 35 real names | 29 main contents opened |
 | 22 records marked prepared | All retained file sets verified |
@@ -32,7 +38,3 @@ The isolation test uses processes on one physical machine. It is not acceptance 
 Not every ArNS name is archived. External APIs/CDNs may remain unavailable despite retained site files. R84 indexes describe content locations; the files must be retained separately. The Raspberry Pi guide targets 64-bit systems; physical Pi acceptance has not been run.
 
 [Use Mesh](user.md) · [Supporter setup](supporter.md) · [Development](developer.md).
-
-## Continuous freshness
-
-[How preparation works and what is tested](continuous-preparation.md).

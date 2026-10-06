@@ -1,6 +1,12 @@
-# RPC and Arweave outage acceptance — 6 October 2026
+# RPC and Arweave access-route isolation — 6 October 2026
 
-This test checks whether the production access engine can open real ArNS content when **both reader and supporter cannot reach external networks**.
+This test checks whether the production access engine can open real ArNS content when **both reader and supporter cannot reach external networks**, while their Mesh connection remains reachable. The test blocks routes to RPC and raw Arweave endpoints; it does not shut down or claim a shutdown of either underlying network.
+
+## Scope of the sample
+
+The 35 names below are a selected test sample captured from existing supporter data. They are not the supporter's full name catalogue, a cap on supported names, or a current count of prepared sites. Some selected names share the same content target, so the report also counts distinct files. The measured results, including missing content, are preserved below.
+
+The live supporter continues checking new registrations and changed targets, retaining name records and preparing verified site files independently of this isolated test. [Continuous preparation](../en/continuous-preparation.md) · [Dated supporter status](../en/status.md). A retained name identifies content; file readiness is tracked separately.
 
 ## Method
 
@@ -20,7 +26,7 @@ The working service was not stopped, restarted or isolated.
 
 | Result | Count |
 |---|---:|
-| Names tested | 35 |
+| Selected names tested | 35 |
 | Main content opened | 29 |
 | Complete prepared file sets verified | 22 |
 | Distinct opened main objects | 9 |

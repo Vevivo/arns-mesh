@@ -40,7 +40,9 @@ There is currently no supported zero-persistent-storage mode. Moving archive wor
 
 ## What happens during a disruption?
 
-In **Automatic** mode, Mesh uses available live sources and can recover using accepted dated information. If RPC and raw Arweave are unavailable, the required name record and files must already be available locally or on a reachable supporter.
+In **Automatic** mode, Mesh uses working live routes while supporters keep checking name updates and preparing verified files. If your RPC route fails, a reachable supporter can supply an accepted name record. If your raw Arweave route fails, a supporter holding the files can supply them through Mesh. You do not need to have opened the site before.
+
+Supporters that still reach live sources can continue preparing updates. If those routes are unavailable to both the reader and every reachable supporter, access uses retained name records and files; newly published information cannot be obtained until a source carrying it becomes reachable. [How preparation and fallback work](continuous-preparation.md).
 
 **Saved** mode is not an operating-system network-off switch: missing files may still be requested. A bookmark remembers an address; it does not save a site.
 

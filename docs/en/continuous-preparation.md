@@ -8,7 +8,21 @@ Name checks run independently of downloads. New and rebound names are prioritize
 
 R84 supplies broad location coverage. A recent upload may arrive before the publisher's next index export. The supporter's separate online preparation process then asks Turbo's or Arweave's public GraphQL index for bundle ancestry. These are untrusted location hints: Mesh retrieves the original bytes and checks their ID and signature before storing or serving them. This preparation uses HTTPS/DNS on the server; the reader's access path remains numeric-IP Mesh/raw transport.
 
-A failed metadata service does not remove prepared data. After a source outage, a reachable supporter can serve the last retained binding and verified files. It cannot discover information published only to a now-unreachable source. Files and an accepted binding must reach at least one surviving supporter before the outage.
+## Alternative access when a route is interrupted
+
+The live routes stay enabled while they work. A failure to reach a service does not mean the underlying network has shut down.
+
+| Available route | How access continues |
+|---|---|
+| The reader cannot reach Solana RPC | Mesh can supply an accepted retained name record from a reachable supporter. A supporter that can still reach RPC can continue observing name updates. |
+| The reader cannot reach raw Arweave endpoints | A reachable Mesh supporter can supply verified copies of the requested files it holds. |
+| Neither the reader nor its reachable supporters can reach RPC or raw Arweave | Mesh serves the accepted name records and verified files retained before those routes became unavailable. |
+
+A name record identifies a content target; it is separate from the files needed to display that content. R84 supplies location information, not a complete local copy of every indexed file. Preparation builds those verified copies over time.
+
+A failed metadata service does not remove prepared data. Updates can continue through supporters that still have working source access. If no reachable source has a new record or file, Mesh cannot obtain that missing information until a route to it becomes available. During that gap, a retained record represents the version last observed by its publisher, not proof of the latest chain state.
+
+[The isolated access test](../validation/upstream-outage-2026-10-06.md) used selected examples to test this fallback. Its sample counts do not limit the continuously updated catalogue.
 
 ## Capacity
 

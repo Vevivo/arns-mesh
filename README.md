@@ -19,21 +19,25 @@ No wallet, payment, Node.js installation or personal server is required. The sta
 
 Use the **middle search box** on Home for topics such as music, games or storage. Results include ArNS addresses, descriptions and topic labels. Click a result to open it. The upper address bar still opens a known name directly. [Search guide](docs/topic-search.md).
 
-## What if Solana RPC and Arweave are unavailable too?
+## Keep names and sites up to date
 
-**Content with retained name records and files remains accessible through Mesh.** The reader obtains the accepted name record and verified files from a reachable supporter. The reader does not need to have visited the site before.
+Supporters with automatic preparation enabled continuously check for new ArNS registrations and changes to existing names, retain the observed name records, and fetch and verify site files in the background. Healthy Solana RPC and Arweave access routes remain in use. Updates continue within the server's storage, bandwidth and processing limits. [How continuous preparation works](docs/en/continuous-preparation.md).
 
-On 6 October 2026, a reader and supporter were isolated together from external networks. RPC, Arweave and external DNS addresses were unreachable; an initially empty reader opened the main content for 29 of 35 names. All 22 records marked ready passed verification of their retained file sets. [Test procedure and results](docs/validation/upstream-outage-2026-10-06.md).
+## If Solana RPC or Arweave access routes are interrupted
 
-A file absent from every reachable supporter cannot be retrieved during the outage. A retained name record describes a previously observed version.
+**Mesh provides an alternative access route through reachable supporters.** If a reader cannot reach Solana RPC, it can obtain an accepted name record from Mesh. If direct Arweave access fails, it can obtain the corresponding verified files from Mesh. The reader does not need to have visited the site before.
+
+A supporter that still reaches live sources can continue preparing updates. If the reader and its reachable supporters all lose those routes, Mesh can serve the name records and files already retained, using the last acquired version. A name record identifies the content; complete site access also requires the corresponding files on a reachable source. R84 helps locate content, while supporters retain and serve the files themselves.
+
+This scenario concerns interrupted **access routes to external services**. On 6 October 2026, an isolated reader/supporter test exercised this fallback with a selected sample of names. Its sample size is not the network's catalogue size or capacity. [Test scope, counts and results](docs/validation/upstream-outage-2026-10-06.md) · [Preparation status](docs/en/status.md).
 
 ## How Mesh works
 
-- **While sources are available:** supporters prepare name records and content. R84 indexes help locate files on Arweave.
+- **While access routes are working:** supporters keep checking names and preparing verified content. R84 indexes help locate files on Arweave.
 - **When a reader opens a site:** Mesh retrieves files from available sources and verifies their identities and signatures.
-- **During an upstream outage:** retained names and files continue to travel through Mesh.
+- **If upstream access routes fail:** reachable Mesh supporters continue serving retained names and files; any supporter with working upstream access can continue preparing updates.
 
-Large indexes stay on supporter servers. The Windows reader keeps bounded local caches and settings. [Local storage](docs/en/user.md#data-on-your-computer).
+Large indexes stay on supporter servers. The Windows reader keeps bounded local caches and settings. [Local storage](docs/en/user.md#storage-on-your-computer).
 
 ## Support the network
 
