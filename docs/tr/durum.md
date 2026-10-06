@@ -1,8 +1,8 @@
-# Mesh 0.5.0 durumu
+# Mesh 0.5.1 durumu
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-Masaüstü ve sunucu için güncel kaynak sürümü **0.5.0**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
+Masaüstü ve sunucu için güncel kaynak sürümü **0.5.1**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
 
 ## Doğrulanan erişim
 

@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {seed} from './seed-saved-fixture.mjs';
-import {SearchPublisher} from '../../src/search-catalog.mjs';
+import {SearchPublisher,TopicSearchPublisher} from '../../src/search-catalog.mjs';
 import {NameSnapshotStore} from '../../src/name-snapshots.mjs';
 import {VerifiedContentStore} from '../../src/content-store.mjs';
 import {peerIdFromPublicKey,signRecord} from '../../src/common.mjs';
@@ -20,8 +20,9 @@ const output=path.resolve(process.env.QA_OUTPUT),data=path.join(output,'user-dat
 const keys=crypto.generateKeyPairSync('ed25519'),publicKeyPem=keys.publicKey.export({format:'pem',type:'spki'}),privateKeyPem=keys.privateKey.export({format:'pem',type:'pkcs8'}),witnessPeerId=peerIdFromPublicKey(publicKeyPem);
 const sign=record=>{const recordJson=JSON.stringify(record);return {ok:true,witnessPeerId,witnessPublicKeyPem:publicKeyPem,recordJson,signature:signRecord(recordJson,privateKeyPem)};};
 const publisher=new SearchPublisher({file:path.join(output,'publisher.json'),snapshots:new NameSnapshotStore(path.join(data,'name-snapshots.json')),contentStore:new VerifiedContentStore(path.join(data,'content')),sign});await publisher.pass();assert.equal(publisher.record.entries.length,1);
+const topicPublisher=new TopicSearchPublisher({file:path.join(output,'topics.json'),snapshots:new NameSnapshotStore(path.join(data,'name-snapshots.json')),documents:publisher,metadata:{get:()=>({title:'',description:'',keywords:['konser'],metadataAt:new Date().toISOString()})},sign});topicPublisher.pass();
 const providerData=path.join(output,'provider-a');
-const peer={identity:{},witnessPeerId,_envelope:sign,requestsServed:0,_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');assert.equal(Object.hasOwn(req,'query'),false);process.send?.({request:true,route:'a'});return publisher.reply();}};
+const peer={identity:{},witnessPeerId,_envelope:sign,requestsServed:0,_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');assert.equal(Object.hasOwn(req,'query'),false);process.send?.({request:true,route:'a'});return req.version===2?topicPublisher.reply():publisher.reply();}};
 const discovery=new PeerDiscovery({dataDir:providerData,scope:()=>peerNetworkScope(providerData),peers:()=>[],identity:peer,listenPort:1});
 const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0,discovery,networkAnnouncement:()=>readNetworkPublication(providerData),networkRecovery:()=>readNetworkRecovery(providerData)});discovery.listenPort=server.address.port;
 let late=null,seedStopped=false;
@@ -36,7 +37,7 @@ fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy
 process.on('message',async message=>{try{
  if(message==='late-supporter'){
   const k=crypto.generateKeyPairSync('ed25519'),pub=k.publicKey.export({format:'pem',type:'spki'}),priv=k.privateKey.export({format:'pem',type:'pkcs8'}),id=peerIdFromPublicKey(pub);
-  const b={identity:{},witnessPeerId:id,requestsServed:0,_envelope(record){const recordJson=JSON.stringify(record);return {ok:true,witnessPeerId:id,witnessPublicKeyPem:pub,recordJson,signature:signRecord(recordJson,priv)};},_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');process.send?.({request:true,route:'b'});return publisher.reply();}};
+  const b={identity:{},witnessPeerId:id,requestsServed:0,_envelope(record){const recordJson=JSON.stringify(record);return {ok:true,witnessPeerId:id,witnessPublicKeyPem:pub,recordJson,signature:signRecord(recordJson,priv)};},_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');process.send?.({request:true,route:'b'});return req.version===2?topicPublisher.reply():publisher.reply();}};
   const d=new PeerDiscovery({dataDir:path.join(output,'provider-b'),scope:()=>peerNetworkScope(providerData),peers:()=>[{host:'127.0.0.1',port:server.address.port}],identity:b,listenPort:1});
   const listener=await startDirectPeerServer(b,{host:'127.0.0.1',port:0,discovery:d,networkAnnouncement:()=>readNetworkPublication(providerData),networkRecovery:()=>readNetworkRecovery(providerData)});d.listenPort=listener.address.port;late={discovery:d,server:listener};await d.sync();assert.equal(d.status().acceptedBy,1);process.send?.({lateReady:true});
  }

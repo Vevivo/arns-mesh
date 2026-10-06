@@ -20,7 +20,7 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    const event={sender:toolbar.webContents,senderFrame:toolbar.webContents.mainFrame};
    const call=(name,...args)=>fake.handlers.get(name)(event,...args);
    const home=content.webContents.session.protocol.rows.get('arnsui');
-   assert.match(await (await home(new Request('arnsui://app/welcome.html?q=muzik'))).text(),/Search indexed ArNS sites/);
+   assert.match(await (await home(new Request('arnsui://app/welcome.html?q=muzik'))).text(),/Search ArNS sites by topic or name/);
    assert.equal((await home(new Request('arnsui://app/welcome.html?refresh=1'))).status,404);
    content.webContents.emit('will-navigate',{preventDefault(){}},'arnsui://app/welcome.html?q=muzik');
    await new Promise(r=>setTimeout(r,0));assert.equal(content.webContents.getURL(),'arnsui://app/welcome.html?q=muzik');

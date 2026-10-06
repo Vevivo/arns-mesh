@@ -2,7 +2,7 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
-The desktop and supporter share Mesh 0.5.0. See the [outage test](../validation/upstream-outage-2026-10-06.md) and [shared-network behavior](shared-network.md).
+The desktop and supporter share Mesh 0.5.1. See the [outage test](../validation/upstream-outage-2026-10-06.md) and [shared-network behavior](shared-network.md).
 
 ## Two runtime roles
 

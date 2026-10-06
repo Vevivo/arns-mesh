@@ -1,34 +1,38 @@
-# Topic search — Mesh 0.5.0
+# Topic search — Mesh 0.5.1
 
-This page describes Mesh 0.5.0.
-The Home page has a topic search field. The top address bar still opens a known ArNS name or `ar://name` directly. Search returns up to 30 matching names, titles and excerpts from the catalogue already downloaded to this device. All query words must match a word or word prefix in the indexed name/text (for example, `art` matches `artwork`, not `start`); accents and Turkish dotted/dotless I are normalized. This is keyword matching, not translation or semantic/AI search.
+The top address bar opens an ArNS name. The Home search box finds ArNS sites by name, topic, description or keyword. Click a result to open it, or click a topic label to search that topic.
 
-Results include the name-observation time, page-indexing time and a dated availability report. **Entry page indexed** does not mean all assets exist. **Site copy reported by peer** describes the provider's preparation scope at indexing time, not a current reachability guarantee. **Saved on this device** is shown only when this reader has a matching ready saved version. Opening any result follows the existing name-resolution and content-verification path. Search metadata never overrides an ArNS binding or becomes a content proof.
+Search covers retained ArNS names and undernames, owner-supplied ANT descriptions/keywords, optional record-specific metadata, and verified cached HTML titles, descriptions, keywords and text. A name can appear before its page has been prepared; the result says **ArNS listing · page availability checked when opened**. A listing is not a promise that all site files are available.
 
-## Reader
+## Using search
 
-1. Open Mesh 0.5.0 and join your network.
-2. Join the operator's network normally. Its signed recovery extension supplies trusted witness identities; a legacy profile without `trustedPeers` needs the operator's updated connection information. No extra search account or API key is required.
-3. On Home, choose **Refresh catalogue** if needed. Automatic checks run at startup and roughly every 15 minutes outside Saved mode. Type a topic and choose **Search Mesh**. Query words stay on the device.
-4. If the provider is unavailable, the last accepted catalogue remains searchable, including after application restart. Saved mode disables catalogue refresh, but not local search.
-5. No result means no match in the downloaded subset. Try another word or enter the known name in the upper address bar. A result does not download or pin the website by itself.
+Join your normal Mesh network, open Home, type a topic and choose **Search Mesh**. Use **Refresh catalogue** if needed. The reader refreshes on startup and about every 15 minutes outside Saved mode. No search account or API key is needed.
 
-A fresh reader with no accepted catalogue cannot invent an offline search index. Opening a result still requires its name observation and real bytes locally or on a reachable source. This feature does not turn reader desktops into public peers.
+Common Turkish and English topic words are paired, including oyun/game, müzik/music, sanat/art, depolama/storage and eğitim/education. Accents and Turkish dotted/dotless I are normalized. Other terms match words or word prefixes, with every query term required. This is bounded keyword search, not general translation or AI semantic search. Exact names rank first; keyword matches have more weight than incidental body text. Up to 30 results are shown.
 
-## Provider and supporter
+Query words stay on the reader. The accepted catalogue remains searchable after a restart or provider outage. A fresh reader needs a reachable supporter to obtain a catalogue. Opening a result always uses the existing ArNS binding and content verification; search metadata cannot change a name target.
 
-The headless peer builds `search-published.json` from locally observed names and **signature-verified cached HTML entry documents**. If a name targets a path manifest, the manifest and selected entry document are both verified. No page scripts run. Scripts, styles, templates and markup are omitted from a bounded text preview; CSS visibility and JavaScript-generated text are not evaluated. A missing or corrupt document is not indexed. After an observed target change, the old entry is removed until the new document is available.
+## Supporters
 
-Existing content discovery/preparation supplies the files; the search publisher introduces no separate web crawler or raw-content download. Up to 32 names are examined per minute, with a round-robin cursor. Large registries, incomplete discovery and quotas can delay coverage. It does not instantly detect every new name or update. Each catalogue has at most 256 HTML entries and 384 KiB of signed JSON; the byte cap can reduce the entry count. Extraction accepts entry payloads up to 1 MiB, stores a 160-character title, 320-character description and 1,200-character static text preview. It does not download a full CDB64 index.
+When the existing name catalog is enabled, a separate search worker reads ANT Config and AntRecordMetadata accounts through the configured numeric-IP Solana RPC about every 15 minutes. It checks the account owner, discriminator, mint, derived address, undername hash and nondecreasing slot. The metadata remains an RPC observation, not an account inclusion proof.
 
-Existing numeric-IP Mesh endpoints accept `{ "op": "catalog", "witnessPeerId": "<trusted-public-witness-id>" }`. The result is an Ed25519-signed `arns-mesh-search/v1` record containing a revision, generation time and entries. No query words are transmitted. The client checks the signature, configured publisher identity, dimensions and dates, and rejects lower revisions and conflicting equal revisions. A whole catalogue is accepted atomically; failed updates preserve the earlier copy. The client retains at most two publisher catalogues and 64 publisher revision high-water marks (including revoked publishers, to prevent rollback on re-addition). It filters revoked publishers out of results immediately.
+Only a current target-catalog name/mint/target matching the retained local name is listed. Root ANT metadata is applied to the root name; undernames use their own optional record metadata. Explicitly empty record keywords override parent keywords. Failed refreshes retain the previous observation. Removed/rebound names are excluded when the name catalog observes that change.
 
-A supporter configured with the source peer address and its trusted witness identity downloads and serves the **original signed envelope** via the same operation. It does not rewrite or re-sign the originating provider's metadata. Readers need the supporter's reachable address plus the original publisher identity in their trusted list. The private signing key is never shared. Each sync tries at most two peer addresses and two trusted publisher identities (four bounded requests), with a 45-second overall timeout. An envelope is limited to 800 KiB; the existing transport also caps responses at 1 MiB. Failed/unavailable responses may consume transport bytes too. With more configured publishers, only the first two are synchronized in this preview.
+HTML indexing verifies the original manifest and entry document signatures and never executes scripts. It examines up to 32 cached entry candidates per pass, excludes scripts/styles/templates, and retains a bounded preview. It keeps the existing limit of 256 prepared HTML entries; additional names remain discoverable through name and ANT metadata. No search-triggered website downloads or extra desktop crawler are introduced.
 
-`ARNS_UPSTREAM_FETCH=0` disables automatic mirror downloads. A disconnected supporter can still serve catalogues it has already retained, and publish from verified local bytes. Copies of a search catalogue are **not** copies of website files or proof of the latest name state. There is still only one independent service provider until other operators actually run peers and retain data.
+## Bounds and compatibility
 
-## Verification and remaining acceptance
+- Server metadata: 16 MiB disk cap, 16 MiB per RPC response, 32 MiB per pass and 512 MiB daily received-body budget. Failures consume quota.
+- Version 2 catalogue: at most 20,000 entries and 8 MiB signed JSON, with a 16 MiB envelope/transport cap. The byte cap may reduce the number of entries.
+- Reader: at most two accepted publisher envelopes, bounded to approximately 32 MiB plus small revision bookkeeping. Actual size depends on the network; this is not the multi-gigabyte R84 index.
+- HTML previews: 1 MiB input, 160-character title, 320-character description, 1,200-character body text, up to 12 bounded keywords.
+- Search uses the existing numeric-IP catalog operation with version 2. Publisher signatures, configured trust, rollback/conflict rejection and atomic acceptance remain enforced.
+- Older readers receive the original version 1 HTML catalogue. Upgraded supporters mirror both versions without sharing private keys.
 
-Automated tests cover signed HTML/manifest extraction, Turkish queries, changed targets, corrupt and evicted bytes, untrusted signatures, rollback/conflicting revisions, bounded storage/requests, escaped result markup and the toolbar/content privilege boundary. A real loopback HTTP experiment transfers a catalogue through an intermediate peer with its original signature, closes both peers, restarts the reader and successfully searches the retained copy. These are local process tests, not independent-machine disaster acceptance.
+Search catalogue replication is separate from website file replication. Dates and availability are reports from the accepted publisher. Missing metadata, incomplete preparation, resource limits, source outages and update intervals all limit coverage.
 
-Linux/Windows source CI and a Windows release ZIP are separate from production release and native UI acceptance. The owner's two-PC test remains deferred. No general Web/ArNS coverage, instant update guarantee, semantic search, independent name-state proof or new OS-level outage result is claimed.
+## Checks
+
+Tests cover account bindings, cleared keywords, changed targets, RPC failure, quota charging, 700 metadata-only results, Turkish/English matching, escaped labels, signed transport, offline restart and legacy compatibility. Windows package acceptance searches a topic found only in an ANT keyword, clicks its tag, restarts offline, and opens the result through the existing renderer.
+
+[Turkish guide](tr/konu-aramasi.md) · [ANT metadata specification](https://github.com/ar-io/specs/blob/main/arns/arns-token-1.md)

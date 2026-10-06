@@ -6,11 +6,11 @@ Windows uygulaması ve çalışan bir ağ daveti yeterlidir. VPS, cüzdan, Node.
 
 ## 1. İndirin
 
-**[0.5.0 Windows x64 uygulama ZIP'ini](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip)** indirin. GitHub'daki **Source code** arşivleri geliştiriciler içindir.
+**[0.5.1 Windows x64 uygulama ZIP'ini](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip)** indirin. GitHub'daki **Source code** arşivleri geliştiriciler içindir.
 
 ZIP'in tamamını kalıcı bir klasöre çıkarın. İçindeki `Mesh-Browser.exe` dosyasını açın. Diğer dosyaları yanında bırakın; masaüstünde simge istiyorsanız kısayol oluşturun.
 
-Bu, topluluk tarafından yayımlanan imzasız bir uygulamadır. Windows engellerse [sürüm ve dosya doğrulama bilgilerini](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0) kontrol edip uyarıyı bildirin. Güvenlik yazılımını kapatarak engeli aşmayın.
+Bu, topluluk tarafından yayımlanan imzasız bir uygulamadır. Windows engellerse [sürüm ve dosya doğrulama bilgilerini](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.1) kontrol edip uyarıyı bildirin. Güvenlik yazılımını kapatarak engeli aşmayın.
 
 ## 2. Bir kez bağlanın
 
@@ -26,7 +26,7 @@ Katılmadan önce gösterilen ağı kontrol edin. Kod tekrar kullanılabilir bir
 
 **Üst adres çubuğuna** `ar://vevivo` veya ziyaret etmek istediğiniz başka bir ArNS ismini yazın. Örnek adresin her zaman açılacağı garanti edilmez.
 
-Alt isimlerde tam kayıtlı yazımı kullanın: örneğin `altisim_isim`. Ana sayfadaki arama kutusu sınırlı bir konu kataloğunu arar; adres çubuğundan ayrıdır.
+Alt isimlerde tam kayıtlı yazımı kullanın: örneğin `altisim_isim`. Ortadaki arama kutusuna müzik, oyun veya depolama gibi bir konu yazın. Sonuca tıklayıp ArNS sitesini açın; etikete tıklayıp o konuda arama yapın. [Arama rehberi](konu-aramasi.md).
 
 Mesh ismi çözer, dosyaları bulur, doğrular ve sayfayı açar. **Page information**, eksik kaynakları ve tarihli isim kaydının kullanılıp kullanılmadığını gösterir. Domain üzerinden çalışan haricî API ve CDN'ler erişilemez kalabilir.
 
@@ -34,7 +34,7 @@ Mesh ismi çözer, dosyaları bulur, doğrular ve sayfayı açar. **Page informa
 
 Büyük paylaşılan indeks ve destekçi arşivleri **sunucuda** tutulur. Gezinmek için bunları indirmeniz gerekmez; tarayıcı diskinizi otomatik olarak diğer kullanıcılara sunmaz.
 
-Ancak 0.5.0; uygulama ayarlarını, gezinme durumunu, isim kayıtlarını ve sınırlı içerik önbelleğini `%APPDATA%\ArNS-Mesh-Browser` altında tutar. **Save current page** ek dosyalar saklar. Bilerek sayfa kopyası kaydetmek istemiyorsanız bu işlemi kullanmayın; normal önbellekleme yine devam eder.
+Ancak 0.5.1; uygulama ayarlarını, gezinme durumunu, isim kayıtlarını ve sınırlı içerik önbelleğini `%APPDATA%\ArNS-Mesh-Browser` altında tutar. **Save current page** ek dosyalar saklar. Bilerek sayfa kopyası kaydetmek istemiyorsanız bu işlemi kullanmayın; normal önbellekleme yine devam eder.
 
 Bu sürümde desteklenen bir sıfır kalıcı depolama modu yoktur. Arşiv işinin destekçilerde yapılması, mevcut tarayıcıyı disksiz yapmaz.
 
@@ -67,3 +67,5 @@ Mevcut imzalı veri nesnesi sınırı 32 MiB'dir. [Göstergelerin açıklaması]
 Mesh'i kapatın. Yeni uygulama ZIP'ini ayrı bir klasöre çıkarıp çalıştırın. AppData ayarları normalde korunur. Yer imleri ve kaydedilmiş verileri korumak istiyorsanız özel yedek alın. Otomatik uygulama güncelleyicisi yoktur.
 
 Program klasörünü silmek AppData'yı silmez. Mesh çalışırken AppData'yı silmeyin. [Gizlilik](gizlilik.md) · [Sorun bildirme](../../CONTRIBUTING.md).
+
+Arama kataloğunu destekçi sunucular hazırlar. Kesintide de arama yapabilmek için cihazda en fazla iki sınırlı katalog tutulur (toplam yaklaşık 32 MiB üst sınır). Arama kelimeleri sunucuya gönderilmez.

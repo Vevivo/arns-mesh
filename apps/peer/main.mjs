@@ -1,8 +1,9 @@
 import '../../src/network-lockdown.mjs';
 import os from 'node:os';
 import {startOnlinePreparation} from '../../src/preparation-process.mjs';
-import {SearchPublisher,SearchCatalog} from '../../src/search-catalog.mjs';
+import {SearchPublisher,SearchCatalog,TopicSearchPublisher} from '../../src/search-catalog.mjs';
 import {readProfile} from '../helper/network-profile.mjs';
+import {SearchMetadataWorker} from '../../src/search-metadata.mjs';
 import {CatalogWorker} from '../../src/catalog-worker.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,16 +49,23 @@ async function refresh(){if(refreshing||stopping)return;refreshing=true;try{for(
 if(pinned.includes(name)){const old=pinner.rows[name],snapshot=runtime.snapshots.get(name);if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
 try{await peer.start();}catch(e){console.error(JSON.stringify({event:'dht-unavailable',error:String(e.message)}));}
 const listenArg=process.argv.indexOf('--listen'),listen=listenArg>=0?parsePeerAddresses(process.argv[listenArg+1])[0]:{host:'0.0.0.0',port:49740};
+let catalog=null,retainedSearchTargets=null;
+const targetFile=path.join(dataDir,'target-catalog.json');
+try{if(fs.statSync(targetFile).size<=16*1024*1024)retainedSearchTargets=JSON.parse(fs.readFileSync(targetFile)).targets||null;}catch{}
+const searchTargets=()=>catalog?.catalog.state.targets||retainedSearchTargets||{};
+const searchMetadata=new SearchMetadataWorker({file:path.join(dataDir,'search-metadata.json'),endpoint:()=>catalog?.catalog.endpoint,targets:searchTargets});
 const search=new SearchPublisher({file:path.join(dataDir,'search-published.json'),snapshots:runtime.snapshots,contentStore:peer.contentStore,pinner,sign:record=>peer._envelope(record)});
+const topicSearch=new TopicSearchPublisher({file:path.join(dataDir,'search-topics-published.json'),snapshots:runtime.snapshots,documents:search,metadata:searchMetadata,current:(name,snapshot)=>!catalog&&!retainedSearchTargets||searchTargets()[name]?.dataId===snapshot.txId&&searchTargets()[name]?.mint===snapshot.antId,sign:record=>peer._envelope(record)});
+const legacySearchMirrors=new SearchCatalog(path.join(dataDir,'search-legacy-cache.json'));
 const searchMirrors=new SearchCatalog(path.join(dataDir,'search-cache.json'));
 const searchTrust=()=>[...new Set([...trustedPeers,...(readProfile(dataDir).trustedPeers||[])])].filter(id=>id!==peer.witnessPeerId);
 peer.searchReply=req=>{
- if(req.witnessPeerId&&req.witnessPeerId!==peer.witnessPeerId)return searchMirrors.mirror(searchTrust(),req.witnessPeerId)||{ok:false,error:'search_catalog_unavailable'};
- return search.reply();
+ if(req.witnessPeerId&&req.witnessPeerId!==peer.witnessPeerId)return (req.version===2?searchMirrors:legacySearchMirrors).mirror(searchTrust(),req.witnessPeerId,req.version===2?2:1)||{ok:false,error:'search_catalog_unavailable'};
+ return req.version===2?topicSearch.reply():search.reply();
 };
-const searchPass=()=>search.pass().catch(error=>{search.lastError=String(error.message).slice(0,160);});
+const searchPass=()=>search.pass().then(()=>topicSearch.pass()).catch(error=>{search.lastError=String(error.message).slice(0,160);});
 void searchPass();const searchTimer=setInterval(()=>void searchPass(),60000);
-const mirrorSearch=()=>searchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000)}).catch(()=>{});
+const mirrorSearch=()=>Promise.allSettled([searchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000)}),legacySearchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000),version:1})]);
 if(upstream)void mirrorSearch();const searchMirrorTimer=setInterval(()=>{if(upstream)void mirrorSearch();},15*60000);
 const peerDiscovery=new PeerDiscovery({dataDir,scope:()=>peerNetworkScope(dataDir,network),peers:()=>loadConfiguredPeers(),identity:peer,listenPort:listen.port,advertise:process.env.MESH_ADVERTISE||'auto'});
 const snapshotRelay=new SnapshotRelay({file:path.join(dataDir,'snapshot-relay.json'),trusted:searchTrust,scope:()=>peerNetworkScope(dataDir,network)});peer.snapshotRelay=snapshotRelay;
@@ -69,9 +77,8 @@ peerDiscovery.start();
 let relayRunning=false;const relayController=new AbortController();
 const mirrorSnapshots=async()=>{if(relayRunning||!upstream)return;relayRunning=true;try{await snapshotRelay.sync({names:[...new Set([...pinned,...runtime.snapshots.names()])],peers:loadDirectPeers().filter(p=>peerAddress(p)!==peerDiscovery.selfAddress()),signal:AbortSignal.any([relayController.signal,AbortSignal.timeout(15000)])});}catch(error){snapshotRelay.lastError=String(error.message).slice(0,160);}finally{relayRunning=false;}};
 void mirrorSnapshots();const relayTimer=setInterval(()=>void mirrorSnapshots(),60000);
-let catalog=null;
 const makeCatalog=endpoint=>new CatalogWorker({dataDir,peer,endpoint,snapshotStore:runtime.snapshots,pinner:process.env.ARNS_PREPARE_ENABLED==='1'?pinner:null,maxPreparedSites:Number(process.env.ARNS_PREPARE_MAX_SITES||32),independentNames:true,intervalMs:Number(process.env.ARNS_CATALOG_INTERVAL_MS||5000),maxPassBytes:mibSetting('ARNS_CATALOG_PASS_MIB',32,128),registryIntervalMs:Number(process.env.ARNS_REGISTRY_INTERVAL_MS||60000),bulkScan:process.env.ARNS_CATALOG_BULK_SCAN==='1',bulkIntervalMs:Number(process.env.ARNS_TARGET_SCAN_INTERVAL_MS||300000),jobsPerPass:8,mintsPerPass:Number(process.env.ARNS_CATALOG_MINTS_PER_PASS||8)});
-if(upstream&&process.env.ARNS_CATALOG_ENABLED==='1'){const seed=JSON.parse(fs.readFileSync(process.env.SOLANA_RPC_SEEDS))[0];catalog=makeCatalog('http://'+(seed.host.includes(':')?'['+seed.host+']':seed.host)+':'+seed.port);catalog.start();}
+if(upstream&&process.env.ARNS_CATALOG_ENABLED==='1'){const seed=JSON.parse(fs.readFileSync(process.env.SOLANA_RPC_SEEDS))[0];catalog=makeCatalog('http://'+(seed.host.includes(':')?'['+seed.host+']':seed.host)+':'+seed.port);retainedSearchTargets=null;catalog.start();searchMetadata.start();}
 peer.onContentDemand=id=>catalog?.enqueueDemand(id);
 // A background update changes the live profile. Recreate the catalog after its
 // current pass stops if its RPC endpoint changed; keep persisted queues.
@@ -90,11 +97,11 @@ if(upstream)runtime.discovery.start();
 if(upstream)void refresh();const timer=setInterval(()=>{if(upstream)void refresh();},60000);
 const version=JSON.parse(fs.readFileSync(path.join(coreRoot,'package.json'))).version;
 const publishStatus=()=>{
- const value={version,...peer.status(),onlinePreparation:onlinePreparation.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),peerDiscovery:peerDiscovery.status(),snapshotRelay:snapshotRelay.status(),catalog:catalog?.status()||null,search:search.status(),network:network.status(),savedSites:pinner.status()};
+ const value={version,...peer.status(),onlinePreparation:onlinePreparation.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),peerDiscovery:peerDiscovery.status(),snapshotRelay:snapshotRelay.status(),catalog:catalog?.status()||null,search:{...topicSearch.status(),documents:search.status(),metadata:searchMetadata.status()},network:network.status(),savedSites:pinner.status()};
  writeOperatorStatus(dataDir,value);console.log(JSON.stringify({event:'peer-status',...value}));
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
+async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
 process.on('SIGINT',stop);process.on('SIGTERM',stop);
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));

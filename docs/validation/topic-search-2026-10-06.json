@@ -1,0 +1,344 @@
+{
+  "version": "0.5.1",
+  "date": "2026-10-06",
+  "liveMetadata": {
+    "programs": 1,
+    "updatedAt": "2026-10-06T10:37:04.820Z",
+    "dayBytes": 3234481,
+    "dailyBytes": 268435456,
+    "lastError": null,
+    "running": true
+  },
+  "search": {
+    "at": "2026-10-06T10:47:48.610Z",
+    "status": {
+      "entries": 13266,
+      "withTopics": 165,
+      "limit": 20000,
+      "generatedAt": "2026-10-06T10:47:45.337Z",
+      "lastError": null
+    },
+    "catalogueBytes": 3872818,
+    "queries": [
+      {
+        "query": "game",
+        "total": 62,
+        "hits": [
+          {
+            "name": "legend",
+            "title": "The Legend of the White Rabbit",
+            "keywords": [
+              "mmorpg",
+              "game",
+              "mud"
+            ],
+            "excerpt": "Legend of the White Rabbit, text-based MMORPG with a GROG token and in-game minable gold supply.",
+            "availability": "document"
+          },
+          {
+            "name": "guessing-game",
+            "title": "ANT-GUESSING-GAME",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "unruggabull",
+            "title": "unruggabull",
+            "keywords": [
+              "game",
+              "retro",
+              "side-scroll"
+            ],
+            "excerpt": "A retro, side-scrolling beat em up where justice has horns and scams go down hard.",
+            "availability": "metadata"
+          },
+          {
+            "name": "games_linktotheworld",
+            "title": "games_linktotheworld",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "gamerssejati_lawakgaming6699",
+            "title": "gamerssejati_lawakgaming6699",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "music",
+        "total": 16,
+        "hits": [
+          {
+            "name": "music",
+            "title": "music",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "discography",
+            "title": "Discography",
+            "keywords": [
+              "Music",
+              "Art",
+              "Artist"
+            ],
+            "excerpt": "A Collectible Music Discography from Discman Studio",
+            "availability": "metadata"
+          },
+          {
+            "name": "discman",
+            "title": "Discman",
+            "keywords": [
+              "Music",
+              "Art",
+              "Artist"
+            ],
+            "excerpt": "A Collectible Music Discography from Discman Studio",
+            "availability": "metadata"
+          },
+          {
+            "name": "playdead",
+            "title": "ar://playdead",
+            "keywords": [
+              "App",
+              "Music",
+              "Player"
+            ],
+            "excerpt": "A themed player and catalog for permanently archived music.",
+            "availability": "metadata"
+          },
+          {
+            "name": "music_cooltest",
+            "title": "music_cooltest",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "storage",
+        "total": 7,
+        "hits": [
+          {
+            "name": "storage",
+            "title": "storage",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "ardrive",
+            "title": "ArDrive App",
+            "keywords": [
+              "App",
+              "File-sharing",
+              "Storage"
+            ],
+            "excerpt": "ArDrive: Secure, Permanent Storage.",
+            "availability": "metadata"
+          },
+          {
+            "name": "soroban",
+            "title": "aos",
+            "keywords": [
+              "SSTORE2",
+              "blockchain-storage",
+              "storage"
+            ],
+            "excerpt": "Compare on-chain storage costs across Ethereum, Solana, Polygon, and other blockchains. Calculate SSTORE2 deployment costs with",
+            "availability": "metadata"
+          },
+          {
+            "name": "a-registry",
+            "title": "a-registry",
+            "keywords": [
+              "storage",
+              "blockchain",
+              "security"
+            ],
+            "excerpt": "Redefining Data Protection for Modern Enterprises",
+            "availability": "metadata"
+          },
+          {
+            "name": "storage_capthowdy",
+            "title": "storage_capthowdy",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "developer",
+        "total": 2,
+        "hits": [
+          {
+            "name": "developer",
+            "title": "developer",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "mz-developer",
+            "title": "mz-developer",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "art",
+        "total": 50,
+        "hits": [
+          {
+            "name": "art",
+            "title": "art",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "ascii-art-generator",
+            "title": "ASCII-ART-GENERATOR",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "artbycity",
+            "title": "ANT-ARTBYCITY",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "discography",
+            "title": "Discography",
+            "keywords": [
+              "Music",
+              "Art",
+              "Artist"
+            ],
+            "excerpt": "A Collectible Music Discography from Discman Studio",
+            "availability": "metadata"
+          },
+          {
+            "name": "discman",
+            "title": "Discman",
+            "keywords": [
+              "Music",
+              "Art",
+              "Artist"
+            ],
+            "excerpt": "A Collectible Music Discography from Discman Studio",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "vevivo",
+        "total": 23,
+        "hits": [
+          {
+            "name": "vevivo",
+            "title": "vevivo",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "vevivoofficial",
+            "title": "vevivo",
+            "keywords": [],
+            "excerpt": "permabull",
+            "availability": "metadata"
+          },
+          {
+            "name": "vevivo-zerotoarweave-starterkit_arlink",
+            "title": "vevivo-zerotoarweave-starterkit_arlink",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "vevivo-permanote_arlink",
+            "title": "vevivo-permanote_arlink",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          },
+          {
+            "name": "vevivo-dumdumtower_arlink",
+            "title": "vevivo-dumdumtower_arlink",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      },
+      {
+        "query": "cubetwist",
+        "total": 1,
+        "hits": [
+          {
+            "name": "cubetwist",
+            "title": "cubetwist",
+            "keywords": [],
+            "excerpt": "",
+            "availability": "metadata"
+          }
+        ]
+      }
+    ]
+  },
+  "offlineSupporter": {
+    "scope": "Actual supporter entrypoint in loopback-only Linux namespace; upstream disabled; retained public records and metadata; fresh supporter identity",
+    "v2": {
+      "schema": "arns-mesh-search/v2",
+      "entries": 13266,
+      "bytes": 4275298,
+      "keywords": 83,
+      "vevivo": {
+        "name": "vevivo",
+        "availability": "document",
+        "documentId": "HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk"
+      },
+      "ardrive": {
+        "name": "ardrive",
+        "keywords": [
+          "App",
+          "File-sharing",
+          "Storage"
+        ]
+      }
+    },
+    "legacy": {
+      "schema": "arns-mesh-search/v1",
+      "entries": 1,
+      "bytes": 894,
+      "keywords": 0,
+      "vevivo": {
+        "name": "vevivo",
+        "availability": "document",
+        "documentId": "HCM6ASXONmBrl53IhZQOpKLAGhu4_Xq7awX3IGIjIjk"
+      },
+      "ardrive": null
+    }
+  },
+  "sourceTests": {
+    "passed": 205,
+    "failed": 0,
+    "platform": "Linux",
+    "runnerConcurrency": 2
+  },
+  "scope": "Live public metadata read; signed search catalogue and offline supporter. Search listings do not certify complete website availability."
+}

@@ -2,7 +2,7 @@
 
 **Domain ve DNS olmadan ArNS sitelerini açın.**
 
-[Windows için Mesh 0.5.0 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
+[Windows için Mesh 0.5.1 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
 
 Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyaları doğrular ve siteyi açar. Siteye ulaşmak için bir gateway domaini veya DNS çözümü kullanmaz.
 
@@ -14,6 +14,10 @@ Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyalar
 4. Adres çubuğuna `ar://vevivo` veya açmak istediğiniz ArNS ismini yazın.
 
 Cüzdan, ödeme, Node.js veya kendi sunucunuz gerekmez. Standart paket bağlantı kodu içermez. [Bağlantı yardımı](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
+
+## Konuya göre site bulun
+
+Ana sayfadaki **orta arama kutusuna** müzik, oyun, sanat veya depolama gibi bir konu yazın. ArNS adresleri, varsa açıklamaları ve konu etiketleri listelenir. Sonuca tıklayıp siteyi açın. Bildiğiniz adresleri üst çubuğa yazmaya devam edin. [Arama rehberi](docs/tr/konu-aramasi.md).
 
 ## Solana RPC ve Arweave de kapanırsa?
 
@@ -39,7 +43,7 @@ Bir VPS veya Raspberry Pi üzerinde destekçi çalıştırarak isim kayıtları,
 
 ## Geliştiriciler
 
-Masaüstü ve destekçi aynı **0.5.0** kaynak ağacındadır. `main` güncel kodu içerir; sürümü yeniden üretmek için `v0.5.0` etiketini kullanın.
+Masaüstü ve destekçi aynı **0.5.1** kaynak ağacındadır. `main` güncel kodu içerir; sürümü yeniden üretmek için `v0.5.1` etiketini kullanın.
 
 [Geliştirme ve testler](docs/tr/gelistirici.md) · [Mimari](docs/en/architecture.md) · [Sürüm notları](docs/en/release-notes.md) · [Durum](docs/tr/durum.md) · [Gizlilik](docs/tr/gizlilik.md) · [Lisans](LICENSE)
 

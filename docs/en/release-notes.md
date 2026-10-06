@@ -1,42 +1,23 @@
-# ArNS Mesh 0.5.0
+# ArNS Mesh 0.5.1
 
-Open ArNS sites through Mesh using numeric addresses, without gateway domains or DNS.
+Find ArNS sites by topic from the Home search box. Open known ArNS addresses in the upper address bar as before.
 
-Built on preview.13, with continuous name tracking, automatic preparation for recent uploads, and verified fallback to retained content. [Live preparation and rollout evidence](https://github.com/Vevivo/arns-mesh/blob/v0.5.0/docs/validation/continuous-preparation-2026-10-06.md).
+This update adds owner-supplied ANT descriptions and keywords, optional undername metadata, clickable topic labels and common Turkish/English topic matches. The larger signed catalogue includes retained names even when their page has not yet been prepared; availability is clearly labelled. Search terms stay on the reader, and accepted catalogues remain searchable during outages.
 
-This release brings the tested desktop, current supporter and R84 index integration into one source tree and one version. It includes automatic recovery from unavailable RPC/content sources, trusted retained-name relay, supporter discovery, verified content delivery, topic search and the connection monitor.
+The 0.5.0 / preview.13 access path, R84 integration, continuous name/content preparation and signature verification are preserved. Older readers continue receiving the original small HTML catalogue.
 
-## New names and updates
+## Use it
 
-Supporters refresh names independently of file downloads. Recent content absent from an R84 export can be prepared using bounded public metadata queries in a separate online process; original content IDs and signatures remain mandatory. First-time readers wait for bounded supporter preparation. Existing complete site versions survive incomplete updates.
+Download and extract the Windows ZIP, launch `Mesh-Browser.exe` and join your existing Mesh network. On Home, refresh the catalogue and search for a topic such as music, games or storage. Click a result to open its ArNS site.
 
-The large datasets stay on the supporter. VPS and Raspberry Pi instructions explain capacity and setup in English and Turkish.
+[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/en/user.md) · [Türkçe](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/tr/konu-aramasi.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/en/supporter.md)
 
-## Upstream outage result
+## Verification
 
-A fresh reader and a supporter were placed together in an OS-isolated network with loopback only. Real configured Solana RPC and Arweave endpoints were unreachable. The original publisher's signed name records were preserved; no private publisher identity was copied.
+The release workflow runs Linux and Windows source tests, packages the actual Windows application, checks keyword-only search and offline restart in Electron, and opens real public content with external DNS, RPC and Arweave blocked before publishing. Live metadata/search observations are recorded in the repository's topic-search validation report.
 
-- Main content opened for 29 of 35 tested real names.
-- All 22 prepared file sets passed.
-- Six names lacked content required to open; other partially prepared names did not have complete resource sets.
-- The 29 successful names represented nine distinct main objects, not 29 independent websites.
+## Boundaries
 
-[Detailed results](https://github.com/Vevivo/arns-mesh/blob/v0.5.0/docs/validation/upstream-outage-2026-10-06.md). The release workflow also checks the packaged Windows interface and runs real-public-site acceptance with DNS, RPC and Arweave blocked for both reader and test supporter before publishing.
+Search listings do not guarantee that a site is fully retained or that external APIs work. Outage access requires retained names, verified files and a reachable Mesh source. Some owners have no useful topic metadata; this is bounded keyword discovery, not a complete web search engine. Large indexes stay on supporters; the reader keeps a bounded catalogue cache.
 
-## Windows firewall recovery
-
-Treat native socket connection denials (`EACCES`/`EPERM` with `syscall=connect`) as source unavailability, so Automatic mode can use trusted retained names and verified Mesh content. File permission failures, application policy rejections and signature/ownership errors do not receive this fallback.
-
-## Downloads and use
-
-Download the Windows x64 ZIP, extract it and launch `Mesh-Browser.exe`. Join with your operator's `mesh1.` code, then open `ar://name`. The standard ZIP contains no operator endpoints, invitation or private data.
-
-[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.5.0/docs/en/user.md) · [VPS/Pi supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.5.0/docs/en/supporter.md) · [Turkish guide](https://github.com/Vevivo/arns-mesh/blob/v0.5.0/docs/tr/kullanici.md).
-
-## Operating boundaries
-
-Upstream-free access requires retained name records, verified content and a reachable Mesh supporter. It does not recover files that no surviving peer holds or prove that a retained name is the newest chain state. Automatic independent replica placement remains future work. Raspberry Pi instructions target 64-bit Linux; physical Pi acceptance has not been run.
-
-Some web applications need external APIs or browser capabilities beyond retained static files. ArDrive reached its application shell in the earlier live audit; full application compatibility is not certified.
-
-The release is an unsigned community build. Checksums and build metadata accompany the ZIP.
+The Windows package is an unsigned community build. Physical Raspberry Pi and full ArDrive application compatibility are not certified. Independent replica placement/repair remains future work.
