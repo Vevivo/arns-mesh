@@ -8,7 +8,21 @@ Kaynaklar çalışırken destekçi sunucu yeni isimleri öğrenir ve doğrulanm�
 
 R84 geniş bir içerik konumu dizini sağlar. Ancak yeni bir yükleme, dizinin bir sonraki yayımından önce yapılmış olabilir. Sunucudaki ayrı hazırlama işlemi bu durumda Turbo veya Arweave'in güncel dizininden dosyanın hangi pakette olduğunu öğrenir. Bu bilgi tek başına güvenilir sayılmaz: dosyanın kendisi alınır, kimliği ve imzası doğrulanır. HTTPS/DNS kullanan bu hazırlık sunucuda yapılır; okuyucu Mesh'e sayısal IP üzerinden erişir.
 
-Kaynak kesildiğinde hazırlanmış dosyalar ve son alınan isim kaydı silinmez. Erişilebilir bir destekçi bunları sunmaya devam eder. Kesintiden önce hiçbir destekçinin alamadığı bilgi veya dosya için erişim sözü verilemez.
+## Bir erişim yolu kesildiğinde alternatif yol
+
+Canlı kaynaklara giden yollar çalıştığı sürece açık kalır. Bir hizmete ulaşamamak, o hizmetin bağlı olduğu ağın kapandığı anlamına gelmez.
+
+| Erişim durumu | Mesh nasıl devam eder? |
+|---|---|
+| Okuyucu Solana RPC'ye ulaşamıyor | Ulaşılabilir destekçi kabul edilen isim kaydını sunabilir. RPC'ye erişimi süren destekçi yeni isim kayıtlarını takip edebilir. |
+| Okuyucu ham Arweave adreslerine ulaşamıyor | İstenen dosyaları elinde tutan ulaşılabilir Mesh destekçisi doğrulanmış kopyaları sunabilir. |
+| Hem okuyucu hem ulaşabildiği destekçiler RPC ve ham Arweave yollarını kaybetti | Mesh, bu yollar kesilmeden önce edinilmiş isim kayıtlarını ve doğrulanmış dosyaları sunar. |
+
+İsim kaydı, içeriğin hangi adreste olduğunu gösterir; o içeriği açmak için gereken dosyalardan ayrıdır. R84 dosyaların konumlarını sağlar. Dosyaların doğrulanmış kopyaları ise hazırlama süreciyle zaman içinde edinilir.
+
+Bir bilgi hizmetine erişimin kesilmesi, hazırlanmış verileri silmez. Kaynaklara erişimi süren destekçiler üzerinden güncellemeler devam edebilir. Yeni bir kayıt veya dosya hiçbir ulaşılabilir kaynakta yoksa ona giden bir yol yeniden kullanılabilir olana kadar bu eksik bilgi alınamaz. Bu arada kullanılan kayıt, yayıncısının son gözlemlediği sürümü gösterir; en yeni zincir durumunun kanıtı sayılmaz.
+
+[Yalıtılmış erişim testinde](../validation/upstream-outage-2026-10-06.md) bu alternatif yolu denemek için seçilmiş örnekler kullanıldı. Testteki sayılar, sürekli güncellenen kataloğun sınırı değildir.
 
 ## Sunucu kapasitesi
 

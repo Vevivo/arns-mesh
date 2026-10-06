@@ -40,7 +40,9 @@ Bu sürümde desteklenen bir sıfır kalıcı depolama modu yoktur. Arşiv işin
 
 ## Erişim kesilirse
 
-**Automatic** modu ulaşılabilir canlı kaynakları kullanır; gerektiğinde kabul edilmiş tarihli bilgiye dönebilir. RPC ve ham Arweave erişilemiyorsa gerekli isim kaydı ve dosyalar yerelde veya ulaşılabilir bir destekçide önceden bulunmalıdır.
+**Automatic** modu çalışan canlı erişim yollarını kullanır; destekçiler isim güncellemelerini takip edip doğrulanmış dosyaları hazırlamaya devam eder. RPC yolunuz kesilirse kabul edilen isim kaydını ulaşılabilir bir destekçi sağlayabilir. Ham Arweave yolunuz kesilirse dosyaları elinde tutan destekçi bunları Mesh üzerinden sunabilir. Siteyi daha önce açmış olmanız gerekmez.
+
+Canlı kaynaklara ulaşabilen destekçiler güncellemeleri edinmeyi sürdürür. Bu yollar hem okuyucu hem ulaşabildiği tüm destekçiler için kesilirse erişim, saklanan isim kayıtları ve dosyalarla sürer. Yeni yayımlanmış bilgi, onu taşıyan bir kaynağa tekrar ulaşılana kadar alınamaz. [Hazırlık ve alternatif erişim nasıl çalışır?](surekli-hazirlik.md).
 
 **Saved** modu işletim sistemi düzeyinde ağı kapatmaz; eksik dosyalar istenebilir. Yer imi adresi hatırlar, siteyi kaydetmez.
 

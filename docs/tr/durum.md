@@ -4,15 +4,21 @@
 
 Masaüstü ve sunucu için güncel kaynak sürümü **0.5.1**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
 
-## Doğrulanan erişim
+## Sürekli hazırlık
 
-**Domain/DNS olmadan ArNS içeriği açılır. Solana RPC ve Arweave de erişilemez olduğunda, önceden saklanmış isim kayıtları ve dosyalar Mesh üzerinden kullanılabilir.**
+Sunucuda çalışan 0.5.1 destekçisi, kaynaklara giden yollar açıkken yeni kayıtları ve mevcut isimlerin içerik hedeflerini takip eder. İsim takibi dosya indirmelerinden bağımsız çalışır. Edinilen isim kayıtları saklanır; dosyalar belirlenen bütçeler içinde indirilip doğrulanır.
 
-6 Ekim 2026 Linux ağ yalıtımı sonucu:
+**6 Ekim 2026, 11:26 UTC** tarihli salt okunur sunucu kontrolünde, alt isimler ve saklanan gözlemler dâhil **13.274 isim** tutuluyordu; isim takibi açıktı. Ardışık kontrollerde kayıt listesinin yenilenme zamanı ilerledi. Bu, bir destekçinin o andaki durumudur; sabit katalog boyutu veya tamamen arşivlenmiş site sayısı değildir. İsim kapsamı ve dosyaların hazır olması ayrı ölçülür. [Hazırlık, güncelleme aralıkları ve sınırlar](surekli-hazirlik.md).
+
+## Dış erişim yolları kesildiğinde doğrulanan erişim
+
+**Domain/DNS olmadan ArNS içeriği açılır. Okuyucunun Solana RPC veya ham Arweave erişimi kesilirse Mesh, ulaşılabilir bir destekçiden kabul edilen isim kayıtlarını ve doğrulanmış dosyaları sağlayabilir.** Dış kaynaklara erişimi süren destekçi güncellemeleri edinmeye devam edebilir. Bu yollar hem okuyucu hem destekçi için kesildiğinde saklanan sürümler kullanılabilir.
+
+6 Ekim 2026 Linux ağ yalıtımı testi, **seçilmiş 35 isimlik bir örnek grup** üzerinde yapıldı. Aşağıdaki sayılar test anındaki örnekleri gösterir; sürekli güncellenen kataloğun toplamı veya sistemin kapasite sınırı değildir:
 
 | Kontrol | Sonuç |
 |---|---|
-| Dış RPC, Arweave, DNS ve HTTPS erişimi | İşletim sistemi düzeyinde erişilemedi |
+| Ayarlı RPC, ham Arweave, DNS ve HTTPS adreslerine giden yollar | İşletim sistemi düzeyinde erişilemedi |
 | Teste boş başlayan okuyucu | İsim kayıtlarını Mesh'ten aldı |
 | 35 gerçek isim | 29 ana içerik açıldı |
 | Hazır işaretlenmiş 22 kayıt | Saklanan dosya setlerinin tamamı doğrulandı |
@@ -33,6 +39,3 @@ Her ArNS isminin içeriği arşivlenmiş değildir. Haricî API/CDN işlevleri s
 
 [Kullanım](kullanici.md) · [Destekçi kurulumu](destekci.md) · [Geliştirme](gelistirici.md).
 
-## Güncel isim ve içerik takibi
-
-[Hazırlık nasıl çalışır, hangi testler yapıldı?](surekli-hazirlik.md).
