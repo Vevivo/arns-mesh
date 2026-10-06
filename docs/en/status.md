@@ -38,4 +38,3 @@ The isolation test uses processes on one physical machine. It is not acceptance 
 Not every ArNS name is archived. External APIs/CDNs may remain unavailable despite retained site files. R84 indexes describe content locations; the files must be retained separately. The Raspberry Pi guide targets 64-bit systems; physical Pi acceptance has not been run.
 
 [Use Mesh](user.md) · [Supporter setup](supporter.md) · [Development](developer.md).
-
