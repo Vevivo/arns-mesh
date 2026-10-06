@@ -6,11 +6,11 @@ You only need the Windows application and a working connection invitation. You d
 
 ## 1. Download
 
-Use the **[0.5.0 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip)**. GitHub's **Source code** archives are for developers.
+Use the **[0.5.1 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip)**. GitHub's **Source code** archives are for developers.
 
 Extract the entire ZIP into a folder you want to keep. Open `Mesh-Browser.exe` inside it. Keep the other files beside the EXE; create a shortcut if you want a desktop icon.
 
-This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.0) and report the warning. Do not disable security tools to bypass it.
+This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.1) and report the warning. Do not disable security tools to bypass it.
 
 ## 2. Connect once
 
@@ -26,7 +26,7 @@ An existing configured installation reuses its settings. A separately supplied C
 
 Type `ar://vevivo`, or another ArNS name you want to visit, into the **top address bar**. The example is not an availability guarantee.
 
-For an undername, use its full registered spelling, such as `undername_name`. The Home search box searches a limited topic catalogue; it is separate from the address bar.
+For an undername, use its full registered spelling, such as `undername_name`. Use the middle Home search box for a topic such as music, games or storage. Click a result to open its ArNS address, or a topic label to search that topic. [Search guide](../topic-search.md).
 
 Mesh resolves the name, finds the files, verifies them and opens the page. **Page information** explains missing resources and whether a dated name record was used. Domain-based external APIs and CDNs may remain unavailable.
 
@@ -34,7 +34,7 @@ Mesh resolves the name, finds the files, verifies them and opens the page. **Pag
 
 The large shared index and supporter archives belong on the **server**. You do not download them to browse, and the browser does not automatically serve your disk to other users.
 
-However, 0.5.0 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
+However, 0.5.1 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
 
 There is currently no supported zero-persistent-storage mode. Moving archive work to supporters does not make the existing browser diskless.
 
@@ -67,3 +67,5 @@ The current signed-item size limit is 32 MiB. [Monitor details](../connection-mo
 Close Mesh. Extract the new application ZIP into a separate folder and run it. Existing AppData settings normally carry over. Keep a private backup if you need to preserve bookmarks or saved data. There is no automatic application updater.
 
 Deleting the program folder does not delete AppData. Do not erase AppData while Mesh is running. [Privacy](privacy.md) · [Report a problem](../../CONTRIBUTING.md).
+
+The search catalogue is prepared on supporters. This device retains at most two bounded catalogues (approximately 32 MiB maximum combined) so searches can continue during an outage. Search words are not sent to the provider.

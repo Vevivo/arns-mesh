@@ -2,7 +2,7 @@
 
 **Open ArNS sites without domains or DNS.**
 
-[Download Mesh 0.5.0 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.0/ArNS-Mesh-Browser-Windows-x64-0.5.0.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+[Download Mesh 0.5.1 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
 Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
@@ -14,6 +14,10 @@ Enter `ar://name` in Mesh. It finds the content named by the record, verifies th
 4. Enter `ar://vevivo` or the ArNS name you want to open in the address bar.
 
 No wallet, payment, Node.js installation or personal server is required. The standard package does not include an operator's connection code. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
+
+## Find sites by topic
+
+Use the **middle search box** on Home for topics such as music, games or storage. Results include ArNS addresses, descriptions and topic labels. Click a result to open it. The upper address bar still opens a known name directly. [Search guide](docs/topic-search.md).
 
 ## What if Solana RPC and Arweave are unavailable too?
 
@@ -39,7 +43,7 @@ Run a supporter on a VPS or Raspberry Pi to serve name records, content location
 
 ## Developers
 
-The desktop and supporter share the **0.5.0** source tree. `main` contains the current implementation; use tag `v0.5.0` to reproduce the release.
+The desktop and supporter share the **0.5.1** source tree. `main` contains the current implementation; use tag `v0.5.1` to reproduce the release.
 
 [Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 

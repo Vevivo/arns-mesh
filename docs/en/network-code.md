@@ -2,7 +2,7 @@
 
 [Home](../../README.md) · [VPS / Pi setup](supporter.md) · [Türkçe](../tr/ag-kodu.md)
 
-Use **Mesh 0.5.0** for the desktop and supporter. Updating the desktop does not update a server installation.
+Use **Mesh 0.5.1** for the desktop and supporter. Updating the desktop does not update a server installation.
 
 ## Which item do I need?
 
@@ -12,7 +12,7 @@ Use **Mesh 0.5.0** for the desktop and supporter. Updating the desktop does not 
 | Network invitation (`mesh1.…`) | A public network key and initial addresses used to join |
 | Connection profile (`mesh-connect.json`) | Legacy/manual source settings; not website files |
 
-**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. 0.5.0 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
+**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. 0.5.1 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
 
 The sections below document today's connection mechanism and advanced operator actions. Codes remain an optional advanced/recovery mechanism in the intended product; normal users should eventually receive a prepared connected download. Current standard ZIPs still need connection setup.
 
@@ -57,7 +57,7 @@ bash scripts/install-peer.sh --network 'COMPLETE_MESH1_CODE_FROM_OPERATOR'
 "$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
 ```
 
-Replace the quoted placeholder. In 0.5.0 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
+Replace the quoted placeholder. In 0.5.1 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
 
 Updates preserve existing configuration. To deliberately join an existing installation, stop its peer, back up its data, run `node scripts/network.mjs join 'REAL_CODE' --data DATA_DIRECTORY`, then restart. The CLI invocation is explicit trust and does not show a second confirmation screen.
 

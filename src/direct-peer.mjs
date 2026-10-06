@@ -18,7 +18,7 @@ export async function queryDirectPeer(peer,request,{signal}={}){
  const bounded=signal?AbortSignal.any([signal,AbortSignal.timeout(lookup?30000:10000)]):AbortSignal.timeout(lookup?30000:10000);
  for(let attempt=0;attempt<(lookup?4:1);attempt++){
   bounded.throwIfAborted();
-  const response=await requestIpJson({...peer,path:'/mesh/v1/query',method:'POST',body:request,purpose:'mesh-peer',maxBytes:1024*1024,timeout:Math.max(1,Math.min(10000,deadline-Date.now())),signal:bounded});
+  const response=await requestIpJson({...peer,path:'/mesh/v1/query',method:'POST',body:request,purpose:'mesh-peer',maxBytes:request.op==='catalog'&&request.version===2?16*1024*1024:1024*1024,timeout:Math.max(1,Math.min(10000,deadline-Date.now())),signal:bounded});
   if(!lookup||response?.ok||response?.error!==pendingError||attempt===3)return response;
   // A cold peer is still fetching and verifying the item. Ask the same peer
   // again, without converting its pending state into a permanent miss.

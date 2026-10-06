@@ -17,12 +17,12 @@ No domain, nginx, TLS certificate, wallet or full Arweave/Solana node is require
 
 ## 1. Get the matching supporter source
 
-Use the same 0.5.0 release for the reader and supporter. The R84 integration is included.
+Use the same 0.5.1 release for the reader and supporter. The R84 integration is included.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.5.0
+git checkout --detach v0.5.1
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 read -r -p 'Paste the complete mesh1 connection code: ' MESH_CODE
 bash scripts/install-peer.sh --network "$MESH_CODE"
@@ -106,7 +106,7 @@ node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 
 If a router exposes a different port, set `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` in `peer.env` using actual values. Restart only this new supporter after a configuration change. The setting does not open ports. IPv6 endpoints use `[ADDRESS]:PORT`.
 
-Already joined 0.5.0 readers learn reachable supporters without a new code. The public invitation still controls initial contact and trusted publishers. A newly learned peer gains no authority to redefine names.
+Already joined 0.5.1 readers learn reachable supporters without a new code. The public invitation still controls initial contact and trusted publishers. A newly learned peer gains no authority to redefine names.
 
 ## 5. Add the R84 index if you want broader location coverage
 

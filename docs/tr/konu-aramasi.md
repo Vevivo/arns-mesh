@@ -1,28 +1,33 @@
-# Konuya göre arama — Mesh 0.5.0
+# Konuya göre arama — Mesh 0.5.1
 
-Bu sayfa güncel Mesh 0.5.0 sürümünü anlatır.
-Ana sayfada bir konu yazıp **Search Mesh** düğmesine basabilirsin. Üstteki adres çubuğuna ise bildiğin ArNS ismini veya `ar://isim` adresini yazarsın. İkisi farklı giriş yollarıdır; sonuçtaki siteye tıklayınca Mesh'in mevcut isim ve dosya doğrulaması çalışır.
+**Üstteki adres çubuğu site açar. Ortadaki arama kutusu site bulur.**
 
-Konu araması Mesh 0.5.0 içinde bulunur. Normal ağ kodunla bağlanırsın; ayrıca arama hesabı veya API anahtarı gerekmez. Eski bağlantı profilinde güvenilen peer kimliği yoksa sağlayıcıdan güncel bağlantı bilgisi alınmalıdır.
+1. Mesh ağınıza normal bağlantı kodunuzla katılın.
+2. Ana sayfadaki orta kutuya bir konu yazın: örneğin **games**, **music**, **art** veya **storage**.
+3. **Search Mesh** düğmesine basın.
+4. İlgili ArNS adresleri, varsa başlıkları, kısa açıklamaları ve konu etiketleri listelenir.
+5. Sonuca tıklayarak siteyi açın. Bir etikete tıklayarak aynı konudaki diğer sonuçları bulun.
 
-**Nasıl kullanılır?** Ana sayfada **Refresh catalogue** ile kataloğu indir. Örneğin `müzik`, `haber` veya `yapay zekâ` yaz. Sonuçlar indirilen küçük katalogdaki sayfa başlıkları, açıklamalar ve sınırlı metinle eşleştirilir. Bütün kelimelerin bulunması gerekir; Türkçe harfler desteklenir. Çeviri veya yapay zekâ ile anlamsal arama yapılmaz; İngilizce sayfayı Türkçe kelimeyle otomatik bulma garantisi yoktur. Bilinen ismi her zaman üst çubuktan doğrudan açabilirsin.
+İsmini bildiğiniz siteyi doğrudan açmak için üstteki adres çubuğuna `ar://isim` yazmaya devam edin. Ek hesap, cüzdan veya arama anahtarı gerekmez.
 
-Arama kelimelerin sunucuya gönderilmez. Katalog normal erişimde başlangıçta ve yaklaşık 15 dakikada bir yenilenmeye çalışılır. Sunucu kapanırsa son kabul edilen kopya bilgisayarda kalır; uygulamayı yeniden açınca da aranabilir. **Saved** modunda katalog yenilenmez. Hiç katalog indirmemiş bir cihazda çevrimdışı konu araması için bilgi bulunmaz.
+## Sonuçlar nereden geliyor?
 
-Sonuçlarda isim kaydının gözlem tarihi ve sayfanın indekslenme tarihi gösterilir:
+Sunucu, ArNS sahiplerinin girdiği açıklama ve anahtar kelimeleri toplar. Alt isimlerin kendi açıklama/etiketleri de kullanılabilir. Hazırlanmış sayfalardaki başlık, açıklama, HTML anahtar kelimeleri ve metinler aramayı destekler.
 
-- **Entry page indexed:** Ana sayfa indekslenmiş; diğer dosyalar eksik olabilir.
-- **Site copy reported by peer:** Sağlayıcı, indeksleme sırasında kendi saklama kapsamındaki kopyayı hazır bildirmiş. Şu anda erişilebildiğinin garantisi değildir.
-- **Saved on this device:** Aynı hedefe ait hazır kopya bu bilgisayarda bulunuyor.
+Mesh arayüzü ve arama örnekleri İngilizcedir. Aradığınız kelimeler site adı, açıklaması, etiketleri ve hazırlanmış metinleriyle eşleştirilir; otomatik çeviri yapılmaz. Örneğin **music**, **games** veya **storage** arayabilirsiniz. Birden fazla kelime yazarsanız her kelimenin eşleşmesi gerekir.
 
-Arama sonucunda görünmek, sitenin tamamının indirilmiş olması anlamına gelmez. Dosyalar sende veya ulaşabildiğin kaynaklarda bulunmalıdır. Sonuç yoksa “bu ArNS ismi yok” denmez; sadece elimizdeki katalogda eşleşme yoktur.
+Arama sonuçları sitenin kaydedildiği anlamına gelmez. **ArNS listing** yazan sonuçta isim bulunmuştur; sayfanın erişilebilirliği açılırken kontrol edilir. **Site copy reported by peer** ise destekçinin hazırladığını bildirdiği kopyayı gösterir. Dış servis isteyen uygulamaların her işlevi çalışmayabilir.
 
-**Proje sahibi olarak senin VPS'in ne yapacak?** Zaten doğrulanarak alınmış ana HTML belgelerinden başlık, açıklama ve küçük bir metin özeti çıkaracak. Bir turda en fazla 32 isim kontrol edilir. Katalog en fazla 256 sayfa ve 384 KiB imzalı veri içerir; boyut sınırı sayıyı azaltabilir. Her sayfanın ilk 1.200 karakterlik statik metni tutulur. Sayfa betikleri çalıştırılmaz. Tam Arweave indeksi indirilmez; bu özellik için SSD yükseltmek gerekmez. Tüm ArNS sitelerinin kapsandığı veya güncellemelerin anında yakalandığı iddia edilmez.
+## Güncelleme ve kesinti
 
-İsim başka hedefe güncellendiği görüldüğünde eski metin yeni hedefin metni gibi kullanılmaz. Yeni belge bulunup doğrulanınca arama kaydı yenilenir. Eksik veya bozuk dosya indekslenmez. JavaScript ile sonradan oluşan sayfa metni bu ilk sürümde aranamayabilir.
+Sunucu konu bilgilerini yaklaşık 15 dakikada bir yeniler. Masaüstü de arama kataloğunu düzenli alır; hemen almak için **Refresh catalogue** seçilebilir. Yeni isimlerin görünmesi isim takibine ve bu yenilemelere bağlıdır.
 
-**Destekçi ne yapabilir?** Kataloğun bir kopyasını alıp asıl sağlayıcının imzasını koruyarak sunabilir. Bağlantı listesinde destekçinin adresi, güven listesinde de asıl sağlayıcının açık peer kimliği bulunur. Gizli anahtar verilmez. Katalog paylaşmak site dosyalarını da paylaşmış olmak değildir; bunların ayrıca hazırlanması gerekir. Masaüstü kullanıcıları otomatik olarak sunucuya dönüşmez.
+Kaynaklar kesildiğinde önceden alınan arama kataloğu kullanılmaya devam eder. Sonucu açmak için gerekli isim kaydı ve dosyaların ulaşılabilir bir Mesh destekçisinde veya cihazdaki önbellekte bulunması gerekir.
 
-İmza, kataloğu kimin yayımladığını doğrular; isim eşleşmesinin şu anki zincir durumunu bağımsız olarak kanıtlamaz. Kullanıcı bu nedenle katalogda tarihleri görür; sonuç açılırken mevcut Mesh doğrulaması yeniden çalışır.
+## Bilgisayarda ne tutulur?
 
-Otomatik testte katalog iki yerel peer üzerinden aktarıldı, iki peer kapatıldı ve yeniden başlayan okuyucu yerelde arama yapabildi. Bu, evdeki iki gerçek PC denemesinin yerine geçmez. O denemeyi sen hazır olduğunda ayrıca yapacağız. [Teknik sınırlar](../topic-search.md).
+Büyük ArNS/R84 indeksleri ve hazırlık sunucudadır. Masaüstü, aramayı yerel yapabilmek için küçük ve sınırlı bir katalog önbelleği tutar; en fazla iki yayıncı için yaklaşık 32 MiB üst sınır vardır. Arama kelimeleri sunucuya gönderilmez. Arama yapmak sitenin tüm dosyalarını indirmez.
+
+Bir sonuç çıkmaması sitenin olmadığı anlamına gelmez. Sahibinin konu bilgisi eksik olabilir veya site henüz katalogda bulunmayabilir. Bilinen ArNS adresi üst çubuktan yine açılabilir.
+
+[Geliştirici ayrıntıları](../topic-search.md) · [Kullanıcı rehberi](kullanici.md)

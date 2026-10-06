@@ -56,7 +56,7 @@ test('publisher verifies manifest and document, drops changed/corrupt/evicted co
  assert.equal(contentStore.get(html.id,{maxBytes:1}),null,'index scans can reject a large file before reading its bytes');
  const manifest=await item(JSON.stringify({manifest:'arweave/paths',version:'0.1.0',index:{path:'index.html'},paths:{'index.html':{id:html.id},'missing.css':{id:'C'.repeat(43)}}}),'application/x.arweave-manifest+json');
  const observe=(id,slot)=>snapshots.put({schema:'arns-mesh-name-snapshot/v1',name:'science',txId:id,antId:'B'.repeat(43),slot,observedAt:now(),ttlSeconds:60},{kind:'local-rpc'});
- observe(manifest.id,1);const publisher=new SearchPublisher({file:path.join(dir,'published.json'),snapshots,contentStore,sign:author.sign});await publisher.pass();
+ observe(manifest.id,1);const localNames=snapshots.names.bind(snapshots);snapshots.names=()=>[...localNames(),'remote-only'];const publisher=new SearchPublisher({file:path.join(dir,'published.json'),snapshots,contentStore,sign:author.sign});await publisher.pass();
  let r=verifySearchEnvelope(publisher.reply(),[author.id]);assert.equal(r.entries[0].documentId,html.id);assert.equal(r.entries[0].availability,'document');assert.equal(r.entries[0].text,'Space telescope');
  observe('D'.repeat(43),2);await publisher.pass();assert.equal(publisher.record.entries.length,0,'old keywords are not assigned to a new binding');
  observe(manifest.id,3);await publisher.pass();assert.equal(publisher.record.entries.length,1);

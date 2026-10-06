@@ -31,6 +31,9 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await capture('09-home-automatic.png');
  const before=peerRequests;await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();
  assert.match(home.url(),/welcome.html\?q=verified$/);assert.equal(await home.locator('.search-result h3 a').innerText(),'Signed QA page');assert.equal(await ui.locator('#address').inputValue(),'');assert.equal(peerRequests,before);report.checks.push('GET form submits; topic query stays local; address bar remains empty');
+ await home.locator('#mesh-query').fill('concert');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();
+ assert.equal(await home.locator('.search-result h3 a').innerText(),'Signed QA page');assert.equal(peerRequests,before);assert.equal(await home.locator('.topic-tag').innerText(),'concert');
+ await home.locator('.topic-tag').click();await home.waitForURL(/q=concert$/);assert.equal(await ui.locator('#address').inputValue(),'');report.checks.push('ANT keyword-only search and clickable topic tag work without a network query');
  await home.screenshot({path:path.join(output,'01-search-results.png'),fullPage:true});
  const session=await home.context().newCDPSession(home);await session.send('Emulation.setDeviceMetricsOverride',{width:850,height:422,deviceScaleFactor:1,mobile:false});assert.equal(await home.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await home.screenshot({path:path.join(output,'02-compact-results.png'),fullPage:true});await session.send('Emulation.clearDeviceMetricsOverride');report.checks.push('850px layout has no horizontal overflow');
  await ui.locator('#monitor-button').click();
@@ -63,7 +66,7 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  report.checks.push('seed stopped; real reader retrieves the original signed catalogue through the automatically learned survivor');
  await closeProvider();await close();
  fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'saved',trustedPeers:[],witnessQuorum:2}));
- ({ui,home}=await launch());await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();await home.screenshot({path:path.join(output,'03-offline-restart.png'),fullPage:true});report.checks.push('provider stopped; restarted Saved reader searches retained catalogue');
+ ({ui,home}=await launch());await home.locator('#mesh-query').fill('concert');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();await home.screenshot({path:path.join(output,'03-offline-restart.png'),fullPage:true});report.checks.push('provider stopped; restarted Saved reader searches retained catalogue');
  await home.locator('.search-result h3 a').click();await home.locator('#script-status').filter({hasText:'Local JavaScript loaded'}).waitFor();assert.match(home.url(),/^ar:\/\/mesh-qa/);await ui.waitForFunction(()=>document.getElementById('address').value.startsWith('ar://mesh-qa'));assert.match(await ui.locator('#address').inputValue(),/^ar:\/\/mesh-qa/);report.checks.push('result opens signed local page through existing ArNS renderer');
  await ui.locator('#monitor-button').click();await ui.locator('#rpc-state').filter({hasText:'Paused'}).waitFor();
  assert.equal(await ui.locator('#monitor-check').isDisabled(),true);assert.equal(await ui.locator('#page-source').innerText(),'From this device');

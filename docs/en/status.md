@@ -1,8 +1,8 @@
-# Mesh 0.5.0 status
+# Mesh 0.5.1 status
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-**0.5.0** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
+**0.5.1** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
 
 ## Verified access
 

@@ -2,12 +2,12 @@
 
 [Türkçe](../tr/gelistirici.md) · [Home](../../README.md)
 
-The desktop, supporter, R84 integration and tests share the **0.5.0** source tree.
+The desktop, supporter, R84 integration and tests share the **0.5.1** source tree.
 
 ## Get the release source
 
 ```bash
-git clone --branch v0.5.0 --depth 1 https://github.com/Vevivo/arns-mesh.git
+git clone --branch v0.5.1 --depth 1 https://github.com/Vevivo/arns-mesh.git
 cd arns-mesh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 npm run check:public

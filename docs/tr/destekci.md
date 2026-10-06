@@ -17,12 +17,12 @@ Doğrudan IP hizmeti için domain, nginx, TLS sertifikası, cüzdan veya tam Arw
 
 ## 1. Doğru destekçi kaynağını alın
 
-Masaüstü ve destekçi için aynı 0.5.0 sürümünü kullanın. R84 entegrasyonu bu kaynağa dâhildir.
+Masaüstü ve destekçi için aynı 0.5.1 sürümünü kullanın. R84 entegrasyonu bu kaynağa dâhildir.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.5.0
+git checkout --detach v0.5.1
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 read -r -p 'Tam mesh1 baglanti kodunu yapistirin: ' MESH_CODE
 bash scripts/install-peer.sh --network "$MESH_CODE"
@@ -106,7 +106,7 @@ node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 
 Modem dışarı farklı port açıyorsa `peer.env` içine gerçek değerlerle `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` yazın. Ayar değişince yalnızca yeni destekçiyi yeniden başlatın. Bu ayar port açmaz. IPv6 biçimi `[ADDRESS]:PORT` şeklindedir.
 
-Ağa katılmış 0.5.0 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
+Ağa katılmış 0.5.1 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
 
 ## 5. Daha geniş konum kapsamı için R84 ekleyin
 

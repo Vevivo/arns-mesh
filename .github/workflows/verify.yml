@@ -126,3 +126,23 @@ jobs:
           if ($version -match '-') { throw 'Final release workflow requires a stable version.' }
           gh release create $tag "dist/ArNS-Mesh-Browser-Windows-x64-$version.zip" dist/SHA256SUMS.txt dist/build.json --target "$env:GITHUB_SHA" --title "ArNS Mesh $version" --latest --notes-file docs/en/release-notes.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Retire superseded 0.5.0 download
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($version -ne '0.5.1') { exit 0 }
+          $current = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/v0.5.1" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $zip = $current.assets | Where-Object { $_.name -eq 'ArNS-Mesh-Browser-Windows-x64-0.5.1.zip' -and $_.state -eq 'uploaded' -and $_.size -gt 100000000 }
+          if ($current.draft -or $current.prerelease -or -not $zip) { throw 'The replacement stable Windows download is not ready.' }
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $old = $releases | Where-Object { $_.tag_name -eq 'v0.5.0' }
+          foreach ($release in $old) {
+            gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/$($release.id)"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }

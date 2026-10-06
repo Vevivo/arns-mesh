@@ -1,64 +1,13 @@
 {
-  "version": "0.5.0",
+  "version": "0.5.1",
   "date": "2026-10-06",
-  "testedApplicationCommit": "0d82f621c7515b6e89fe0529cb0b6a8d6a03cd10",
-  "nodeTests": {
-    "passed": 199,
+  "searchEvidence": "../validation/topic-search-2026-10-06.json",
+  "sourceTests": {
+    "passed": 205,
     "failed": 0,
-    "platforms": [
-      "Linux",
-      "Windows"
-    ],
-    "node": "24.19.0"
+    "platform": "Linux",
+    "runnerConcurrency": 2
   },
-  "workflow": "https://github.com/Vevivo/arns-mesh/actions/runs/37389695131",
-  "windowsUI": {
-    "passed": true,
-    "checks": [
-      "search",
-      "connection-monitor",
-      "late-supporter-discovery",
-      "original-signed-catalogue-after-seed-loss",
-      "saved-restart-zero-http",
-      "real-public-content-with-OS-firewall"
-    ],
-    "realOutageNames": [
-      "vevivo",
-      "bilolbabagate",
-      "bionica",
-      "ardrive-logo-2026"
-    ],
-    "firewallBlocks": [
-      "external-DNS",
-      "Solana-RPC",
-      "raw-Arweave"
-    ],
-    "sameMachineReplica": true
-  },
-  "production": {
-    "version": "0.5.0",
-    "sourceCommit": "0d82f621c7515b6e89fe0529cb0b6a8d6a03cd10",
-    "updated": true,
-    "retainedIdentityAndR84": true,
-    "automaticNameAndContentPreparation": true,
-    "liveDesktopFollowup": "cubetwist rendered; one verified resource, zero missing resources, zero script errors",
-    "cacheOnlyMeshFollowup": true
-  },
-  "liveBroadScan": {
-    "registeredNames": 2899,
-    "targets": 13272,
-    "isolatedScanMs": 36552
-  },
-  "pending": [
-    "independent physical-host disaster acceptance",
-    "physical Raspberry Pi acceptance",
-    "universal content coverage",
-    "full ArDrive application compatibility"
-  ],
-  "evidence": [
-    "../validation/continuous-preparation-2026-10-06.md",
-    "../validation/upstream-outage-2026-10-06.md",
-    "../validation/windows-upstream-outage-2026-10-06.json"
-  ],
-  "desktopContentServing": false
+  "windowsAcceptance": "Publication requires successful exact-commit Windows source, keyword UI and real-content OS firewall checks. See release build.json for acceptanceRun.",
+  "baselineEvidence": "../archive/verification-0.5.0.json"
 }

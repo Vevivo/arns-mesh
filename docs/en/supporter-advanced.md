@@ -2,7 +2,7 @@
 
 [Setup](supporter.md) · [VPS](vps.md) · [Raspberry Pi](raspberry-pi.md)
 
-Use the same **0.5.0** release as the desktop. Complete the supporter setup before using these commands.
+Use the same **0.5.1** release as the desktop. Complete the supporter setup before using these commands.
 
 ```bash
 systemctl --user status arns-mesh-supporter --no-pager
