@@ -2,12 +2,12 @@
 
 [English](../en/developer.md) · [Ana sayfa](../../README.tr.md)
 
-Masaüstü, destekçi, R84 okuyucusu ve testler aynı **0.5.1** kaynak ağacındadır.
+Masaüstü, destekçi, R84 okuyucusu ve testler aynı **0.6.0** kaynak ağacındadır.
 
 ## Kaynağı alın
 
 ```bash
-git clone --branch v0.5.1 --depth 1 https://github.com/Vevivo/arns-mesh.git
+git clone --branch v0.6.0 --depth 1 https://github.com/Vevivo/arns-mesh.git
 cd arns-mesh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 npm run check:public

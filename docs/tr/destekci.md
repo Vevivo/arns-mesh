@@ -1,138 +1,74 @@
-# Mesh destekçisi çalıştırın
+# Bağımsız Mesh destekçisi kur
 
-[English](../en/supporter.md) · [Ana sayfa](../../README.tr.md) · [VPS hazırlığı](vps.md) · [Raspberry Pi hazırlığı](raspberry-pi.md)
+[English](../en/supporter.md) · [VPS](vps.md) · [Raspberry Pi](raspberry-pi.md)
 
-Destekçi, sunucusundan **isim kayıtları, içerik konumları ve doğrulanmış dosyalar** sunar. Bu rehber mevcut ağa katılmak içindir. Okuyucular Windows uygulamalarını kullanır; sunucuya Windows tarayıcısı kurulmaz.
+Destekçi; ArNS isim kayıtlarını ve doğrulanmış dosyaları kendi sunucusunda tutar, kaynaklara erişebildiğinde güncellemeleri toplar ve başka bir destekçi erişilemez olduğunda kullanıcılara hizmet verir. **Kullanıcıların bulunduğu aynı Mesh ağına katıl. Onlar için ayrı bir ağ kodu üretmen gerekmez.**
 
-Yeni bir klasör ve normal Linux kullanıcı hesabı kullanın. Bunlar yeni destekçi kurulum adımlarıdır; mevcut çalışan kurulumun üzerine uygulanacak güncelleme talimatı değildir.
+Bağımsız keşif için hem destekçi hem okuyucu **0.6.0** kullanmalıdır. Eski 0.5.1 okuyucu önceden öğrendiği adresleri kullanabilir; yeni keşif mekanizması için güncelleme gerekir.
 
-## Başlamadan önce
+## Hazırlık
 
-1. [Linux VPS](vps.md) veya [64 bit Raspberry Pi](raspberry-pi.md) hazırlayın.
-2. Git, npm ve Node.js 24 LTS kurun. Kaynak 22.12+ kabul eder; CI 24.19.0 kullanır. [Sistemdeki Node'u değiştirmeden kurulum (EN)](../en/node-setup.md).
-3. İşletmeciden mevcut ağın tam `mesh1.` davetini alın.
-4. İnternetten erişilebilen sayısal IP ve boş TCP portu seçin. Bu rehber **49741** kullanır.
+Yeni bir Linux VPS veya SSD kullanan 64 bit Raspberry Pi; normal kullanıcı hesabı, systemd, sudo, Git ve [Node.js 24 LTS/npm](../en/node-setup.md) hazır olmalı. Genel erişilebilir sayısal IP ve kullanılmayan TCP portu seç; örnek port **49741**. Gelen TCP bağlantısı ve keşif için giden UDP trafiği çalışmalıdır. CGNAT altında dışarıdan erişilebilir bir yol gerekir. Kurucu yönlendiriciyi veya güvenlik duvarını değiştirmez.
 
-Doğrudan IP hizmeti için domain, nginx, TLS sertifikası, cüzdan veya tam Arweave/Solana düğümü gerekmez. İlk indirmeler ve R84 hazırlığı dış hizmetler kullanır.
+Varsayılan kurulum, sürüme eklenen yetkili imzalı genel ağ tanımıyla **mevcut topluluk Mesh ağına** katılır. İlk işletmeciden kod veya özel anahtar istemen gerekmez. Okuyucular aynı desteklenen topluluk kodunu kullanır. Başka bir ağ için bağımsız davetini `--network YOUR_CODE` ile ver. [Topluluk ağı](../community-network.md) · [Kodun anlamı](ag-kodu.md).
 
-## 1. Doğru destekçi kaynağını alın
+| Profil | Site dosyaları | Otomatik önbellek | R84 ve yenileme payı | Yeni kurulum için boş alan |
+|---|---:|---:|---:|---:|
+| `vps` (varsayılan) | 64 GiB | 16 GiB | 50 GiB | 4 GiB çalışma payıyla **134 GiB** |
+| `pi` (SSD) | 16 GiB | 4 GiB | 50 GiB | 4 GiB çalışma payıyla **74 GiB** |
 
-Masaüstü ve destekçi için aynı 0.5.1 sürümünü kullanın. R84 entegrasyonu bu kaynağa dâhildir.
+İki profil de 20.000 site kaydına kadar hazırlama kuyruğu, sürekli isim takibi, kabul edilen isim kayıtlarının çoğaltılması ve doğrulanmış dosya hazırlama kullanır. Pi daha az dosya saklayabilir. Bu sınırlar bütün sitelerin sığacağı sözü değildir. Gerçek Raspberry Pi üzerinde kabul testi henüz yapılmadı.
+
+Destekçi bellek sınırı VPS için 1 GiB, Pi için 768 MiB; ayrı R84 güncelleyicisinin sınırı 384 MiB'dır. İşletim sistemine ve diğer uygulamalara da yer bırak. Sağlayıcının trafik kotasını kontrol et; indirme bütçeleri ayrıdır, kullanıcılara gönderilen trafik ayrıca oluşur.
+
+## Kurulum
+
+Normal destekçi hesabıyla çalıştır. `YOUR_PUBLIC_IP` yerine **kendi genel IP adresini** yaz.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.5.1
+git checkout --detach v0.6.0
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-read -r -p 'Tam mesh1 baglanti kodunu yapistirin: ' MESH_CODE
-bash scripts/install-peer.sh --network "$MESH_CODE"
-unset MESH_CODE
+bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
 
-Bir komut hata verirse devam etmeyin. Kurucu daveti denetler, sabitlenmiş bağımlılıkları sürümlü klasöre kurar ve yeni destekçi kimliği oluşturur. Mevcut bağlantı dosyaları korunur. Henüz arka plan hizmeti veya güvenlik duvarı kuralı oluşturmaz.
+Pi için `--capacity pi` kullan. `--dry-run`, kurulum ve servis başlatmadan planı ve disk payını denetler.
 
-Varsayılan kurulum: `~/.local/share/ArNS-Mesh-Supporter`. Örnekler özel `MESH_INSTALL_ROOT` veya `XDG_DATA_HOME` kullanılmadığını varsayar.
+Bu kurulum; kodu ve kapasiteyi kontrol eder, destekçiyi kendi kimliğiyle kurar, isim takibini ve dosya hazırlamayı açar, **R84 indeksini ayrı hesap ve otomatik yenileme servisiyle kurar**, destekçi servisini başlatır ve açılışta çalışmasını sağlar. Varsayılan konum: `~/.local/share/ArNS-Mesh-Supporter`.
 
-## 2. Katkı sınırlarınızı belirleyin
+Hata varsa sonraki adıma geçme. İlk indeks kurulumu sırasında kaynak erişilemezse mevcut veriler korunur; kaynak döndüğünde yeniden dene. Yarım kalan kurulum hazır bir yedek değildir. [R84 ilerlemesi ve hatalar](paylasilan-indeks.md).
 
-İlk çalıştırmadan önce `peer.env` oluşturun. Bu örnek mevcut dosyanın üzerine yazmayı reddeder:
+Mevcut kimlik, bağlantı dosyaları ve açıkça seçilmiş ayarlar korunur. Eski küçük kapasiteleri gözden geçir. Kurucu çalışan destekçiyi, ilgisiz servis dosyalarını, mevcut duyuru adresini veya kapalı hazırlama ayarlarını sessizce değiştirmez.
 
-```bash
-MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
-(
-  set -o noclobber
-  cat > "$MESH_ROOT/peer.env" <<'MESH_ENV'
-MESH_LISTEN=0.0.0.0:49741
-ARNS_PREPARE_ENABLED=1
-ARNS_PREPARE_MAX_SITES=32
-ARNS_CACHE_MIB=256
-ARNS_SAVED_MIB=1024
-ARNS_NAMES_DAILY_MIB=64
-ARNS_CATALOG_DAILY_MIB=256
-ARNS_INDEX_DAILY_MIB=64
-MESH_ENV
-)
-```
+## Kullanıcılar bu sunucuyu nasıl bulur?
 
-| Ayar | Anlamı |
-|---|---|
-| `ARNS_PREPARE_MAX_SITES` | Otomatik yönetilen site kaydı sınırı; örnekte 32, üst sınır 20.000 |
-| `ARNS_CACHE_MIB` | Otomatik içerik önbelleği bütçesi |
-| `ARNS_SAVED_MIB` | Saklanması seçilmiş içerik bütçesi |
-| `ARNS_NAMES_DAILY_MIB` | İsim hazırlığı için ayrı günlük bütçe |
-| `ARNS_CATALOG_DAILY_MIB` | İçerik hazırlığının ölçülen günlük yanıt verisi bütçesi |
-| `ARNS_INDEX_DAILY_MIB` | Ham Arweave keşif bütçesi; R84 güncelleyicisinin bütçesi **değildir** |
+Kod ortak ağı tanımlar; `--advertise` ise yeni sunucunun adresini belirtir. Mesh adresleri aynı ağ içinde duyurur ve keşfeder. İlk sunucu yokken de imzalı sayısal IP keşif ayarları üzerinden diğer destekçiler bulunabilir. Bir adresin öğrenilmesi, o sunucuya isim kayıtlarını değiştirme yetkisi vermez.
 
-Bunlar örneklerdir; kapasite garantisi veya toplam trafik sınırı değildir. Bağımlılıklar, indeksler, günlükler ve dışarı sunulan içerik trafiği ek kaynak tüketir. İçerik bütçesi dolduğunda yeni dosya hazırlığı durabilir; isimler ayrı bütçeyle devam eder. Sınırı artırmak eksik dosyaları veya bağımsız kopyaları kendiliğinden oluşturmaz.
+0.6.0 okuyucuları aynı desteklenen ağ kodunu kullanır. İlk işletmecinin her geliştirici için yeni kod dağıtması gerekmez. Keşif yollarının ulaşılabilir olması gerekir; hiçbir iletişim yolu yoksa yeni adres öğrenilemez.
 
-Kalıcı katkı için hangi isimleri tutmak istediğinizi seçip dosyalarını kontrol edin. [İsim hazırlığı ve devralma](dayaniklilik.md).
-
-## 3. Arka plan hizmetini başlatın
-
-Kaynak klasöründen, aynı normal kullanıcıyla:
-
-```bash
-bash scripts/install-user-service.sh
-systemctl --user status arns-mesh-supporter --no-pager
-journalctl --user -u arns-mesh-supporter -n 30 --no-pager
-```
-
-Kurucu `peer.env` dosyasını okuyan **kullanıcı hizmetini** etkinleştirir ve başlatır. Mevcut hizmet dosyasını değiştirmeyi reddeder. Aynı anda başka terminalden `Start-Peer.sh` çalıştırmayın.
-
-Oturum kapandığında ve sunucu yeniden açıldığında da çalışması için yönetici bu hesapta lingering açabilir:
-
-```bash
-sudo loginctl enable-linger "$(id -un)"
-```
-
-Sağlanan hizmet, cgroups uygulanıyorsa CPU'yu %25 ve belleği 768 MiB ile sınırlar; başlatıcı 384 MiB Node heap kullanır. Bunlar ölçülmüş donanım gereksinimi değildir.
-
-## 4. Dış erişimi ve keşfi doğrulayın
-
-Destekçinin kaynak klasöründe:
-
-```bash
-node scripts/probe-peer.mjs 127.0.0.1:49741
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
-```
-
-Ardından **başka bir ağdan**, `YOUR_PUBLIC_IP` yerine gerçek sayısal adresinizi yazarak deneyin:
+Başka bir ağdan kontrol et:
 
 ```bash
 node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 ```
 
-“Mesh endpoint responded” yalnızca erişimi gösterir. İşletmeci raporunda duyurulan adresi ve duyuruyu kabul eden destekçiyi kontrol edin. Keşif için yaklaşık bir dakika ve işlem süresi tanıyın.
+Bu sadece bağlantı kontrolüdür. Dosyaların hazır olması ve bağımsız erişim ayrıca sınanır.
 
-Modem dışarı farklı port açıyorsa `peer.env` içine gerçek değerlerle `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` yazın. Ayar değişince yalnızca yeni destekçiyi yeniden başlatın. Bu ayar port açmaz. IPv6 biçimi `[ADDRESS]:PORT` şeklindedir.
-
-Ağa katılmış 0.5.1 okuyucular yeni ulaşılabilir destekçileri ek kod almadan öğrenebilir. İlk temas ve güvenilen yayıncılar ağ davetiyle belirlenir. Yeni öğrenilen destekçi, isimleri değiştirme yetkisi kazanmaz.
-
-## 5. Daha geniş konum kapsamı için R84 ekleyin
-
-[Paylaşılan indeks kurulumunu](paylasilan-indeks.md) izleyin. Bu ayrı, isteğe bağlı bir süreçtir; ayrı disk ve indirme bütçesiyle tamamen sunucuda çalışır. Temel kurucu büyük indeksi veya yenileme zamanlayıcısını **kurmaz**.
-
-Destekçi tam indeks olmadan sakladığı içeriklerle katkı sağlayabilir. Yalnızca konum indeksi tutmak, site yedeği olmak değildir.
-
-## 6. Gerçekten katkı verdiğini görün
-
-En az bir durum döngüsünden sonra:
+## Hazırlığı ve bağımsız erişimi kontrol et
 
 ```bash
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --json
-du -sh "$HOME/.local/share/ArNS-Mesh-Supporter/data"
+MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
+node scripts/check-supporter.mjs --data "$MESH_ROOT/data" --json
+node scripts/operator.mjs --data "$MESH_ROOT/data" --json
+systemctl --user status arns-mesh-supporter --no-pager
+systemctl status arns-mesh-index-sync.service --no-pager
 ```
 
-Desteklemek istediğiniz isimleri, `savedSites.sites` listesini, eksik dosyaları, isim gözlem tarihlerini ve `snapshotRelay.records` değerini kontrol edin. “Hazır” kaydı sadece ana belgeyi kapsıyor olabilir; `scope` alanını okuyun. Birçok isim aynı dosyaya işaret edebilir.
+Hazırlık veya ayrı okuyucu kontrolü eksikken hazır olma komutu 2 çıkış kodu verir. İlk indeks indirmesi ve dosya hazırlığı arka planda sürer; başta bekliyor görünmesi normaldir. İsim kayıtlarını, doğrulanmış dosya setlerini, kuyruğu, disk/indirme bütçelerini, indeks güncelliğini ve dış erişimi incele. İsim ve indeks sayıları eksiksiz saklanan site sayısı değildir.
 
-Ayrı okuyucuyla hazırlanmış bir ismi bu destekçiden alın. Ardından [bağımsız devralma işlemini](dayaniklilik.md) uygulayın. Hizmetin çalışması, yüksek indeks sayısı veya açık port, diğer sunucunun yerini alabildiğini kanıtlamaz.
+**Son adım [bağımsız destekçi testi](dayaniklilik.md).** Ayrı okuyucu ilk sunucuyu dışarıda bırakarak yeni destekçiyi sınar. Servisin çalışması tek başına devralmanın hazır olduğunu kanıtlamaz.
 
-## Günlük işletim
+Ayarlar `peer.env` dosyasındadır; ön planda ve servis olarak çalıştırma aynı dosyayı kullanır. Güncellemeden önce bu destekçiyi durdur, verilerini özel olarak yedekle ve seçilen sürümde kurucuyu yeniden çalıştır. Önceki uygulama/veriyi geri dönüş için sakla; özel kimlik anahtarını birden fazla sunucuya kopyalama.
 
-Günlükler: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Durdurma: `systemctl --user stop arns-mesh-supporter`. Başlatma: `systemctl --user start arns-mesh-supporter`.
-
-Güncellemede bu destekçiyi durdurun; verisini ve başlatıcısını özel olarak yedekleyin; seçilen sürümü inceleyip kurucuyu yeniden çalıştırın. Geri dönüş için eşleşen eski uygulamayı ve veriyi koruyun. Kimlikleri ve imza anahtarlarını paylaşmayın; aynı kimliği farklı aktif sunuculara kopyalamayın.
-
-[Keşif ayrıntıları](paylasilan-ag.md) · [Durum ve sınırlar](durum.md) · [İşletim başvurusu](destekci-ayrintili.md)
-
-[Sürekli hazırlık ve daha güçlü sunucu ayarları](surekli-hazirlik.md).
+Yerel hazır olma raporu dışarıdan erişimi kanıtlayamadığı için çıkış kodu 2 verir. `locallyPrepared` yerel dosya hazırlığını gösterir. Ayrı okuyucu kontrolü kendi başarılı/başarısız sonucunu üretir; yerel raporu sonradan bir sertifikaya dönüştürmez.

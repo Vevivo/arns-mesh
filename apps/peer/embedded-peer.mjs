@@ -100,6 +100,7 @@ export class MeshPeer {
       if(req.cacheOnly!==true)this._warmLocation(id);
       return {ok:false,error:'content_not_cached'};
     }
+    if(req.op==='snapshots')return this.snapshotPageReply?.(req)||{ok:false,error:'snapshot_pages_unavailable'};
     if(req.op==='snapshot'){const name=String(req.name||'').toLowerCase();if(!validArName(name))return {ok:false,error:'invalid_arns_name'};if(req.witnessPeerIds!==undefined&&(!Array.isArray(req.witnessPeerIds)||req.witnessPeerIds.length>16||req.witnessPeerIds.some(id=>typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))))return {ok:false,error:'invalid_snapshot_witnesses'};const row=req.prepared===true?this.pinner?.readySnapshot(name):this.snapshotStore?.exportLocal(name);if(row&&(!row.provenance||row.provenance.kind==='local-rpc')&&(!req.witnessPeerIds||req.witnessPeerIds.includes(this.witnessPeerId)))return this._envelope({...row,...(req.prepared===true?{prepared:true}:{})});return this.snapshotRelay?.reply({...req,name})||{ok:false,error:'snapshot_not_found'};}
     if(req.op==='resolve'){
       const name=String(req.name||'').toLowerCase();

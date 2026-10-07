@@ -11,7 +11,7 @@ subprocess.run(['node',str(source/'scripts/check-public.mjs')],cwd=source,check=
 version=json.loads((source/'package.json').read_text())['version']
 network_code=None
 if a.network_code_file:
- if a.network_code_file.stat().st_size>4096:raise SystemExit('Network invitation is too large.')
+ if a.network_code_file.stat().st_size>49152:raise SystemExit('Network invitation is too large.')
  network_code=a.network_code_file.read_text().strip()
  if not a.network_name.strip() or len(a.network_name)>80:raise SystemExit('Network name must be 1 to 80 characters.')
  subprocess.run(['node',str(source/'scripts/network.mjs'),'check-code',network_code],cwd=source,check=True)
@@ -44,7 +44,9 @@ archive=a.out/f'ArNS-Mesh-Browser-Windows-x64-{version}{suffix}.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
  for f in sorted(root.rglob('*')):
   if f.is_file():z.write(f,str(f.relative_to(a.out)))
-summary={'file':archive.name,'bytes':archive.stat().st_size,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'version':version,'operatorEndpointsBundled':bool(network_code),'networkInvitationBundled':bool(network_code),'windowsAcceptance':'pending'}
+continuity_file=source/'resources/network-continuity.json'
+continuity_count=len(json.loads(continuity_file.read_text()).get('invitations',[])) if continuity_file.exists() else 0
+summary={'file':archive.name,'bytes':archive.stat().st_size,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'version':version,'operatorEndpointsBundled':bool(network_code or continuity_count),'networkContinuityDefinitions':continuity_count,'networkInvitationBundled':bool(network_code),'windowsAcceptance':'pending'}
 (a.out/'build.json').write_text(json.dumps(summary,indent=2)+'\n')
 (a.out/'SHA256SUMS.txt').write_text(summary['sha256']+'  '+archive.name+'\n')
 print(json.dumps(summary))

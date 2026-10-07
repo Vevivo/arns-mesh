@@ -1,4 +1,4 @@
-# Topic search — Mesh 0.5.1
+# Topic search — Mesh 0.6.0
 
 The top address bar opens an ArNS name. The Home search box finds ArNS sites by name, topic, description or keyword. Click a result to open it, or click a topic label to search that topic.
 

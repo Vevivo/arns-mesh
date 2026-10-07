@@ -1,5 +1,6 @@
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {NetworkRendezvous} from './network-rendezvous.mjs';
 import {requestIpJson} from './ip-transport.mjs';
 import {PeerDirectory,PEER_TTL,bindPeerDirectory,discoveryAddress,normalizePeerHost,peerAddress,verifyPeerEnvelope} from './peer-directory.mjs';
 
@@ -8,9 +9,10 @@ export class PeerDiscovery{
  constructor({dataDir,scope,peers,identity=null,listenPort=null,advertise='auto',onChange=()=>{},now=()=>Date.now(),request=requestIpJson,intervalMs=60000}){
   this.scope=scope;this.peers=peers;this.identity=identity;this.listenPort=listenPort;this.advertise=advertise;this.onChange=onChange;this.now=now;this.request=request;this.intervalMs=intervalMs;
   this.directory=new PeerDirectory({file:path.join(dataDir,'peer-directory.json'),scope,now});this.unbind=bindPeerDirectory(path.join(dataDir,'mesh-ip-peers.json'),this.directory);
-  this.own=null;this.observed=null;this.acceptedBy=new Map();this.networkId=scope()?.id||null;this.lastError=null;this.lastSync=null;this.running=null;this.timer=null;this.controller=null;this.cursor=0;this.exportCursor=0;this.probes=0;this.probeTimes=[];this.stopped=true;
+  this.rendezvous=new NetworkRendezvous({scope:()=>this.context(),self:identity&&advertise!=='off'?()=>this.self():null,onPeer:(env,{signal})=>this.verifyReachable(env,AbortSignal.any([signal,AbortSignal.timeout(3500)])),now});
+  this.own=null;this.observed=null;this.acceptedBy=new Map();this.networkId=scope()?.id||null;this.lastError=null;this.lastSync=null;this.running=null;this.timer=null;this.controller=null;this.cursor=0;this.exportCursor=0;this.loopEpoch=0;this.probes=0;this.probeTimes=[];this.stopped=true;
  }
- context(){const scope=this.scope();if((scope?.id||null)!==this.networkId){this.networkId=scope?.id||null;this.own=null;this.observed=null;this.acceptedBy.clear();this.lastError=null;this.lastSync=null;}for(const [address,at] of this.acceptedBy)if(this.now()-at>=PEER_TTL)this.acceptedBy.delete(address);return scope;}
+ context(){const scope=this.scope();if((scope?.id||null)!==this.networkId){void this.rendezvous?.close().catch(()=>{});this.networkId=scope?.id||null;this.own=null;this.observed=null;this.acceptedBy.clear();this.lastError=null;this.lastSync=null;}for(const [address,at] of this.acceptedBy)if(this.now()-at>=PEER_TTL)this.acceptedBy.delete(address);return scope;}
  accepted(address){this.acceptedBy.delete(address);this.acceptedBy.set(address,this.now());while(this.acceptedBy.size>32)this.acceptedBy.delete(this.acceptedBy.keys().next().value);}
  sign(value){return this.identity?._envelope(value);}
  self(observed=this.observed){
@@ -54,6 +56,7 @@ export class PeerDiscovery{
   const scope=this.context();if(!scope)return;
   const controller=this.controller=new AbortController(),bounded=AbortSignal.any([controller.signal,AbortSignal.timeout(15000),...(signal?[signal]:[])]);
   const work=(async()=>{
+   await this.rendezvous.sync({signal:bounded,timeoutMs:this.directory.addresses().length?500:4000}).catch(e=>{if(bounded.aborted)throw e;this.lastError=String(e.message).slice(0,160);});
    const candidates=this.directory.rank([...this.peers(),...this.directory.addresses()]).filter(p=>peerAddress(p)!==this.selfAddress());
    if(!candidates.length)return;
    // Always visit one known route and rotate a second route. No unbounded fanout.
@@ -74,8 +77,8 @@ export class PeerDiscovery{
   try{return await work;}finally{if(this.running===work){this.running=null;this.controller=null;}}
  }
  selfAddress(){try{return this.own?JSON.parse(this.own.recordJson).address:null;}catch{return null;}}
- start(){if(!this.stopped)return;this.stopped=false;const loop=async()=>{if(this.stopped)return;await this.sync().catch(e=>{this.lastError=String(e.message).slice(0,160);});if(!this.stopped){this.timer=setTimeout(loop,this.intervalMs);this.timer.unref?.();}};void loop();}
- stop(){this.stopped=true;clearTimeout(this.timer);this.timer=null;this.controller?.abort(new Error('peer_discovery_stopped'));}
- close(){this.stop();this.unbind();}
- status(){this.context();return {...this.directory.status(),announcing:Boolean(this.identity)&&this.advertise!=='off',address:this.selfAddress(),acceptedBy:this.acceptedBy.size,lastSync:this.lastSync,error:this.lastError};}
+ start(){if(!this.stopped)return;this.stopped=false;const epoch=++this.loopEpoch;const loop=async()=>{if(this.stopped||epoch!==this.loopEpoch)return;await this.sync().catch(e=>{this.lastError=String(e.message).slice(0,160);});if(!this.stopped&&epoch===this.loopEpoch){this.timer=setTimeout(loop,this.intervalMs);this.timer.unref?.();}};void loop();}
+ stop(){this.stopped=true;this.loopEpoch++;void this.rendezvous.close().catch(()=>{});clearTimeout(this.timer);this.timer=null;this.controller?.abort(new Error('peer_discovery_stopped'));}
+ close(){this.stop();this.unbind();return this.rendezvous.close();}
+ status(){this.context();return {...this.directory.status(),announcing:Boolean(this.identity)&&this.advertise!=='off',address:this.selfAddress(),acceptedBy:this.acceptedBy.size,lastSync:this.lastSync,error:this.lastError,rendezvous:this.rendezvous.status()};}
 }

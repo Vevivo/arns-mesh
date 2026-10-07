@@ -10,7 +10,7 @@ Her kurulum için ölçülmüş tek bir asgari donanım gereksinimi yoktur. Ayr�
 
 - İşletim sistemi ve desteklenen Node.js.
 - İçerik bütçesi, isim kayıtları, günlükler ve ağ trafiği.
-- İsteğe bağlı R84 indeksi: belgelenen ilk indeks ve yenileme payı için içerik alanına ek olarak SSD'de en az **50 GiB boş alan**. Yayıncının indeks boyutu değişebilir.
+- Standart kuruluma dahil R84 indeksi: belgelenen ilk indeks ve yenileme payı için içerik alanına ek olarak SSD'de en az **50 GiB boş alan**. Yayıncının indeks boyutu değişebilir.
 - Hizmet ve güncelleyici için boş bellek. Varsayılan hizmet sınırları donanım önerisi değildir.
 
 VPS seçerken disk, bellek ve trafik kotasını kontrol edin. Mevcut yoğun sunucuya, diğer işlerin yükünü değerlendirmeden ek hizmet kurmayın.
@@ -41,4 +41,6 @@ Yeni destekçide boş TCP **49741** portunu seçin. Sağlayıcının güvenlik d
 
 Kurulumdan sonra başka bir ağdan kontrol edin. Sunucunun kendi içinden başarılı yanıt almak, dışarıdan erişildiğini göstermez.
 
-**[Destekçi kurulumuyla devam edin](destekci.md).** Ardından isterseniz [R84 indeksi](paylasilan-indeks.md) ekleyin ve [kesintiye hazırlığı](dayaniklilik.md) tamamlayın.
+**[Destekçi kurulumuyla devam edin](destekci.md).** R84 indeksi kurulumun içindedir; ardından [bağımsız erişim kontrolünü](dayaniklilik.md) tamamlayın.
+
+0.6.0 destekçi kurulumunda R84, isim çoğaltma ve dosya hazırlama birlikte kurulur. Topluluk ağı varsayılandır; ilk işletmeciden kod istemek gerekmez. VPS profili yeni kurulumda 134 GiB, Pi profili 74 GiB boş alan ister. [Tam kurulum ve kontrol](destekci.md).

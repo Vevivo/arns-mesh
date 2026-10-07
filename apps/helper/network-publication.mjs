@@ -1,25 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {signNetwork,verifyNetwork,signNetworkRecovery,verifyNetworkRecovery,connectionProfile,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,networkId,MAX_NETWORK_BYTES,MAX_NETWORK_AGE} from '../../src/network-invitation.mjs';
+import {signNetwork,verifyNetwork,signNetworkRecovery,verifyNetworkRecovery,connectionProfile,networkPublicKey,encodeInvitation,decodeInvitation,validateInvitation,networkId,MAX_NETWORK_BYTES,MAX_NETWORK_AGE,withNetworkContinuity,invitationScope,signNetworkContinuity,verifyNetworkContinuity} from '../../src/network-invitation.mjs';
 import {validateProfile} from './network-profile.mjs';
 
 function readJson(file,max=MAX_NETWORK_BYTES){if(fs.statSync(file).size>max)throw new Error('Network file is too large.');return JSON.parse(fs.readFileSync(file,'utf8'));}
 function writeJson(file,value){const tmp=file+'.tmp';fs.writeFileSync(tmp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});try{fs.renameSync(tmp,file);}finally{fs.rmSync(tmp,{force:true});}}
 export function peerNetworkScope(dataDir,connection){
- if(connection?.state)return {id:networkId(connection.state.invitation.key),local:connection.state.invitation.local};
+ if(connection?.state)return invitationScope(withNetworkContinuity(connection.state.invitation));
  // A provider may publish a network without being a joined reader itself.
- try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);verifyNetwork(record.envelope,record.invitation,{allowExpired:true});return {id:networkId(record.invitation.key),local:record.invitation.local};}catch{return null;}
+ try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);verifyNetwork(record.envelope,record.invitation,{allowExpired:true});return invitationScope(withNetworkContinuity(record.invitation));}catch{return null;}
 }
 export function readNetworkPublication(dataDir){
  try{
-  const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);
+  const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);
   verifyNetwork(record.envelope,record.invitation,{allowExpired:true});
   return record.envelope;
  }catch(error){if(error.code==='ENOENT')return null;throw new Error('Invalid local network publication: '+error.message);}
 }
 export function readNetworkRecovery(dataDir){
- try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true});return record.recovery||null;}catch(error){if(error.code==='ENOENT')return null;throw error;}
+ try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true});return record.recovery||null;}catch(error){if(error.code==='ENOENT')return null;throw error;}
 }
 export function publishNetwork({dataDir,profile,name,seeds=profile.directPeers.slice(0,8),local=false,days=14,now=Date.now()}){
  const p=validateProfile(profile);if(!Number.isInteger(days)||days<1||days>MAX_NETWORK_AGE/86400000)throw new Error('Choose 1 to 30 days for a connection-list publication.');
@@ -29,7 +29,10 @@ export function publishNetwork({dataDir,profile,name,seeds=profile.directPeers.s
   const keyFile=path.join(dataDir,'network-authority.private.json');let identity;
   try{identity=readJson(keyFile,4096);}catch(error){if(error.code!=='ENOENT')throw error;identity={schema:'arns-mesh-network-authority/v1',privateKey:crypto.generateKeyPairSync('ed25519').privateKey.export({format:'pem',type:'pkcs8'}),revision:0};}
   if(identity.schema!=='arns-mesh-network-authority/v1'||!Number.isSafeInteger(identity.revision)||identity.revision<0)throw new Error('Invalid network authority state.');
-  const invitation=validateInvitation({version:1,key:networkPublicKey(identity.privateKey),seeds,local});
+  let invitation=validateInvitation({version:1,key:networkPublicKey(identity.privateKey),seeds,local});
+  try{const prior=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3).invitation;
+   if(prior.version===2&&prior.key===invitation.key&&prior.local===local&&JSON.stringify(prior.seeds)===JSON.stringify(invitation.seeds))invitation=validateInvitation(prior);
+  }catch(error){if(error.code!=='ENOENT')throw error;}
   const {trustedPeers,...legacyProfile}=p;
   const payload={schema:'arns-mesh-network/v1',name,revision:identity.revision+1,issuedAt:now,expiresAt:now+days*86400000,profile:legacyProfile};
   const envelope=signNetwork(payload,identity.privateKey,{local,now});
@@ -43,9 +46,18 @@ export function publishNetwork({dataDir,profile,name,seeds=profile.directPeers.s
 export function mirrorNetwork(dataDir,invitation,envelope,recovery=null){
  verifyNetwork(envelope,invitation);verifyNetworkRecovery(recovery,envelope,invitation);fs.mkdirSync(dataDir,{recursive:true,mode:0o700});
  const file=path.join(dataDir,'network-announcement.json');
- try{const old=readJson(file,MAX_NETWORK_BYTES+4096);const previous=verifyNetwork(old.envelope,invitation,{allowExpired:true});const next=verifyNetwork(envelope,invitation);if(next.revision<previous.revision||next.revision===previous.revision&&old.envelope.recordJson!==envelope.recordJson)throw new Error('Older or conflicting network publication rejected.');}catch(error){if(error.code!=='ENOENT')throw error;}
+ try{const old=readJson(file,MAX_NETWORK_BYTES*3);const previous=verifyNetwork(old.envelope,invitation,{allowExpired:true});const next=verifyNetwork(envelope,invitation);if(next.revision<previous.revision||next.revision===previous.revision&&old.envelope.recordJson!==envelope.recordJson)throw new Error('Older or conflicting network publication rejected.');}catch(error){if(error.code!=='ENOENT')throw error;}
  writeJson(file,{invitation,envelope,...(recovery?{recovery}:{})});
 }
+// Previously accepted settings remain usable when the live authority list expires.
+// Do not republish an expired list as a fresh announcement or crash the peer.
+export function mirrorAcceptedMembership(dataDir,connection,{now=Date.now()}={}){
+ const state=connection?.state;if(!state||fs.existsSync(path.join(dataDir,'network-authority.private.json')))return false;
+ const payload=verifyNetwork(state.envelope,state.invitation,{now,allowExpired:true});
+ if(payload.expiresAt!==null&&payload.expiresAt<=now)return false;
+ mirrorNetwork(dataDir,state.invitation,state.envelope,state.recovery);return true;
+}
+
 export function bundledNetworks(coreRoot){
  let rows;try{rows=readJson(path.join(coreRoot,'resources','networks.json'),32768);}catch(error){if(error.code==='ENOENT')return [];throw error;}
  if(!Array.isArray(rows)||rows.length>8)throw new Error('Invalid bundled network list.');
@@ -57,11 +69,30 @@ export function bundledNetworks(coreRoot){
 export function renewNetworkPublication(dataDir,{now=Date.now()}={}){
  const keyFile=path.join(dataDir,'network-authority.private.json');
  if(!fs.existsSync(keyFile))return null;
- const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES+4096);
+ const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);
  const payload=verifyNetwork(record.envelope,record.invitation,{allowExpired:true,now});
  if(payload.expiresAt-now>3*86400000)return null;
  const identity=readJson(keyFile,4096);
  if(networkPublicKey(identity.privateKey)!==record.invitation.key)throw new Error('A mirror cannot renew another network authority’s list.');
  const trustedPeers=verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true,now});
  return publishNetwork({dataDir,profile:connectionProfile(payload,trustedPeers),name:payload.name,seeds:record.invitation.seeds,local:record.invitation.local,days:14,now});
+}
+
+// Explicit authority-side operation. The public definition is durable; no mirror
+// needs or receives the private key, and expired short-lived lists stay invalid.
+export function publishNetworkContinuity({dataDir,bootstrap,generation,now=Date.now()}){
+ const lock=path.join(dataDir,'network-publication.lock');fs.mkdirSync(lock);
+ try{
+ const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);
+ const payload=verifyNetwork(record.envelope,record.invitation,{allowExpired:true,now});
+ const identity=readJson(path.join(dataDir,'network-authority.private.json'),4096);
+ if(networkPublicKey(identity.privateKey)!==record.invitation.key)throw new Error('Only the network authority can issue a durable definition.');
+ const trusted=verifyNetworkRecovery(record.recovery,record.envelope,record.invitation,{allowExpired:true,now});
+ const previousGeneration=record.invitation.version===2?verifyNetworkContinuity(record.invitation.definition,record.invitation).generation:0;
+ generation??=previousGeneration+1;if(generation<=previousGeneration)throw new Error('Increase the durable network generation.');
+ const definition=signNetworkContinuity({name:payload.name,profile:connectionProfile(payload,trusted),seeds:record.invitation.seeds,local:record.invitation.local,bootstrap,generation,now},identity.privateKey);
+ const invitation=validateInvitation({...record.invitation,version:2,definition});
+ writeJson(path.join(dataDir,'network-announcement.json'),{...record,invitation});
+ return {name:payload.name,networkId:networkId(invitation.key),code:encodeInvitation(invitation),invitation};
+ }finally{fs.rmdirSync(lock);}
 }

@@ -8,8 +8,9 @@ import {validateSnapshot} from './name-snapshots.mjs';
 import {discoverArweaveReferences} from './arweave-references.mjs';
 
 export class SitePinner{
- constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient,maxFiles=1024}){
+ constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient,maxFiles=1024,pinNamespace='site'}){
   if(!Number.isSafeInteger(maxFiles)||maxFiles<1||maxFiles>32768)throw new Error('invalid_site_file_limit');this.maxFiles=maxFiles;
+  if(!/^[a-z][a-z0-9-]{0,31}$/.test(pinNamespace))throw new Error('invalid_pin_namespace');this.pinNamespace=pinNamespace;
   this.file=file;this.snapshots=snapshots;this.store=contentStore;this.fetchContent=fetchContent;this.createClient=createClient;this.jobs=new Map();this.rows=Object.create(null);
   try{this.rows=Object.assign(Object.create(null),JSON.parse(fs.readFileSync(file)));}catch{}
   for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
@@ -43,7 +44,7 @@ export class SitePinner{
  remove(name){
   if(this.jobs.has(name))throw new Error('site_save_in_progress');
   const old=this.rows[name];delete this.rows[name];try{this.save();}catch(e){this.rows[name]=old;throw e;}
-  for(const group of new Set([name,old?.pinGroup,old?.update?.pinGroup].filter(Boolean)))this.store.unpin(group);
+  for(const group of new Set([...(this.pinNamespace==='site'?[name]:[]),old?.pinGroup,old?.update?.pinGroup].filter(Boolean)))this.store.unpin(group);
  }
  start(name,{accessPolicy='live',trustedPeers=[],signal,contentSources='all',snapshot:provided=null,managedBy=null}={}){
   if(!validArName(name))throw new Error('invalid_arns_name');
@@ -55,7 +56,7 @@ export class SitePinner{
  }
  async run(name,snapshot,{signal,contentSources,managedBy}={}){
   const old=this.rows[name],previous=this.isReady(old)?{...old,update:undefined}:null;
-  const pinGroup='site:'+crypto.createHash('sha256').update(name).digest('hex')+':'+snapshot.txId;
+  const pinGroup='site:'+crypto.createHash('sha256').update(this.pinNamespace==='site'?name:this.pinNamespace+'|'+name).digest('hex')+':'+snapshot.txId;
   const row={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},pinGroup,...(managedBy==='catalog'?{managedBy:'catalog'}:{}),status:'saving',scope:'document',total:1,saved:0,failed:0,errors:[]};
   this.rows[name]=previous?{...previous,update:row}:row;try{this.save();}catch(error){if(old)this.rows[name]=old;else delete this.rows[name];throw error;}
   const stale=old?.update?.pinGroup||(!previous&&old?.pinGroup);if(stale&&stale!==pinGroup&&stale!==previous?.pinGroup)this.store.unpin(stale);
@@ -100,8 +101,8 @@ export class SitePinner{
     // pinned until that atomic metadata commit succeeds, including on crashes.
     this.rows[name]=row;
     try{this.save();}catch(error){this.rows[name]=previous?{...previous,update:row}:row;throw error;}
-    const prefix='site:'+crypto.createHash('sha256').update(name).digest('hex')+':';
-    for(const group of Object.keys(this.store.pins||{}))if(group!==pinGroup&&(group===name||group.startsWith(prefix)))this.store.unpin(group);
+    const prefix='site:'+crypto.createHash('sha256').update(this.pinNamespace==='site'?name:this.pinNamespace+'|'+name).digest('hex')+':';
+    for(const group of Object.keys(this.store.pins||{}))if(group!==pinGroup&&((this.pinNamespace==='site'&&group===name)||group.startsWith(prefix)))this.store.unpin(group);
    }else{this.rows[name]=previous?{...previous,update:row}:row;this.save();}
    }finally{await client.stop();}
   }

@@ -1,138 +1,84 @@
-# Run a Mesh supporter
+# Run an independent Mesh supporter
 
-[Türkçe](../tr/destekci.md) · [Home](../../README.md) · [VPS preparation](vps.md) · [Raspberry Pi preparation](raspberry-pi.md)
+[Türkçe](../tr/destekci.md) · [Home](../../README.md) · [VPS](vps.md) · [Raspberry Pi](raspberry-pi.md)
 
-A supporter contributes **name records, content locations and verified files** from a server. This guide joins an existing network. Readers keep using their Windows applications; you do not install the Windows browser on the server.
+A supporter keeps ArNS name observations and verified files on its own server, follows updates while sources are reachable, and serves readers when another supporter is unavailable. **Join the same Mesh network; you do not create a separate code for its readers.**
 
-Use a new directory and an ordinary Linux account. These instructions are for a new supporter, not an instruction to replace an existing working deployment.
+Use Mesh **0.6.0** on both supporters and readers for independent discovery. A 0.5.1 reader can use previously learned routes, but does not gain the new discovery mechanism without upgrading.
 
 ## Before you start
 
-1. Prepare a [Linux VPS](vps.md) or [64-bit Raspberry Pi](raspberry-pi.md).
-2. Install Git, npm and Node.js 24 LTS. The source accepts 22.12+; CI uses 24.19.0. [Isolated Node installation](node-setup.md).
-3. Obtain the existing network's complete `mesh1.` invitation from an operator.
-4. Choose a publicly reachable numeric IP and unused TCP port. This guide uses **49741**.
+Use a new Linux server or 64-bit Raspberry Pi with an SSD, a normal user account, systemd, sudo, Git and [Node.js 24 LTS with npm](node-setup.md). Choose a public numeric IP and an unused TCP port; examples use **49741**. Incoming TCP access and outgoing UDP for discovery must work. CGNAT needs a reachable public route; the installer does not change routers or firewalls.
 
-No domain, nginx, TLS certificate, wallet or full Arweave/Solana node is required for this direct-IP service. Initial downloads and R84 preparation do use external services.
+The default setup joins the **existing community Mesh network** from its bundled, authority-signed public definition. You do not need to ask the first operator for a code or private key. Readers keep using the same supported community code. For a different network, add `--network YOUR_CODE` with its self-contained invitation. See [the community network](../community-network.md) and [network codes](network-code.md).
 
-## 1. Get the matching supporter source
+| Installation profile | Site storage | Automatic cache | R84 index and refresh allowance | Fresh-install free space |
+|---|---:|---:|---:|---:|
+| `vps` (default) | 64 GiB | 16 GiB | 50 GiB | **134 GiB** including 4 GiB headroom |
+| `pi` (SSD) | 16 GiB | 4 GiB | 50 GiB | **74 GiB** including 4 GiB headroom |
 
-Use the same 0.5.1 release for the reader and supporter. The R84 integration is included.
+These are explicit storage allowances, not promises to hold every site. Both profiles track and queue up to 20,000 site records, collect names continuously, mirror accepted name records and prepare verified content. The Pi profile has less room for complete copies. Its real-hardware acceptance is still pending.
+
+The peer's memory limit is 1 GiB for VPS or 768 MiB for Pi; the separate index updater has a 384 MiB limit. Leave room for the OS and other applications. Check the provider's transfer allowance: incoming budgets are separate, and outgoing service traffic is additional.
+
+## Install
+
+Run as the ordinary supporter account. Replace the sample IP with **your own reachable IP**, keeping the port aligned with your firewall/router.
 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.5.1
+git checkout --detach v0.6.0
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-read -r -p 'Paste the complete mesh1 connection code: ' MESH_CODE
-bash scripts/install-peer.sh --network "$MESH_CODE"
-unset MESH_CODE
+bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
 
-Stop if any command fails. The installer validates the invitation, installs locked dependencies into a versioned directory and creates a new peer identity. Existing connection files are preserved. It does not install a background service or open a firewall.
+For a Pi, use `--capacity pi`. Add `--dry-run` to check the plan and disk allowance without installing or starting services.
 
-Default installation: `~/.local/share/ArNS-Mesh-Supporter`. These examples assume no custom `MESH_INSTALL_ROOT` or `XDG_DATA_HOME`.
+The setup performs the whole supporter path:
 
-## 2. Set a bounded contribution
+1. Checks the invitation, available storage and preparation settings before installation.
+2. Installs locked source dependencies and the supporter under `~/.local/share/ArNS-Mesh-Supporter`, with its own identity.
+3. Enables continuous names, broad target scans, accepted-record replication and automatic file preparation.
+4. Installs the signed **R84 location-index updater** under a separate account, enables its refresh timer and starts the first download.
+5. Starts the supporter user service and enables startup after logout/reboot.
 
-Before the first start, create `peer.env`. This example refuses to overwrite an existing file:
+Stop if a command fails. If an upstream is unavailable during first index configuration, existing data is kept; rerun once that source returns. A partially completed setup is not a ready replacement. [R84 details and errors](../shared-index.md).
 
-```bash
-MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
-(
-  set -o noclobber
-  cat > "$MESH_ROOT/peer.env" <<'MESH_ENV'
-MESH_LISTEN=0.0.0.0:49741
-ARNS_PREPARE_ENABLED=1
-ARNS_PREPARE_MAX_SITES=32
-ARNS_CACHE_MIB=256
-ARNS_SAVED_MIB=1024
-ARNS_NAMES_DAILY_MIB=64
-ARNS_CATALOG_DAILY_MIB=256
-ARNS_INDEX_DAILY_MIB=64
-MESH_ENV
-)
-```
+Existing identities, connection files and explicit settings are preserved. The setup refuses to silently replace an unrelated service, use a disabled preparation profile, change an existing advertised address, or update a running supporter. Review existing small budgets before migrating an older installation.
 
-| Setting | Meaning |
-|---|---|
-| `ARNS_PREPARE_MAX_SITES` | Maximum automatically managed site records; 32 here, hard cap 20,000 |
-| `ARNS_CACHE_MIB` | Automatic content cache allowance |
-| `ARNS_SAVED_MIB` | Pinned/saved content allowance |
-| `ARNS_NAMES_DAILY_MIB` | Separate daily budget for name preparation |
-| `ARNS_CATALOG_DAILY_MIB` | Daily accounted response bytes for content preparation |
-| `ARNS_INDEX_DAILY_MIB` | Daily raw Arweave discovery budget; **not** the R84 updater budget |
+## Let readers find this server
 
-These are examples, not a promise of capacity or a total traffic cap. Dependencies, indexes, logs and outgoing content traffic are additional. A full content budget can pause new preparation while names continue. Increasing a limit does not create missing files or independent replicas.
+The advertised IP is your server's address; the **network code identifies the shared network**. They are different things. Mesh advertises and discovers supporter addresses within that network, including through its signed numeric-IP rendezvous configuration when the first server is unavailable. An address announcement never grants authority to change an ArNS name.
 
-For useful long-term coverage, choose which names you intend to retain and check their files. [Prepare selected names and failover](resilience.md).
+Readers on 0.6.0 keep the same supported network code. The original operator does not have to distribute a second developer's separate code or approve each server. The discovery routes themselves still need to be reachable; no network can discover an address with no available communication path.
 
-## 3. Start the background service
-
-From the source checkout, as the same ordinary user:
-
-```bash
-bash scripts/install-user-service.sh
-systemctl --user status arns-mesh-supporter --no-pager
-journalctl --user -u arns-mesh-supporter -n 30 --no-pager
-```
-
-The installer enables and starts the **user service**, which reads `peer.env`. It refuses to replace an existing unit. Do not also run `Start-Peer.sh` in another terminal.
-
-To start after boot and remain available after logout, an administrator can enable lingering for this account:
-
-```bash
-sudo loginctl enable-linger "$(id -un)"
-```
-
-The supplied service limits CPU to 25% and memory to 768 MiB where cgroups enforce them; the launcher uses a 384 MiB Node heap. These are limits, not measured minimum hardware requirements.
-
-## 4. Confirm external reachability and discovery
-
-From the source checkout on the supporter:
-
-```bash
-node scripts/probe-peer.mjs 127.0.0.1:49741
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
-```
-
-Then use the probe from **another network**, replacing `YOUR_PUBLIC_IP` with your real numeric address:
+Check the TCP endpoint from another network:
 
 ```bash
 node scripts/probe-peer.mjs YOUR_PUBLIC_IP:49741
 ```
 
-“Mesh endpoint responded” proves reachability only. Check the operator report for an announced endpoint and a peer accepting the announcement. Allow about a minute plus processing time for discovery.
+A successful probe proves reachability only. Preparation and independent serving must also pass the next checks.
 
-If a router exposes a different port, set `MESH_ADVERTISE=YOUR_PUBLIC_IP:PUBLIC_PORT` in `peer.env` using actual values. Restart only this new supporter after a configuration change. The setting does not open ports. IPv6 endpoints use `[ADDRESS]:PORT`.
-
-Already joined 0.5.1 readers learn reachable supporters without a new code. The public invitation still controls initial contact and trusted publishers. A newly learned peer gains no authority to redefine names.
-
-## 5. Add the R84 index if you want broader location coverage
-
-Follow the [shared-index installation](../shared-index.md). This is a separate optional process and a separate disk/download budget, entirely on the server. The basic installer does **not** install the large index or its refresh timer.
-
-A supporter can contribute retained content without the full shared index. A location index by itself is not a content replica.
-
-## 6. Know when it is actually useful
-
-After at least one status cycle, inspect:
+## Check preparation, then prove independent serving
 
 ```bash
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --json
-du -sh "$HOME/.local/share/ArNS-Mesh-Supporter/data"
+MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
+node scripts/check-supporter.mjs --data "$MESH_ROOT/data" --json
+node scripts/operator.mjs --data "$MESH_ROOT/data" --json
+systemctl --user status arns-mesh-supporter --no-pager
+systemctl status arns-mesh-index-sync.service --no-pager
 ```
 
-Check the names you intend to support, `savedSites.sites`, missing files, name observation dates and `snapshotRelay.records`. A “ready” document may cover only its main file; inspect `scope`. Several names can point to the same file.
+The first download and content preparation run in the background. The local readiness command returns exit code 2 because it cannot prove reachability from another machine. Its `locallyPrepared` field describes local preparation; the separate reader command below provides the pass/fail serving result. Expect a pending state at first. Check accepted name records, verified complete file sets, remaining queue, storage/download budgets, index freshness and advertised reachability. Counts of names or index entries are not counts of fully retained websites.
 
-Use a separate reader to retrieve a prepared name from your supporter. Then follow the [independent failover procedure](resilience.md). “Service running,” a high index count and “port open” are not proof that another server can replace the original.
+**Finish with the [independent supporter check](resilience.md).** It uses a separate reader and excludes the original server, so the working network remains available. Do not describe a supporter as ready merely because its service is running.
 
-## Operations
+## Operations and updates
 
-Logs: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`. Stop: `systemctl --user stop arns-mesh-supporter`. Start: `systemctl --user start arns-mesh-supporter`.
+Settings: `~/.local/share/ArNS-Mesh-Supporter/peer.env`. Foreground and service starts read the same settings. Logs: `journalctl --user -u arns-mesh-supporter -n 30 --no-pager`.
 
-For an update, stop this supporter, privately back up its data and launcher, review the chosen revision, rerun the installer and restart. Preserve the matching old application and data for rollback. Keep identities and signing keys private; never clone one identity onto several active peers.
+For an update, stop this supporter, back up its data privately, select the reviewed release and rerun setup. Keep the previous application/data for rollback. Managed services can be installed again without duplicating units; unrelated units are preserved. Never clone a live peer's private identity onto a second server.
 
-[Peer discovery details](shared-network.md) · [Status and limits](status.md) · [Operations reference](supporter-advanced.md)
-
-[Continuous preparation and larger-server settings](continuous-preparation.md).
+[Status](status.md) · [Discovery protocol](shared-network.md) · [Configuration reference](supporter-advanced.md)

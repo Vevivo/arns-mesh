@@ -2,7 +2,7 @@
 
 **Domain ve DNS olmadan ArNS sitelerini açın.**
 
-[Windows için Mesh 0.5.1 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
+[Windows için Mesh 0.6.0 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.0/ArNS-Mesh-Browser-Windows-x64-0.6.0.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
 
 Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyaları doğrular ve siteyi açar. Siteye ulaşmak için bir gateway domaini veya DNS çözümü kullanmaz.
 
@@ -10,10 +10,10 @@ Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyalar
 
 1. Yukarıdaki Windows ZIP'ini indirin ve tamamını bir klasöre çıkarın.
 2. `Mesh-Browser.exe` dosyasını açın.
-3. İşletmecinizin verdiği `mesh1.` kodunu **Settings → Mesh connection code → Check code → Join this network** bölümüne girin.
+3. Mesh bağlantı kodunuzu **Settings → Mesh connection code → Check code → Join this network** bölümüne girin.
 4. Adres çubuğuna `ar://vevivo` veya açmak istediğiniz ArNS ismini yazın.
 
-Cüzdan, ödeme, Node.js veya kendi sunucunuz gerekmez. Standart paket bağlantı kodu içermez. [Bağlantı yardımı](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
+Cüzdan, ödeme, Node.js veya kendi sunucunuz gerekmez. [Açık topluluk bağlantısını](docs/community-network.md) veya güvendiğiniz başka bir ağın kodunu kullanabilirsiniz. [Bağlantı yardımı](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
 
 ## Konuya göre site bulun
 
@@ -41,13 +41,15 @@ Büyük indeksler destekçi sunucularda tutulur. Windows okuyucusu sınırlı ye
 
 ## Ağa destek olun
 
-Bir VPS veya Raspberry Pi üzerinde destekçi çalıştırarak isim kayıtları, içerik konumları ve dosyalar sunabilirsiniz. Bağımsız destekçiler, bir sunucu kapandığında erişimin sürmesine yardım eder.
+VPS veya Raspberry Pi üzerinde [tam destekçi kurulumunu](docs/tr/destekci.md) izleyin. Kurulum, kapasite seçiminize göre isim/dosya hazırlığını, kabul edilen kayıtların kopyalanmasını ve R84 güncelleyicisini başlatır. Topluluk ağının tanımı herkese açıktır; ilk işletmeciden kişisel izin veya özel anahtar almanız gerekmez.
+
+Mesh 0.6.0, ilk başlangıç sunucusu erişilemez olduktan sonra katılan yeni destekçiyi de bulabilir. Açık, imzalı ağ tanımı aynı ağ kimliğini korur; bağımsız buluşma noktaları yeni destekçilerin adreslerini öğrenmeye yardım eder. Mevcut topluluk kodu, uygulama güncellendikten sonra kullanılmaya devam eder. Site dosyalarının hazırlanması zaman ve ulaşılabilir kaynak gerektirir; kurulum hazırlık durumunu gösterir ve devralma için ayrı okuyucuyla kontrol sağlar.
 
 **[VPS kurulumu](docs/tr/vps.md)** · **[Raspberry Pi kurulumu](docs/tr/raspberry-pi.md)** · [R84 indeks kurulumu](docs/tr/paylasilan-indeks.md) · [Başka sunucunun devralmasına hazırlık](docs/tr/dayaniklilik.md)
 
 ## Geliştiriciler
 
-Masaüstü ve destekçi aynı **0.5.1** kaynak ağacındadır. `main` güncel kodu içerir; sürümü yeniden üretmek için `v0.5.1` etiketini kullanın.
+Masaüstü ve destekçi aynı **0.6.0** kaynak ağacındadır. `main` güncel kodu içerir; sürümü yeniden üretmek için `v0.6.0` etiketini kullanın.
 
 [Geliştirme ve testler](docs/tr/gelistirici.md) · [Mimari](docs/en/architecture.md) · [Sürüm notları](docs/en/release-notes.md) · [Durum](docs/tr/durum.md) · [Gizlilik](docs/tr/gizlilik.md) · [Lisans](LICENSE)
 

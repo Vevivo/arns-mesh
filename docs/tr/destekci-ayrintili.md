@@ -2,7 +2,7 @@
 
 [Kurulum](destekci.md) · [VPS](vps.md) · [Raspberry Pi](raspberry-pi.md)
 
-Masaüstüyle aynı **0.5.1** sürümünü kullanın. Bu komutlardan önce destekçi kurulumunu tamamlayın.
+Masaüstüyle aynı **0.6.0** sürümünü kullanın. Bu komutlardan önce destekçi kurulumunu tamamlayın.
 
 ```bash
 systemctl --user status arns-mesh-supporter --no-pager

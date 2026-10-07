@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 import net from 'node:net';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {validateProfile,trustedWitnesses} from '../apps/helper/network-profile.mjs';
 
 const PREFIX=Buffer.from('302a300506032b6570032100','hex');
@@ -31,20 +33,64 @@ function address(value,local){
  if(!local&&!publicNetworkHost(host))fail('Public networks cannot advertise private or local addresses.');
  return (net.isIP(host)===6?'['+host+']':host)+':'+Number(port);
 }
+export const MAX_INVITATION_BYTES=49152;
+function validateContinuityPayload(value,{key,local,seeds,now=Date.now()}={}){
+ fields(value,['schema','key','local','seeds','name','generation','issuedAt','profile','bootstrap']);
+ if(value.schema!=='arns-mesh-network-continuity/v1'||value.key!==key||value.local!==local||typeof value.name!=='string'||!value.name.trim()||value.name.length>80||/[\x00-\x1f\x7f]/.test(value.name))fail('Invalid durable network definition.');
+ if(!Number.isSafeInteger(value.generation)||value.generation<1||!Number.isSafeInteger(value.issuedAt)||value.issuedAt>now+300000)fail('Invalid durable network generation or time.');
+ if(!Array.isArray(value.seeds)||JSON.stringify(value.seeds)!==JSON.stringify(seeds))fail('Durable network seeds differ from the invitation.');
+ if(!Array.isArray(value.bootstrap)||!value.bootstrap.length||value.bootstrap.length>8)fail('A durable network needs 1 to 8 numeric-IP rendezvous nodes.');
+ const bootstrap=[...new Set(value.bootstrap.map(v=>address(v,local)))],profile=validateProfile(value.profile);
+ for(const values of [profile.directPeers,profile.rpcSources,profile.arweavePeers])for(const v of values)address(v,local);
+ return {...value,profile,bootstrap};
+}
+export function verifyNetworkContinuity(definition,invitation,{now=Date.now()}={}){
+ fields(definition,['key','recordJson','signature']);
+ if(definition.key!==invitation.key||typeof definition.recordJson!=='string'||Buffer.byteLength(JSON.stringify(definition))>MAX_NETWORK_BYTES)fail('Invalid durable network authority or size.');
+ if(!crypto.verify(null,Buffer.from(definition.recordJson),keyObject(invitation.key),base64(definition.signature,64)))fail('Invalid durable network signature.');
+ let value;try{value=JSON.parse(definition.recordJson);}catch{fail('Invalid durable network definition.');}
+ return validateContinuityPayload(value,{key:invitation.key,local:invitation.local,seeds:invitation.seeds,now});
+}
+export function signNetworkContinuity({name,profile,seeds,bootstrap,local=false,generation=1,now=Date.now()},privateKey){
+ const key=networkPublicKey(privateKey),invite=validateInvitation({version:1,key,seeds,local});
+ const payload=validateContinuityPayload({schema:'arns-mesh-network-continuity/v1',key,local,seeds:invite.seeds,name,generation,issuedAt:now,profile,bootstrap},{...invite,now});
+ const recordJson=JSON.stringify(payload);
+ return {key,recordJson,signature:crypto.sign(null,Buffer.from(recordJson),crypto.createPrivateKey(privateKey)).toString('base64url')};
+}
 export function validateInvitation(value){
- fields(value,['version','key','seeds','local']);
- if(value.version!==1||typeof value.local!=='boolean')fail('Unsupported network invitation.');
+ fields(value,['version','key','seeds','local','definition']);
+ if(![1,2].includes(value.version)||typeof value.local!=='boolean'||value.version===1&&value.definition!==undefined)fail('Unsupported network invitation.');
  base64(value.key,32);
  if(!Array.isArray(value.seeds)||!value.seeds.length||value.seeds.length>8)fail('A network needs 1 to 8 starting peers.');
- return {version:1,key:value.key,seeds:[...new Set(value.seeds.map(v=>address(v,value.local)))],local:value.local};
+ const result={version:value.version,key:value.key,seeds:[...new Set(value.seeds.map(v=>address(v,value.local)))],local:value.local};
+ if(value.version===2){verifyNetworkContinuity(value.definition,result);result.definition=value.definition;}
+ return result;
 }
-export function encodeInvitation(value){const normalized=validateInvitation(value),body=Buffer.from(JSON.stringify(normalized)).toString('base64url');const check=crypto.createHash('sha256').update(body).digest('hex').slice(0,12);return 'mesh1.'+body+'.'+check;}
+export function encodeInvitation(value){const normalized=validateInvitation(value),body=Buffer.from(JSON.stringify(normalized)).toString('base64url');const check=crypto.createHash('sha256').update(body).digest('hex').slice(0,12);return 'mesh'+normalized.version+'.'+body+'.'+check;}
 export function decodeInvitation(code){
- if(typeof code!=='string'||code.trim().length>4096)fail('Invalid Mesh connection code.');
- const match=code.trim().match(/^mesh1\.([A-Za-z0-9_-]+)\.([a-f0-9]{12})$/);
- if(!match||crypto.createHash('sha256').update(match[1]).digest('hex').slice(0,12)!==match[2])fail('The Mesh connection code is incomplete or mistyped.');
- let data;try{data=JSON.parse(Buffer.from(match[1],'base64url').toString('utf8'));}catch{fail('Invalid Mesh connection code.');}
+ if(typeof code!=='string'||code.trim().length>MAX_INVITATION_BYTES||!code.trim().startsWith('mesh2.')&&code.trim().length>4096)fail('Invalid Mesh connection code.');
+ const match=code.trim().match(/^mesh([12])\.([A-Za-z0-9_-]+)\.([a-f0-9]{12})$/);
+ if(!match||crypto.createHash('sha256').update(match[2]).digest('hex').slice(0,12)!==match[3])fail('The Mesh connection code is incomplete or mistyped.');
+ let data;try{data=JSON.parse(Buffer.from(match[2],'base64url').toString('utf8'));}catch{fail('Invalid Mesh connection code.');}
+ if(data.version!==Number(match[1]))fail('Invalid Mesh connection code version.');
  return validateInvitation(data);
+}
+// A release may carry public durable definitions for existing mesh1 invitations.
+// Only a same-authority signature can upgrade an old code. This never adds trust
+// for the package author or for discovered content peers.
+export function withNetworkContinuity(invitation,{file=fileURLToPath(new URL('../resources/network-continuity.json',import.meta.url))}={}){
+ const invite=validateInvitation(invitation);if(invite.version===2)return invite;
+ try{
+  if(fs.statSync(file).size>256*1024)return invite;
+  const bundle=JSON.parse(fs.readFileSync(file,'utf8'));
+  if(bundle.schema!=='arns-mesh-bundled-continuity/v1'||!Array.isArray(bundle.invitations)||bundle.invitations.length>8)return invite;
+  for(const candidate of bundle.invitations){try{const next=validateInvitation(candidate);if(next.version===2&&next.key===invite.key&&next.local===invite.local)return next;}catch{}}
+ }catch{}
+ return invite;
+}
+export function invitationScope(invitation){
+ const invite=validateInvitation(invitation),continuity=invite.version===2?verifyNetworkContinuity(invite.definition,invite):null;
+ return {id:networkId(invite.key),local:invite.local,...(continuity?{bootstrap:continuity.bootstrap}:{})};
 }
 function validatePayload(payload,{local=false,now=Date.now(),allowExpired=false}={}){
  fields(payload,['schema','name','revision','issuedAt','expiresAt','profile']);
@@ -68,6 +114,11 @@ export function verifyNetwork(envelope,invitation,{now=Date.now(),allowExpired=f
  if(typeof envelope.recordJson!=='string'||Buffer.byteLength(JSON.stringify(envelope))>MAX_NETWORK_BYTES)fail('Network response is too large.');
  if(!crypto.verify(null,Buffer.from(envelope.recordJson),keyObject(invite.key),base64(envelope.signature,64)))fail('Invalid network signature.');
  let payload;try{payload=JSON.parse(envelope.recordJson);}catch{fail('Invalid signed network record.');}
+ if(payload.schema==='arns-mesh-network-continuity/v1'){
+  if(invite.version!==2||envelope.recordJson!==invite.definition.recordJson||envelope.signature!==invite.definition.signature)fail('Durable network definition does not match the invitation.');
+  const definition=verifyNetworkContinuity(envelope,invite,{now});
+  return {...definition,revision:0,expiresAt:null};
+ }
  return validatePayload(payload,{local:invite.local,now,allowExpired});
 }
 export const networkRecordHash=envelope=>crypto.createHash('sha256').update(envelope.recordJson).digest('hex');

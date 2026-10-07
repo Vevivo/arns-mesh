@@ -1,12 +1,12 @@
-# Mesh 0.5.1 status
+# Mesh 0.6.0 status
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-**0.5.1** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
+**0.6.0** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
 
 ## Continuous preparation
 
-The deployed 0.5.1 supporter keeps checking new registrations and existing name targets while its source routes are reachable. Name synchronization runs independently of content downloads. It retains observed name records and prepares verified files within configured budgets.
+The supporter keeps checking new registrations and existing name targets while its source routes are reachable. Name synchronization runs independently of content downloads. It retains observed name records and prepares verified files within configured budgets.
 
 A read-only operator-status observation at **2026-10-06 11:26 UTC** reported **13,274 retained names**, including undernames and retained observations, with name synchronization active. The registry refresh timestamp advanced between successive checks. This is a dated observation of one supporter, not a fixed catalogue size or a count of completely archived sites. Name coverage and file readiness are measured separately. [Preparation, timing and limits](continuous-preparation.md).
 
@@ -27,11 +27,15 @@ The Linux OS-isolation test on 6 October 2026 used a **selected sample of 35 nam
 
 [Full evidence](../validation/upstream-outage-2026-10-06.md). The Windows release workflow also tests the packaged application with real content and OS firewall isolation, and publishes only after acceptance passes.
 
-## Surviving a supporter outage
+## Surviving the original server's absence
 
-Readers can discover and use another reachable supporter. That independent machine must already hold the required files and accepted name records. [Preparation guide](resilience.md).
+A new supporter can join the public community after its original server is already absent. The release supplies the same authority-signed durable definition; numeric-IP rendezvous lets existing and fresh readers find later supporters. No personal approval or new reader code is required. Readers need the updated desktop.
 
-The isolation test uses processes on one physical machine. It is not acceptance of independent providers taking over for each other. Automatic independent replica placement/repair is not implemented.
+Supporters automatically copy accepted name records in bounded pages and prepare verified files in a separate retained set. Healthy RPC/raw-content routes remain available for live preparation. If those routes are also unavailable, a surviving source must hold the requested accepted record and files.
+
+The 6 October acceptance includes original-seed-absent joining, real public rendezvous, copied signed records and a three-file manifest served after its original source stopped. These server tests used separate processes on one physical host. They do not prove independent hosting providers are already operating replicas. [Evidence and limits](../validation/independent-supporters-2026-10-06.md).
+
+The Windows release workflow additionally requires a fresh packaged Electron reader to discover and use a later supporter with the original seed absent. [Install and check a supporter](supporter.md).
 
 ## Coverage
 

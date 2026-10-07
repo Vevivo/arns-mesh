@@ -1,6 +1,6 @@
-# Dayanıklı erişim — Mesh 0.5.1
+# Dayanıklı erişim — Mesh 0.6.0
 
-Bu sayfa güncel Mesh 0.5.1 sürümünü anlatır.
+Bu sayfa güncel Mesh 0.6.0 sürümünü anlatır.
 Proje sahibi ilk hizmet sağlayıcısıdır: sunucuyu, depolama bütçesini, ağ kimliğini ve hizmet kapsamını yönetir. Normal kullanıcı masaüstünü indirip site açar. Destekçi isterse ayrı bir peer çalıştırıp veri kopyaları tutar. Geliştirici kod yazar; sunucu çalıştırması şart değildir. Masaüstünü iki bilgisayara kurmak, kendiliğinden iki veri sunucusu oluşturmaz.
 
 | Çalışan kaynaklar | Mesh'in kullanacağı yol |

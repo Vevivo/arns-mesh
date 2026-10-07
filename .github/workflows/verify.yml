@@ -65,6 +65,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Exercise search and connection monitor in real Windows Electron
         run: node qa/desktop/search.cjs
+      - name: Discover a new supporter from an empty Windows reader with the original seed absent
+        timeout-minutes: 6
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/mesh-independent-supporter
+        run: node qa/desktop/independent-supporter.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: windows-independent-supporter
+          path: |
+            ${{ runner.temp }}/mesh-independent-supporter/results.json
+            ${{ runner.temp }}/mesh-independent-supporter/serving-summary.json
+            ${{ runner.temp }}/mesh-independent-supporter/*.png
+            ${{ runner.temp }}/mesh-independent-supporter/electron.log
+          retention-days: 30
       - name: Prepare real public content for upstream outage acceptance
         env:
           MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}

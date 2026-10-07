@@ -1,6 +1,6 @@
-# Masaüstü bağlantı ekranı — Mesh 0.5.1
+# Masaüstü bağlantı ekranı — Mesh 0.6.0
 
-Bu sayfa güncel Mesh 0.5.1 sürümünü anlatır.
+Bu sayfa güncel Mesh 0.6.0 sürümünü anlatır.
 Adres çubuğunun altındaki şerit Mesh, Solana RPC ve ham Arweave bağlantılarını ayrı gösterir. **Network monitor** düğmesi ayrıntıları açar: yanıt alınan kaynaklar, açık sayfanın kaynağı ve bu uygulama oturumunun veri trafiği.
 
 - **Responding:** Bu bilgisayardan yakın zamanda HTTP yanıtı alındı veya protokol kontrolü geçti. Her sitenin açılacağını garanti etmez. Ayrıntılarda bu iki ölçüm ayrılır.

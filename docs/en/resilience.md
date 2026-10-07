@@ -1,72 +1,88 @@
-# Prepare a supporter to survive loss of the original
+# Check independent access through a supporter
 
-[Türkçe](../tr/dayaniklilik.md) · [Supporter installation](supporter.md)
+[Türkçe](../tr/dayaniklilik.md) · [Complete supporter installation](supporter.md)
 
-The intended result is an already joined reader retrieving prepared content from supporter B when supporter A is unavailable. That requires preparation before the outage.
+The goal is for readers to keep using the same network when its first server is unavailable. **Mesh 0.6.0 separates discovery, live preparation and retained-content readiness**, so a running service is not confused with a complete content replica.
 
-## What must exist on B?
+## When the first server is already unavailable
 
-| Requirement | Why it matters |
+A new developer can run the [standard setup](supporter.md) without contacting the original operator. The bundled community definition is signed by the same network authority as the existing public code. Other networks use a self-contained signed invitation. The developer supplies their own reachable numeric IP; Mesh discovers and advertises that supporter through the signed network's numeric-IP rendezvous paths.
+
+Readers need 0.6.0 for this independent discovery. Existing 0.5.1 installations only have their older seed/learned-route behavior until upgraded. The original code and the new durable invitation identify the same community network; there is no separate developer network for users to join.
+
+While independent RPC and content sources remain reachable, the new supporter observes current names and prepares verified files. Loss of the first server does not turn those healthy paths off. If all upstream paths are also unavailable, the new supporter must obtain accepted name records and files from another surviving Mesh copy. It cannot reconstruct information that no reachable source holds.
+
+Discovery is about finding an address, not granting that address permission to redefine an ArNS name. Original signatures are preserved when records are relayed. A newly discovered supporter does not become a trusted name publisher.
+
+## What the standard installation prepares
+
+Both capacity profiles enable continuous name updates, broad target scanning, signed-record replication and automatic file preparation. R84 installation is included. The supporter uses its own identity and its own storage; the original server's private data directory is never cloned.
+
+| Layer | Required result |
 |---|---|
-| Independent machine and reachable IP/port | A second process on A fails with A |
-| Its own peer identity | Cloning A's private identity does not create an independent peer |
-| A route already learned by readers | Discovery cannot contact an address the reader never learned |
-| Accepted name records for the selected version | A file alone does not tell the reader what an ArNS name means |
-| Actual verified files, including needed resources | A location index only points to data |
-| Enough disk, memory and upload capacity | Stored copies must also be deliverable |
+| Discovery | A reader can find the supporter without contacting the original server |
+| Names | A live independently checked binding, or an accepted retained observation for the requested content version |
+| Content | Actual verified files are served by the supporter, not merely location hints |
+| Retained-site coverage | The root and supported manifest/static resources have all been retained within limits |
+| Capacity | Disk and daily budgets leave preparation able to progress |
+| Independence | A separate reader succeeds with the original server excluded |
 
-B joins the **same existing network invitation**, announces its address and mirrors the original signed network list. It can relay the original trusted publisher's signed name records. B's own identity does not automatically become a trusted name publisher.
+Names update independently of content-download budgets. Replication has its own daily allowance: **8 GiB for VPS, 2 GiB for Pi**, in addition to the ordinary content-preparation and R84 updater budgets. A full disk or exhausted allowance is reported as unfinished preparation; increasing a number alone does not create copies.
 
-## Prepare selected names
+## 1. Inspect local preparation
 
-Use a fresh B installed with the [current guide](supporter.md). Automatic preparation is bounded. To explicitly retain a small set of names, the supported `peer-pins.json` file accepts up to **16** names.
+```bash
+MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
+node scripts/check-supporter.mjs --data "$MESH_ROOT/data" --json
+```
 
-On B only, stop its service. Create this file in B's data directory if it does not already exist. Example:
+The local report exposes accepted names, stored roots, complete prepared file sets, replication, index state, trust and advertised reachability. It always requests a separate reader check; running that check does not write an external certification into the local report. Exit code **2** means preparation or validation is incomplete; it is not a certificate that installation failed.
+
+To prioritize selected names, stop this supporter, edit its existing `data/peer-pins.json` without overwriting other entries, and start it again. The file accepts up to 16 explicit names:
 
 ```json
 ["vevivo"]
 ```
 
-Path: `~/.local/share/ArNS-Mesh-Supporter/data/peer-pins.json`. Replace the example with names you actually intend to support. If the file exists, review and edit its list rather than overwriting it. Do not copy another peer's entire data directory.
+Automatic preparation continues beyond these priority names. Do not copy another supporter's private identity.
 
-Start B again:
+## 2. Check retained content from another machine
+
+Use the same reviewed source release and dependencies on a separate checking machine. Substitute the real numeric endpoints. The community code can be read from the signed bundled definition; use your explicit invitation for a different network.
 
 ```bash
-systemctl --user start arns-mesh-supporter
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --json
+MESH_CODE="$(node scripts/community-network.mjs)"
+node scripts/check-supporter.mjs \
+  --peer SECOND_SUPPORTER_IP:49741 \
+  --code "$MESH_CODE" \
+  --name vevivo \
+  --exclude ORIGINAL_SUPPORTER_IP:49740 \
+  --json
+unset MESH_CODE
 ```
 
-Allow preparation and subsequent status cycles to complete. Check the selected names individually:
+Repeat `--name` for up to 32 names you actually intend to serve. This check contacts **only the selected supporter**, asks for retained bytes only, validates accepted signed name records and verifies the root plus supported manifest/static file graph. It does not use RPC, raw Arweave, DHT or a warm reader disk cache. It does not ask the supporter to fetch missing files from the original server.
 
-- `savedSites.sites`: target ID, status, saved/total files, errors and `scope`.
-- `retainedNames`: a count, not proof that your selected name is present.
-- `snapshotRelay.records` and the requested snapshot: confirm an original trusted publisher record for the **same content version** is available.
-- Content and name budgets: a waiting queue can mean preparation is unfinished.
+Exit **0** means the stated names passed from that checking machine. Exit **2** includes missing bindings, files, signature/network failures or limits. Keep the result with its time, target IDs and names. A pass covers those resources, not every ArNS site or an application's external APIs.
 
-A `document-saved` result covers its main document. `linked-resources-saved` and `manifest-saved` cover supported traversed files within limits. External APIs and dynamic resources are not automatically archived. Several names may share a target.
+## 3. Check discovery and normal browsing separately
 
-The relay is bounded (up to 512 records; small batches per pass). It is not a mirror of all names. If an accepted record for your selected version is missing, B is not ready for no-RPC recovery for that name. An operator can manage additional trusted publishers through the signed network list; do not disable signature checks or copy the authority private key to every supporter.
+The explicit-endpoint check proves serving, not automatic discovery. Use a fresh **0.6.0 reader profile** in an isolated environment:
 
-## Validate without interrupting the working network
+1. Exclude the original server from that environment; leave the working production server running.
+2. Join using the same supported community code, with no manually entered B endpoint.
+3. Confirm the reader learns B and opens the selected names through it.
+4. Restart the test reader and repeat.
+5. If claiming retained access during an RPC/Arweave-path outage too, block those paths in the isolated reader/supporter test environment and repeat with prepared files. Record every missing resource.
 
-Use a separate reader profile and an isolated test environment; do not shut down A or alter production firewalls merely to test B.
+API cache-only testing is useful evidence, but is not an operating-system firewall test. Two processes on one host test protocol behavior; a separate machine/provider is still needed to establish real host-failure independence.
 
-1. **Both available:** join the existing network, let the test reader learn B, record A/B identities and the selected name targets. Ensure B is on a different machine/network.
-2. **Prove B serves bytes:** use a test source configuration targeting B and verify the selected documents/resources. Inspect B's content-serving counters; a counter alone does not establish complete site coverage.
-3. **A unavailable to the test reader:** deny A only in the isolated test environment. The reader should use its learned B route without replacing the user's production profile.
-4. **RPC and raw Arweave also unavailable:** restrict those paths for the isolated test reader and, if testing B's independence from upstream retrieval, its test-side supporter environment. Verify dated name records and pre-existing files from B. A warm reader cache must not be the sole source.
-5. **Restart the test reader:** repeat to check retained routes and data. Record missing assets and expired/untrusted name observations as failures, not successes.
+## Keep coverage current
 
-A cache-only API check demonstrates existing data; it does not prove full operating-system network isolation. Test all resources required for the use case, not just one HTML document.
+Leave collection and index refresh running while sources are healthy. Inspect the age of retained observations, preparation errors, budget waits and storage headroom. When a target changes, keep the last complete version until the new supported file set is verified.
 
-## Bootstrap and long outages
+R84 records are content locations, not retained website counts. A document may cover one main file; a manifest/static-resource set covers the supported discovered files. Dynamic external APIs are separate dependencies.
 
-Already joined readers can retain learned routes. A **fresh installation** still needs a reachable initial address and a valid signed network list. Before an outage, operators should provide invitations/source lists with surviving reachable entry points and manage the authority's renewal/backup lifecycle. Mirrors cannot renew the authority's signature.
+If every discovery route and every known address is unavailable, another reachable entry point is needed. If no reachable copy has a required file or accepted name binding, retained access for that content is pending. These are explicit readiness states, not reasons to stop preparing and sharing what is available.
 
-If every known entry point is gone before B is learned, a new reachable entry point must be supplied. If all reachable copies lack a file or name binding, the network cannot recreate it from the index alone.
-
-## Current boundary
-
-Automatic address discovery, measured content-source selection and original-signature relay exist. **Automatic independent replica placement/repair, universal site coverage and independent-provider disaster acceptance remain unfinished.**
-
-Run the procedure above for the names and hosts you operate before promising takeover. [Measured evidence](status.md) · [Protocol limits](shared-network.md).
+[Status and evidence](status.md) · [Network discovery](shared-network.md)

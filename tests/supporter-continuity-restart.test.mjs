@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import net from 'node:net';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {publishNetwork,mirrorAcceptedMembership,readNetworkPublication} from '../apps/helper/network-publication.mjs';
+import {NetworkConnection} from '../apps/helper/network-connection.mjs';
+import {verifyNetwork,verifyNetworkRecovery,connectionProfile,signNetworkContinuity} from '../src/network-invitation.mjs';
+async function unusedPort(){const server=net.createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;await new Promise(r=>server.close(r));return port;}
+test('supporter restarts with expired accepted live list and durable identity while original authority is absent',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-expired-supporter-')),authorityDir=path.join(root,'authority'),dataDir=path.join(root,'supporter');
+ const original=await unusedPort(),listen=await unusedPort(),old=Date.now()-3*86400000;
+ const profile={schema:'arns-mesh-network-profile/v1',directPeers:['127.0.0.1:'+original],rpcSources:['127.0.0.1:8899'],arweavePeers:[],trustedPeers:['a'.repeat(64)]};
+ publishNetwork({dataDir:authorityDir,profile,name:'Restart network',local:true,days:1,now:old});
+ const record=JSON.parse(fs.readFileSync(path.join(authorityDir,'network-announcement.json'))),authority=JSON.parse(fs.readFileSync(path.join(authorityDir,'network-authority.private.json')));
+ const definition=signNetworkContinuity({name:'Restart network',profile,seeds:record.invitation.seeds,bootstrap:['127.0.0.1:49737'],local:true},authority.privateKey);
+ const invitation={...record.invitation,version:2,definition};
+ const payload=verifyNetwork(record.envelope,invitation,{allowExpired:true}),trusted=verifyNetworkRecovery(record.recovery,record.envelope,invitation,{allowExpired:true});
+ const connection=new NetworkConnection({dataDir});connection.commit(invitation,{payload,envelope:record.envelope,recovery:record.recovery,profile:connectionProfile(payload,trusted)});
+ fs.writeFileSync(path.join(dataDir,'network-announcement.json'),JSON.stringify({...record,invitation}));
+ const before=fs.readFileSync(path.join(dataDir,'network-announcement.json'),'utf8');
+ assert.equal(mirrorAcceptedMembership(dataDir,new NetworkConnection({dataDir})),false);
+ assert.equal(fs.readFileSync(path.join(dataDir,'network-announcement.json'),'utf8'),before);
+ assert.ok(readNetworkPublication(dataDir));
+ const child=spawn(process.execPath,[fileURLToPath(new URL('../apps/peer/main.mjs',import.meta.url)),'--listen','127.0.0.1:'+listen],{env:{...process.env,ARNS_MESH_DATA:dataDir,ARNS_UPSTREAM_FETCH:'0',ARNS_CATALOG_ENABLED:'0',ARNS_ONLINE_PREPARATION:'0',ARNS_MESH_DIRECT_ONLY:'1',MESH_ADVERTISE:'127.0.0.1:'+listen},stdio:['ignore','pipe','pipe']});
+ let output='',errors='';
+ child.stdout.on('data',b=>output+=b);child.stderr.on('data',b=>errors+=b);
+ t.after(async()=>{if(child.exitCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill();const timer=setTimeout(()=>child.kill('SIGKILL'),5000);await stopped;clearTimeout(timer);}fs.rmSync(root,{recursive:true,force:true});});
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>{clearInterval(poll);reject(new Error('supporter startup timeout '+errors));},20000);
+  const poll=setInterval(()=>{if(output.includes('"event":"peer-started"')){clearTimeout(timer);clearInterval(poll);resolve();}},20);
+  child.once('exit',code=>{clearTimeout(timer);clearInterval(poll);reject(new Error('supporter exited '+code+' '+errors));});
+ });
+ assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir,'operator-status.json'),'utf8')).readiness.schema,'arns-mesh-supporter-readiness/v1');
+ assert.equal(fs.existsSync(path.join(dataDir,'network-authority.private.json')),false);
+ assert.equal(fs.readFileSync(path.join(dataDir,'network-announcement.json'),'utf8'),before);
+});

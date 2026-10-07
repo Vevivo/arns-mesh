@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-06",
+  "version": "0.6.0",
+  "publicRendezvous": {
+    "at": "2026-10-06T14:05:07.815Z",
+    "scope": "Real public HyperDHT and numeric-IP HTTP; two peers on one physical host, original seed absent from start",
+    "passed": true,
+    "bootstrapCount": 3,
+    "supporterJoinedWithoutOriginal": true,
+    "readerDiscoveredNewSupporter": true,
+    "learnedRoutes": 1,
+    "rendezvousReplies": 1,
+    "verifiedContentBytes": 86,
+    "dataId": "KUunBC7PbrEIxDAMm0uB9MzhxGSHKigD3Z4DzL29aTc",
+    "contentSignatureVerified": true
+  },
+  "sourceSuite": {
+    "passed": 219,
+    "failed": 0,
+    "scope": "Full pre-final suite on Linux. Later fixes have targeted regressions; exact final commit checked by release CI."
+  },
+  "checks": {
+    "coldSupporterWithoutOriginal": true,
+    "freshReaderDiscoversNewSupporter": true,
+    "bulkSignedRecords": 2402,
+    "bulkSignedRecordsExceedOneMiB": true,
+    "resumePaginationAfterRestart": true,
+    "manifestFilesVerified": 3,
+    "replicaServesAfterOriginalStops": true,
+    "secondGenerationReplicaServesAfterFirstReplicaStops": true,
+    "missingFileRejectsReadiness": true,
+    "forgedUntrustedRollbackRejected": true,
+    "expiredAuthorityMirrorRestarts": true,
+    "expiredRemotePublisherReplayRejected": true,
+    "currentRevocationOverridesDurableFallback": true
+  },
+  "scope": {
+    "serverPhysicalHosts": 1,
+    "independentHostingProviderAcceptance": false,
+    "physicalRaspberryPiAcceptance": false,
+    "allArnsFilesArchived": false
+  },
+  "windowsAcceptance": "Required by exact-commit release workflow; see published build.json acceptanceRun."
+}

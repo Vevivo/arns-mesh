@@ -1,107 +1,35 @@
-# Bağlantı koduyla Mesh kullanımı
+# Mesh bağlantı kodu ve bağımsız katılım
 
-[Ana sayfa](../../README.tr.md) · [VPS / Pi kurulumu](destekci.md) · [English](../en/network-code.md)
+[Ana sayfa](../../README.tr.md) · [Destekçi kurulumu](destekci.md) · [Ayrıntılı işletmeci komutları (EN)](../en/network-code.md)
 
-Masaüstü ve destekçi için **Mesh 0.5.1** kullanın. Masaüstünü güncellemek sunucudaki kurulumu değiştirmez.
+## Kullanıcı için
 
-## Hangisine ihtiyacım var?
+Mesh **0.6.0** kurun. [Açık topluluk kodunu](../community-network.md) **Settings → Mesh connection code → Check code → Join this network** alanında kullanın. Mevcut kullanıcıların bağlantısı güncellemede korunur.
 
-| Bilgi | Anlamı |
-|---|---|
-| Peer adresi (`IP:port`) | Bir destekçinin erişilebilir servis adresi |
-| Ağ daveti (`mesh1.…`) | Ağa katılmak için açık ağ anahtarı ve başlangıç adresleri |
-| Bağlantı profili (`mesh-connect.json`) | Eski/elle kullanılan kaynak ayarı; site dosyası değildir |
+Kod bir ağ davetidir; parola, lisans veya kişisel izin değildir. Topluluk kodu herkese açık paylaşılabilir. Başka bir ağın kodunu kullanmak, o ağın güven ayarlarını seçmektir.
 
-**Mevcut ağa destek mi veriyorsunuz?** [Kısa VPS/Pi kurulumundan](destekci.md) başlayın. Mevcut davetle katılırsınız. 0.5.1 erişilebilir içerik adresini otomatik duyurur; yeni ağ kurmanız veya herkese yeni kod dağıtmanız gerekmez. [İşleyiş ve sınırlar](paylasilan-ag.md).
+## Destekçi için
 
-Aşağıdaki bölümler bugünkü bağlantı mekanizmasını ve gelişmiş sağlayıcı işlemlerini anlatır. Hedef üründe kod gelişmiş/kurtarma yolu olarak kalabilir; normal kullanıcı hazırlanmış bağlantılı indirmeyle başlayacaktır. Bugünkü standart ZIP'lerde bağlantı ayarı hâlâ gerekir.
+[Destekçi kurulumu](destekci.md), açık topluluk ağını varsayılan olarak kullanır. İlk işletmeciye yazmanız veya onun özel anahtarını almanız gerekmez. Sunucunuz kendi kimliğini oluşturur, kendi erişilebilir adresini duyurur ve hazırlamaya başlar. Kullanıcılara ayrı kod dağıtılmaz.
 
+## İlk sunucu erişilemez olduğunda
 
-## Kullanıcı ne yapar?
+0.6.0, ilk sunucunun imzalama kimliğiyle doğrulanan kalıcı bir ağ tanımı taşır. Yeni `mesh2.` kodları bunu kendi içinde taşır; mevcut topluluk `mesh1.` kodu da paketteki aynı anahtarla imzalanmış tanımla eşleştirilir.
 
-1. Windows masaüstü ZIP'ini indirir, tamamını çıkarır ve `Mesh-Browser.exe` dosyasını açar.
-2. Sağlayıcısından `mesh1.` ile başlayan **bağlantı kodunu** alır. **Settings → Mesh connection code** alanına yapıştırıp **Check code** seçer.
-3. Ağın adını ve kaynak sayısını inceler, **Join this network** seçer. Bu seçim mevcut bağlantı listesini bu ağın listesiyle değiştirir. Eski kaynaklarını tutmak istiyorsa önce **Export profile** ile dışa aktarır.
-4. Mesh'in adres çubuğuna ArNS ismini yazar. Sunucu kurması veya IP adresi düzenlemesi gerekmez.
+Bu tanım sayesinde ilk sunucu kapalıyken de ağa katılınabilir. Okuyucu ve destekçiler, sayısal IP üzerinden bağımsız buluşma noktalarıyla yeni destekçileri öğrenir ve duyurulan adreslerin kimliğini denetler. Kullanıcının ikinci sunucuyu önceden görmüş olması gerekmez.
 
-Sağlayıcının özellikle hazırladığı **Connected** paketinde ağ kodu zaten bulunabilir: temiz kurulum ilk açılışta o ağa bağlanmayı dener. Kod kontrolü veya imza doğrulaması atlanmaz. Mevcut bağlantıları olan kurulumlar otomatik değiştirilmez. Standart genel GitHub ZIP'inde hazır sağlayıcı yoktur; kod veya eski JSON profili gerekir.
+Kalıcı tanım ilk işletmeci çevrimdışı diye sona ermez. Mevcut güvenilen isim yayıncılarını ve kaynak ayarlarını korur; yeni bir adresin öğrenilmesi o sunucuya isim değiştirme yetkisi vermez. Daha yeni kabul edilmiş kaynak ayarları eski tanımla değiştirilmez.
 
-**Örnek:** Sen iki sunucu işletir, ikisini tek ağ listesine koyarsın. Ayşe uygulamayı indirir ve senin kodunu girer. Tarayıcısı bu listedeki kaynaklara bağlanır. Mehmet de normal kullanıcıysa aynı kodu kullanabilir. Kimsenin Ayşe'ye site dosyalarını elle göndermesi gerekmez. İçerik erişilebilir kaynaklardan alınır ve doğrulanır.
+## İsimler ve dosyalar
 
-Eski `mesh-connect.json` dosyası hâlâ **Settings → Already have a connection file? → Import connection profile** yoluyla aktarılabilir. Elle dosya aktarımı veya gelişmiş bağlantı düzenlemesi ağın otomatik adres güncellemelerini durdurur.
+Destekçi, kabul edilen isim kayıtlarını özgün imzalarını koruyarak ve dosyaları ayrıca doğrulayarak edinir. Canlı kaynaklar çalışıyorsa güncellemeler takip edilir. Kaynaklara erişim kesilmişse ulaşılabilir kopyalar kullanılır. Hiçbir ulaşılabilir kaynakta bulunmayan bilgi kendiliğinden oluşmaz.
 
-## Kod ne içerir, ne içermez?
+[Hazırlık ve bağımsız okuyucu kontrolü](dayaniklilik.md), hangi isimlerin ve dosyaların hazır olduğunu gösterir. Ağ kodu, içerik arşivinin kendisi değildir.
 
-Kod; ağın açık imza anahtarını, ilk ulaşılacak birkaç IP:port adresini ve yerel ağ kullanımına izin verilip verilmediğini taşır. Küçük bir bağlantı paketi olduğu için kısa bir PIN'den uzundur; kopyala/yapıştır kullanılır.
+## Güncellemeler ve eski kodlar
 
-- Tekrar kullanılabilir; tüketilmez ve kişiye/cihaza bağlanmaz.
-- Site verisi, cüzdan, özel anahtar veya ödeme bilgisi içermez.
-- Kaynak adreslerini gizlemez; sunucuya özel erişim yetkisi sağlamaz.
-- İmza, listede aynı ağ yetkilisinin değişiklik yaptığını doğrular. Yetkilinin güvenilirliğini veya bütün içeriklerin bulunabildiğini kanıtlamaz.
+Canlı imzalı kaynak listeleri geçerlilik süresi, sürüm sırası ve imzaya göre denetlenmeye devam eder. Kalıcı tanımı bulunmayan eski ağlarda ilk katılım için erişilebilir ve süresi geçmemiş liste gerekir. Eski uygulamalar yeni keşif özelliğini kendiliğinden edinmez; 0.6.0'a güncellenmelidir.
 
-Kodun tamamını güvendiğin sağlayıcıdan al. Kod içindeki başlangıç adresleri ilk bağlantıyı sağlar; **Check code** bu adreslerden imzalı listeyi ister. Yerel ağ kodu, özel IP'lere erişime izin verdiğini inceleme ekranında belirtir. Genel ağ kodunun sonradan öğrenilen adresleri özel/yerel ağ adreslerine çevrilemez.
+**Saved** modu otomatik liste yenilemesini ve keşfi durdurur. Ağ üzerinden erişim için kullanılabilir internet/IP yolu gerekir. Bütün bilinen keşif yolları erişilemezse yeni ve bilinmeyen bir sunucu keşfedilemez.
 
-## Sunucu sahibi nasıl kod üretir?
-
-Önce [VPS/Pi rehberindeki](destekci.md) kurulumu ve dışarıdan erişim kontrolünü tamamla. Kullanıcılara sunulacak gerçek Mesh, RPC ve isteğe bağlı ham Arweave adreslerini içeren `mesh-connect.json` dosyan hazır olsun. Bu dosya **sunucunun kendi upstream dosyasından farklı olabilir**: okuyucuların ulaşacağı Mesh adresin listede yer almalı.
-
-Güncellenmiş kaynak dizininde, sunucunun kullandığı **aynı veri dizinini** seç:
-
-```sh
-node scripts/network.mjs publish --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --profile ../mesh-connect.json --name "Benim Mesh Agim"
-```
-
-Komutun verdiği `code` değerini kullanıcıya, Windows indirme bağlantısıyla birlikte gönder. İlk yayında özel bir ağ imza anahtarı üretilir. Çalışan güncel peer bu veri dizinindeki yayını sunar. Herkese açık, erişilebilir bir Mesh adresi olmadan kod tek başına bağlantı sağlamaz.
-
-Varsayılan olarak profildeki ilk sekiz Mesh adresi başlangıç noktaları olur. Yalnız **bu ağa ait imzalı listeyi sunan** noktaları kullan; diğer içerik peer'leri ağ listesinin içinde kalabilir. Gerekirse seçimi `--seed GERCEK_IP:PORT` seçenekleriyle açıkça yap. İki bağımsız makinede liste ve yararlı veri bulundurmak tek makineye bağlılığı azaltır.
-
-### Yeni bir destekçiyi mevcut ağa bağlamak
-
-Kurucu ilk kurulumda JSON yerine kod kabul eder:
-
-```sh
-bash scripts/install-peer.sh --network 'SAGLAYICIDAN_ALDIGIM_MESH1_KODU'
-"$HOME/.local/share/ArNS-Mesh-Supporter/Start-Peer.sh"
-```
-
-Tırnak içindeki örneği gerçek kodun tamamıyla değiştir. Sunucu bu ağın kaynak listesini edinir ve güncel tutar. 0.5.1'te erişilebilir içerik adresini otomatik duyurur; yeni sürüm peer ve okuyucular bunu öğrenir. İmzalı yetkili listesi değişmez, isim yetkisi verilmez. Eski sürümler için yönetici adresi listeye ekleyip `publish` ile yeniden yayımlar. [Yeni davranış ve sınırlar](paylasilan-ag.md).
-
-Güncelleme kurulumu mevcut kaynak ayarlarını korur. Mevcut sunucuyu bilinçli olarak başka ağa geçirmek için peer'i durdur, veriyi yedekle, ardından `node scripts/network.mjs join 'GERCEK_KOD' --data VERI_DIZINI` çalıştır ve yeniden başlat. Bu komut kaynağı değiştirir; masaüstündeki gibi ikinci bir onay ekranı göstermez.
-
-### İkinci sunucuda bağlantı listesini de yayımlamak
-
-Önce ikinci peer'i yukarıdaki kodla ağa bağla. O sunucuda:
-
-```sh
-node scripts/network.mjs mirror 'GERCEK_KOD' --data "$HOME/.local/share/ArNS-Mesh-Supporter/data"
-```
-
-Bu işlem yalnız **imzalı açık listeyi** kopyalar. Gizli anahtarı paylaşmaz. Ağa bağlı mirror peer sonraki kabul edilmiş liste değişikliklerini de sunar. İlk kez bağlanan bir kullanıcının mirror'ı bulabilmesi için adresi verdiğin koddaki başlangıç noktalarından biri olmalı; daha önce bağlanmış kullanıcılar son kabul ettikleri listedeki Mesh noktalarını da dener.
-
-Liste kopyalamak site dosyalarını kopyalamaz. İçerik/katalog çoğaltması ayrı işlerdir; gerçek verinin diğer sunucuda bulunduğunu dene. Bu sürüm masaüstünü otomatik içerik sunucusu yapmaz.
-
-## Adresler değişirse ve bir sunucu kapanırsa
-
-Kullanıcı listesi değişince aynı veri diziniyle `publish` komutunu yeniden çalıştır. Anahtar korunur, sürüm numarası artar. Kodda anahtar ve başlangıç adresleri aynıysa kod da aynı kalır. Başlangıç adreslerini değiştirirsen ilk kurulumlar için yeni kod dağıt; bütün eski başlangıç adresleri erişilemezken yeni kullanıcı kendiliğinden ilk kaynağı bulamaz.
-
-Masaüstü Automatic modunda açılışta ve yaklaşık 15 dakikada bir güncelleme arar. İmzası değiştirilmiş, süresi geçmiş, eski sürümlü veya aynı sürümde çelişen listeleri kabul etmez. Kaynaklara erişemediğinde son kabul ettiği adresleri silmez. **Saved** modunda liste sorgusu yapmaz. Tam kayıtlı dosyalar yerelden açılabilir; adayda eksik içerik Mesh/ham kaynaklardan istenebilir. Bu bütün ağı kapatma modu değildir.
-
-Bir yayın varsayılan 14 gün geçerlidir. Yetkili anahtarın bulunduğu çalışan peer, başlangıçta ve altı saatte bir kontrol eder; üç gün veya daha az kalınca listeyi yeniler. Mirror tek başına süreyi uzatamaz. Süre dolması önceden kaydedilmiş adresleri veya dosyaları silmez; yeni katılım ve yeni liste kabulü için geçerli yayın gerekir. Bu **abonelik süresi değildir**.
-
-**Stop automatic updates** son adresleri koruyup ağ yönetimini bırakır. Tekrar katılmak yeniden güven kararıdır. DNS/gateway olmasa da IP erişimi ve gerekli isim/veri kaynakları gerekir. Bir sağlayıcının çok sunucusu olması o sağlayıcıdan kurumsal bağımsızlık sağlamaz.
-
-## Kodun paketin içinde olduğu sürüm
-
-[Geliştirici rehberindeki](gelistirici.md) Windows paketleme ortamında kodun tamamını tek satırlık, repo dışında bir dosyaya koy:
-
-```sh
-python scripts/package-windows.py --runtime ELECTRON_DIZINI --out dist --network-code-file ../ag-kodu.txt --network-name "Benim Mesh Agim"
-```
-
-Çıktı adı `-Connected.zip` ile biter. Ağ daveti yalnız bu çıktı paketine eklenir; kaynak reponun genel varsayılanı boş kalır. Bu dosyada adresler herkesçe görülebilir. Paketleme otomatik olarak yeni sunucu açmaz veya bir ağı hazır hâle getirmez.
-
-## Özel anahtarın yedeği
-
-`network-authority.private.json` dosyasını **özel yedekte** tut; kullanıcıya, mirror'a, GitHub'a veya masaüstü ZIP'ine verme. Anahtar kaybolursa aynı ağ adına imzalı güncelleme yapılamaz. Eski bir yedeğe dönüp sürüm sayacını geriye alma. Anahtar çalınırsa yeni anahtar/kodun güvenilir ayrı yoldan dağıtılması gerekir; otomatik anahtar değişimi bu sürümde yoktur.
-
-Bağlantı kodları tekrar kullanılabilir; ödeme veya aktivasyon lisansı gerektirmez. Özel erişim yetkisi veren kimlik bilgileri değildir.
+Ağ yetkilisinin özel anahtarı yalnızca yetkili tarafta tutulur; kullanıcıya, pakete veya destekçilere verilmez. [Ayrıntılı anahtar ve yayım işlemleri](../en/network-code.md).

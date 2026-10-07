@@ -1,12 +1,12 @@
-# Mesh 0.5.1 durumu
+# Mesh 0.6.0 durumu
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-Masaüstü ve sunucu için güncel kaynak sürümü **0.5.1**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
+Masaüstü ve sunucu için güncel kaynak sürümü **0.6.0**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
 
 ## Sürekli hazırlık
 
-Sunucuda çalışan 0.5.1 destekçisi, kaynaklara giden yollar açıkken yeni kayıtları ve mevcut isimlerin içerik hedeflerini takip eder. İsim takibi dosya indirmelerinden bağımsız çalışır. Edinilen isim kayıtları saklanır; dosyalar belirlenen bütçeler içinde indirilip doğrulanır.
+Destekçi, kaynaklara giden yollar açıkken yeni kayıtları ve mevcut isimlerin içerik hedeflerini takip eder. İsim takibi dosya indirmelerinden bağımsız çalışır. Edinilen isim kayıtları saklanır; dosyalar belirlenen bütçeler içinde indirilip doğrulanır.
 
 **6 Ekim 2026, 11:26 UTC** tarihli salt okunur sunucu kontrolünde, alt isimler ve saklanan gözlemler dâhil **13.274 isim** tutuluyordu; isim takibi açıktı. Ardışık kontrollerde kayıt listesinin yenilenme zamanı ilerledi. Bu, bir destekçinin o andaki durumudur; sabit katalog boyutu veya tamamen arşivlenmiş site sayısı değildir. İsim kapsamı ve dosyaların hazır olması ayrı ölçülür. [Hazırlık, güncelleme aralıkları ve sınırlar](surekli-hazirlik.md).
 
@@ -27,11 +27,15 @@ Sunucuda çalışan 0.5.1 destekçisi, kaynaklara giden yollar açıkken yeni ka
 
 [Ayrıntılı kanıt](../validation/upstream-outage-2026-10-06.md). Windows sürüm akışı ayrıca paketlenmiş uygulamayı gerçek içerik ve güvenlik duvarı yalıtımıyla test eder; sonuç geçmeden sürümü yayımlamaz.
 
-## Destekçinin kapanmasına hazırlık
+## İlk sunucu yokken devam etme
 
-Başka bir destekçi erişilebilir olduğunda okuyucu onu öğrenip kullanabilir. İkinci makinenin gerekli dosyaları ve kabul edilen isim kayıtlarını önceden edinmesi gerekir. [Hazırlık rehberi](dayaniklilik.md).
+Yeni geliştirici, ilk sunucu zaten kapalıyken de yayımlanmış topluluk ağına katılabilir. Sürüm aynı yetkili anahtarla imzalanmış kalıcı ağ tanımını içerir. Sayısal IP üzerinden bağımsız keşif, hem mevcut hem yeni okuyucuların sonraki destekçileri bulmasını sağlar. Senden özel izin veya kullanıcılara yeni kod dağıtılması gerekmez. Masaüstünün güncellenmesi gerekir.
 
-Kesinti testi tek fiziksel makinede yalıtılmış süreçlerle yapılmıştır; farklı sağlayıcılarda iki bağımsız sunucunun devralma kabul testi değildir. Otomatik bağımsız kopya yerleştirme/onarım henüz yoktur.
+Destekçiler kabul edilen isim kayıtlarını sayfalı biçimde kopyalar, bunların doğrulanmış dosyalarını ayrı bir saklanan kümede hazırlar. Çalışan RPC ve içerik yolları güncel hazırlık için kullanılmaya devam eder. Bu yollar da erişilemezse, istenen kabul edilmiş kaydın ve dosyaların erişilebilen bir kopyası gerekir.
+
+6 Ekim kabul kontrollerinde ilk adres baştan kapalıyken katılım, gerçek genel keşif ağı, imzalı kayıt kopyalama ve ilk kaynak durduktan sonra üç dosyalı bir sitenin sunulması sınandı. Sunucu testleri tek fiziksel makinedeki ayrı süreçlerle yapıldı. Farklı sağlayıcılarda hazır yedek sunucular bulunduğu anlamına gelmez. [Kanıtlar ve kapsam](../validation/independent-supporters-2026-10-06.md).
+
+Windows sürüm akışı ayrıca paketten açılan boş Electron okuyucunun, ilk adres yokken yeni destekçiyi bulup içerik açmasını şart koşar. [Destekçi kurulumu ve doğrulama](destekci.md).
 
 ## Kapsam
 

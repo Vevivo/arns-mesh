@@ -1,0 +1,13 @@
+{
+  "version": "0.5.1",
+  "date": "2026-10-06",
+  "searchEvidence": "../validation/topic-search-2026-10-06.json",
+  "sourceTests": {
+    "passed": 205,
+    "failed": 0,
+    "platform": "Linux",
+    "runnerConcurrency": 2
+  },
+  "windowsAcceptance": "Publication requires successful exact-commit Windows source, keyword UI and real-content OS firewall checks. See release build.json for acceptanceRun.",
+  "baselineEvidence": "../archive/verification-0.5.0.json"
+}
