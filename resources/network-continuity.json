@@ -1,0 +1,18 @@
+{
+  "schema": "arns-mesh-bundled-continuity/v1",
+  "invitations": [
+    {
+      "version": 2,
+      "key": "lenWP4k3LM1kEA5YgBgs7AQKaP0rMMbs-CY0vbtheHg",
+      "seeds": [
+        "194.163.169.13:49740"
+      ],
+      "local": false,
+      "definition": {
+        "key": "lenWP4k3LM1kEA5YgBgs7AQKaP0rMMbs-CY0vbtheHg",
+        "recordJson": "{\"schema\":\"arns-mesh-network-continuity/v1\",\"key\":\"lenWP4k3LM1kEA5YgBgs7AQKaP0rMMbs-CY0vbtheHg\",\"local\":false,\"seeds\":[\"194.163.169.13:49740\"],\"name\":\"Vevivo ArNS Mesh\",\"generation\":1,\"issuedAt\":1791295341147,\"profile\":{\"schema\":\"arns-mesh-network-profile/v1\",\"directPeers\":[\"194.163.169.13:49740\"],\"rpcSources\":[\"134.119.214.42:8899\"],\"arweavePeers\":[\"138.201.218.229:1984\",\"168.119.211.20:1984\",\"49.12.173.84:1984\",\"38.29.227.69:1984\",\"108.238.244.144:2012\"],\"trustedPeers\":[\"1330e51e4fc65597312fb9252cf457bf6e0efedf1075bd5d3e977f6dff239d7a\"]},\"bootstrap\":[\"88.99.3.86:49737\",\"142.93.90.113:49737\",\"138.68.147.8:49737\"]}",
+        "signature": "tjB_RlWlqbMLSzusQHVvfNvgprf3hRyVlkvPbCP-irpOTA-YtwOtwSCH4rDLh2CwDGCa68syW3BlFZZZEhCFAw"
+      }
+    }
+  ]
+}

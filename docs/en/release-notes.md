@@ -1,23 +1,26 @@
-# ArNS Mesh 0.5.1
+# ArNS Mesh 0.6.0
 
-Find ArNS sites by topic from the Home search box. Open known ArNS addresses in the upper address bar as before.
+A new supporter can join the same network and be discovered after the original starting server is unavailable. The release preserves existing ArNS access, English topic search, R84 location lookup and content signature checks.
 
-This update adds owner-supplied ANT descriptions and keywords, optional undername metadata, clickable topic labels and English topic keyword matching. The larger signed catalogue includes retained names even when their page has not yet been prepared; availability is clearly labelled. Search terms stay on the reader, and accepted catalogues remain searchable during outages.
+## What changes
 
-The established access path, R84 integration, continuous name/content preparation and signature verification are preserved. Older readers continue receiving the original small HTML catalogue.
+- Public, authority-signed durable network definitions support joining without contacting the original server or obtaining its private key. Existing community codes are matched to the bundled definition using the same signing identity.
+- Independent numeric-IP rendezvous locates later supporters. Readers verify the announced endpoint before using it; discovering an address does not grant it permission to redefine names.
+- Supporters copy original accepted name records in bounded pages, with capacity for 40,000 envelopes and 64 MiB. A separate preparation worker retains their verified files and prepared versions.
+- One supporter setup includes capacity selection, continuous name/content preparation, R84 installation, a persistent service and readiness checks.
 
 ## Use it
 
-Download and extract the Windows ZIP, launch `Mesh-Browser.exe` and join your existing Mesh network. On Home, refresh the catalogue and search for a topic such as music, games or storage. Click a result to open its ArNS site.
+Update the desktop and supporters to **0.6.0**. Existing community connection settings carry over; another user's separate Mesh network remains a separate trust choice. The public community definition is also available to fresh installations when the original starting server cannot respond.
 
-[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/en/user.md) · [Türkçe](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/tr/konu-aramasi.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.5.1/docs/en/supporter.md)
+[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/en/user.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/en/supporter.md) · [Community connection](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/community-network.md)
 
 ## Verification
 
-The release workflow runs Linux and Windows source tests, packages the actual Windows application, checks keyword-only search and offline restart in Electron, and opens real public content with external DNS, RPC and Arweave blocked before publishing. Live metadata/search observations are recorded in the repository's topic-search validation report.
+The release workflow runs Linux and Windows source tests, builds the Windows application, checks topic search and opens real public content under OS firewall isolation. New continuity, rendezvous, bulk replication and supporter checks cover the original server being absent.
 
-## Boundaries
+## Scope
 
-Search listings do not guarantee that a site is fully retained or that external APIs work. Outage access requires retained names, verified files and a reachable Mesh source. Some owners have no useful topic metadata; this is bounded keyword discovery, not a complete web search engine. Large indexes stay on supporters; the reader keeps a bounded catalogue cache.
+A usable network route and a source holding the requested information remain necessary. A new server can prepare from healthy upstream sources or surviving Mesh copies. It cannot reconstruct a never-retained file while every source carrying it is unreachable. Prepared site files do not make external APIs available. Readiness reports describe their checked names and file sets rather than universal coverage.
 
-The Windows package is an unsigned community build. Physical Raspberry Pi and full ArDrive application compatibility are not certified. Independent replica placement/repair remains future work.
+The Windows build is unsigned. Physical Raspberry Pi and complete ArDrive application compatibility are not certified.

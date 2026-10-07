@@ -18,7 +18,7 @@ import {VerifiedContentStore} from '../../src/content-store.mjs';
 import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from '../helper/network-profile.mjs';
 import {checkConnections} from '../helper/connection-check.mjs';
 import {NetworkConnection} from '../helper/network-connection.mjs';
-import {bundledNetworks} from '../helper/network-publication.mjs';
+import {bundledNetworks,peerNetworkScope} from '../helper/network-publication.mjs';
 import {networkId,connectionRecordHash} from '../../src/network-invitation.mjs';
 import crypto from 'node:crypto';
 import {ResponseCache} from '../helper/response-cache.mjs';
@@ -391,7 +391,7 @@ async function start(){
   pinner=new SitePinner({file:path.join(runtime.dataDir,'saved-sites.json'),snapshots:runtime.snapshots,contentStore:store});
   searchCatalog=new SearchCatalog(path.join(runtime.dataDir,'search-cache.json'));
   network=new NetworkConnection({dataDir:runtime.dataDir,onChange:()=>{if(accessPolicy!=='saved')peerDiscovery?.start();cache.clear();reloadHomes();lastSearchSync=0;void syncSearch().catch(()=>{});send();}});
-  peerDiscovery=new PeerDiscovery({dataDir:runtime.dataDir,scope:()=>network.state?{id:networkId(network.state.invitation.key),local:network.state.invitation.local}:null,peers:()=>loadConfiguredPeers(),onChange:()=>send()});
+  peerDiscovery=new PeerDiscovery({dataDir:runtime.dataDir,scope:()=>peerNetworkScope(runtime.dataDir,network),peers:()=>loadConfiguredPeers(),onChange:()=>send()});
   const uiSession=session.fromPartition('mesh-ui',{cache:false});filterSession(uiSession,{ui:true});uiSession.protocol.handle('arnsui',uiHandler);
   win=new BaseWindow({width:1280,height:900,minWidth:850,minHeight:600,title:'ArNS Mesh Browser',backgroundColor:'#f6f4ef',icon:path.join(here,'ui',process.platform==='win32'?'mesh.ico':'mesh.png')});
   toolbar=new WebContentsView({webPreferences:{session:uiSession,preload:path.join(here,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});

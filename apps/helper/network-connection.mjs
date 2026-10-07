@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {decodeInvitation,validateInvitation,verifyNetwork,networkId,connectionRecordHash,connectionProfile,verifyNetworkRecovery,profileHash,MAX_NETWORK_BYTES} from '../../src/network-invitation.mjs';
+import {decodeInvitation,validateInvitation,withNetworkContinuity,verifyNetwork,networkId,connectionRecordHash,connectionProfile,verifyNetworkRecovery,profileHash,MAX_NETWORK_BYTES} from '../../src/network-invitation.mjs';
 import {parsePeerAddresses} from '../../src/direct-peer.mjs';
 import {requestIpJson} from '../../src/ip-transport.mjs';
 import {applyProfile,readProfile} from './network-profile.mjs';
 import {peerDirectory,peerAddress} from '../../src/peer-directory.mjs';
 
 export async function findNetwork(invitation,{signal,current=null,query=requestIpJson,now=Date.now(),alternatives=[]}={}){
- const invite=validateInvitation(invitation);
+ const invite=withNetworkContinuity(invitation);
  const seeds=[...new Set([...alternatives,...(current?.profile.directPeers||[]),...invite.seeds])].slice(0,24);
  const results=[],errors=[];let cursor=0;
  const controller=new AbortController(),bounded=AbortSignal.any([controller.signal,AbortSignal.timeout(18000),...(signal?[signal]:[])]);
@@ -32,16 +32,23 @@ export async function findNetwork(invitation,{signal,current=null,query=requestI
  for(const item of results){const hash=connectionRecordHash(item.envelope,item.recovery);const known=hashes.get(item.payload.revision);if(known&&known!==hash)throw new Error('Conflicting signed lists for the same network revision.');hashes.set(item.payload.revision,hash);}
  if(current?.recordHash&&hashes.has(current.revision)&&hashes.get(current.revision)!==current.recordHash)throw new Error('A signed network revision was changed without increasing its revision.');
  results.sort((a,b)=>b.payload.revision-a.payload.revision);
+ if(!results.length&&invite.version===2&&(!current||current.revision===0)){
+  const payload=verifyNetwork(invite.definition,invite,{now});
+  if(current?.recordHash&&current.recordHash!==connectionRecordHash(invite.definition,null))throw new Error('The durable network definition changed; review its new invitation.');
+  return {payload,envelope:invite.definition,recovery:null,profile:payload.profile,endpoint:null,continuity:true};
+ }
  if(!results.length)throw new Error(errors[0]||work.find(r=>r.status==='rejected')?.reason?.message||'No network starting peer responded.');
  return results[0];
 }
 
 export class NetworkConnection{
- constructor({dataDir,onChange=()=>{},query=requestIpJson,now=()=>Date.now()}){
+ constructor({dataDir,onChange=()=>{},query=requestIpJson,now=()=>Date.now(),continuityFile}){
+  this.upgradeInvitation=invitation=>withNetworkContinuity(invitation,{file:continuityFile});
   this.dataDir=dataDir;this.file=path.join(dataDir,'network-membership.json');this.onChange=onChange;this.query=query;this.now=now;this.state=null;this.running=null;this.controller=null;this.timer=null;this.error=null;this.lastChecked=null;this.epoch=0;
   try{
-   if(fs.statSync(this.file).size>65536)throw new Error('Network membership is too large.');
+   if(fs.statSync(this.file).size>128*1024)throw new Error('Network membership is too large.');
    const state=JSON.parse(fs.readFileSync(this.file));
+   if(state?.invitation)state.invitation=this.upgradeInvitation(state.invitation);
    if(state?.schema==='arns-mesh-membership/v1'){
     const payload=verifyNetwork(state.envelope,state.invitation,{now:this.now(),allowExpired:true});
     const profile=connectionProfile(payload,verifyNetworkRecovery(state.recovery,state.envelope,state.invitation,{now:this.now(),allowExpired:true}));
@@ -51,15 +58,15 @@ export class NetworkConnection{
    }
   }catch(error){if(error.code!=='ENOENT')this.error=String(error.message).slice(0,240);}
  }
- status(){const p=this.state?.payload;return {joined:Boolean(p),name:p?.name||null,id:this.state?networkId(this.state.invitation.key):null,local:this.state?.invitation.local||false,revision:p?.revision||null,expiresAt:p?.expiresAt||null,expired:Boolean(p&&p.expiresAt<=this.now()),refreshing:Boolean(this.running),lastChecked:this.lastChecked,error:this.error};}
+ status(){const p=this.state?.payload;return {joined:Boolean(p),name:p?.name||null,id:this.state?networkId(this.state.invitation.key):null,local:this.state?.invitation.local||false,revision:p?.revision??null,expiresAt:p?.expiresAt||null,expired:Boolean(p?.expiresAt&&p.expiresAt<=this.now()),continuity:p?.schema==='arns-mesh-network-continuity/v1',refreshing:Boolean(this.running),lastChecked:this.lastChecked,error:this.error};}
  async inspect(code,{signal}={}){
-  const invitation=decodeInvitation(code),current=this.state?.invitation.key===invitation.key?{...this.state.payload,recordHash:this.state.recordHash}:null;
+  const invitation=this.upgradeInvitation(decodeInvitation(code)),current=this.state?.invitation.key===invitation.key?{...this.state.payload,recordHash:this.state.recordHash}:null;
   const found=await findNetwork(invitation,{signal,current,query:this.query,now:this.now()});
   return {invitation,...found};
  }
  async join(code,{expectedId,expectedRevision,expectedHash,signal}={}){
   if(this.running)throw new Error('A network connection is already being checked.');
-  const invitation=decodeInvitation(code);
+  const invitation=this.upgradeInvitation(decodeInvitation(code));
   if(expectedId!==networkId(invitation.key))throw new Error('Review this network before joining it.');
   const controller=this.controller=new AbortController(),epoch=++this.epoch;
   const bounded=signal?AbortSignal.any([signal,controller.signal]):controller.signal;

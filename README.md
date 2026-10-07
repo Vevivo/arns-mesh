@@ -2,7 +2,7 @@
 
 **Open ArNS sites without domains or DNS.**
 
-[Download Mesh 0.5.1 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+[Download Mesh 0.6.0 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.0/ArNS-Mesh-Browser-Windows-x64-0.6.0.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
 Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
@@ -10,10 +10,10 @@ Enter `ar://name` in Mesh. It finds the content named by the record, verifies th
 
 1. Download the Windows ZIP above and extract the whole folder.
 2. Open `Mesh-Browser.exe`.
-3. Enter your operator's complete `mesh1.` code under **Settings → Mesh connection code → Check code → Join this network**.
+3. Enter your complete Mesh connection code under **Settings → Mesh connection code → Check code → Join this network**.
 4. Enter `ar://vevivo` or the ArNS name you want to open in the address bar.
 
-No wallet, payment, Node.js installation or personal server is required. The standard package does not include an operator's connection code. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
+No wallet, payment, Node.js installation or personal server is required. Use the [public community connection](docs/community-network.md), or a code for another network you trust. [Connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml).
 
 ## Find sites by topic
 
@@ -41,13 +41,15 @@ Large indexes stay on supporter servers. The Windows reader keeps bounded local 
 
 ## Support the network
 
-Run a supporter on a VPS or Raspberry Pi to serve name records, content locations and files. Independent supporters help preserve access when another server goes away.
+Install a supporter on a VPS or Raspberry Pi using the [complete setup](docs/en/supporter.md). It starts name/content preparation, accepted-record replication and the R84 index updater with a capacity profile. The community network definition is public; you do not need to contact the original operator for permission or a private key.
+
+Mesh 0.6.0 can discover a new supporter even after the original starting server becomes unreachable. The public signed network definition keeps the same network identity, and independent rendezvous nodes help readers learn new supporter addresses. Existing community codes remain usable after upgrading. Website files still need time and available sources to be prepared; the setup reports preparation and supports a separate reader check before claiming takeover.
 
 **[VPS setup](docs/en/vps.md)** · **[Raspberry Pi setup](docs/en/raspberry-pi.md)** · [R84 index setup](docs/shared-index.md) · [Prepare another server for takeover](docs/en/resilience.md)
 
 ## Developers
 
-The desktop and supporter share the **0.5.1** source tree. `main` contains the current implementation; use tag `v0.5.1` to reproduce the release.
+The desktop and supporter share the **0.6.0** source tree. `main` contains the current implementation; use tag `v0.6.0` to reproduce the release.
 
 [Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 

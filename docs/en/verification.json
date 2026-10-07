@@ -1,13 +1,14 @@
 {
-  "version": "0.5.1",
+  "version": "0.6.0",
   "date": "2026-10-06",
-  "searchEvidence": "../validation/topic-search-2026-10-06.json",
+  "continuityEvidence": "../validation/independent-supporters-2026-10-06.json",
   "sourceTests": {
-    "passed": 205,
+    "passed": 219,
     "failed": 0,
     "platform": "Linux",
-    "runnerConcurrency": 2
+    "runnerConcurrency": 2,
+    "scope": "Pre-final full suite; subsequent expired-publication and readiness fixes also passed targeted tests. Exact final commit is checked by release CI."
   },
-  "windowsAcceptance": "Publication requires successful exact-commit Windows source, keyword UI and real-content OS firewall checks. See release build.json for acceptanceRun.",
-  "baselineEvidence": "../archive/verification-0.5.0.json"
+  "windowsAcceptance": "Publication requires successful exact-commit Linux/Windows source tests and packaged Windows search, original-seed-absent discovery, and real-content OS firewall checks. See release build.json for acceptanceRun.",
+  "baselineEvidence": "../archive/verification-0.5.1.json"
 }

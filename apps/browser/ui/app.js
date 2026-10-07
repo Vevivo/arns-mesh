@@ -125,7 +125,7 @@ function renderNetwork(state={}){
  $('joined-network').classList.toggle('hidden',!state.joined);
  if(!state.joined)return;
  $('joined-network-name').textContent=state.name;
- $('joined-network-status').textContent=(state.refreshing?'Checking signed connection updates…':state.error?'Update unavailable. Last accepted addresses are retained. '+state.error:state.expired?'The connection list needs renewal. Last accepted addresses are retained.':`Connected to this network · List revision ${state.revision}`);
+ $('joined-network-status').textContent=(state.refreshing?'Checking signed connection updates…':state.error?'Update unavailable. Last accepted addresses are retained. '+state.error:state.expired?'The connection list needs renewal. Last accepted addresses are retained.':`Connected to this network · ${state.continuity?'Durable network definition':('List revision '+state.revision)}`);
  const peers=lastState.peerDiscovery;$('peer-discovery-status').textContent=lastState.accessPolicy==='saved'?'Peer discovery paused in Saved mode.':`${peers?.learned||0} learned peer addresses · Content is verified before use. These are saved routes, not a count of online users.`;
  $('refresh-network').disabled=state.refreshing||lastState.accessPolicy==='saved';
 }
@@ -142,7 +142,7 @@ async function inspectNetwork(){
   networkTicket=result.ticket;$('network-preview-name').textContent=result.name;
   const p=result.profile;
   $('network-preview-summary').textContent=`${p.directPeers.length} Mesh peers · ${p.rpcSources.length} name sources · ${p.arweavePeers.length} raw sources · ${p.trustedPeers?.length||0} trusted saved-name witnesses.`+(result.local?' This code allows local network addresses.':'');
-  $('network-preview-details').textContent=`Network identity: ${result.id}\nRevision: ${result.revision}\nList valid until: ${new Date(result.expiresAt).toLocaleString()}\n\n`+JSON.stringify(p,null,2);
+  $('network-preview-details').textContent=`Network identity: ${result.id}\nRevision: ${result.revision}\nConnection: ${result.expiresAt===null?'Durable network definition':('List valid until '+new Date(result.expiresAt).toLocaleString())}\n\n`+JSON.stringify(p,null,2);
   $('network-preview').classList.remove('hidden');settingsResult('Signature matches the code. Review the network, then join.');
  }catch(error){settingsResult(errorText(error),true);}finally{$('inspect-network').disabled=false;}
 }

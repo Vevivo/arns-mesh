@@ -37,3 +37,7 @@ snapshot-relay.json
 search-topics-published.json
 search-metadata.json
 search-legacy-cache.json
+
+# Supporter replication runtime state
+supporter-replication.json
+replicated-sites.json

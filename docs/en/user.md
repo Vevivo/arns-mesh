@@ -6,21 +6,21 @@ You only need the Windows application and a working connection invitation. You d
 
 ## 1. Download
 
-Use the **[0.5.1 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.5.1/ArNS-Mesh-Browser-Windows-x64-0.5.1.zip)**. GitHub's **Source code** archives are for developers.
+Use the **[0.6.0 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.0/ArNS-Mesh-Browser-Windows-x64-0.6.0.zip)**. GitHub's **Source code** archives are for developers.
 
 Extract the entire ZIP into a folder you want to keep. Open `Mesh-Browser.exe` inside it. Keep the other files beside the EXE; create a shortcut if you want a desktop icon.
 
-This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.5.1) and report the warning. Do not disable security tools to bypass it.
+This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.6.0) and report the warning. Do not disable security tools to bypass it.
 
 ## 2. Connect once
 
-Obtain the complete code beginning `mesh1.` from a trusted network operator.
+Copy the [public community connection code](../community-network.md). A different trusted network may provide its own `mesh1.` or `mesh2.` code.
 
 **Settings → Mesh connection code → Check code → Join this network**
 
-Review the network shown before joining. The code is a reusable invitation, not a password or paid licence. [Request connection help](https://github.com/Vevivo/arns-mesh/issues/new?template=connection-profile.yml) if you do not have one; availability depends on volunteer operators.
+Review the network shown before joining. The code is a reusable invitation, not a password or paid licence. The public code is already published; you do not have to ask the original operator for permission.
 
-An existing configured installation reuses its settings. A separately supplied Connected package can include an invitation; the standard public ZIP above does not. A legacy connection file can be imported under **Settings → Already have a connection file?**.
+An existing configured installation reuses its settings. The standard ZIP includes a signed definition for the public community; joining with its code selects it. A separately supplied Connected package can select a network on first launch. A legacy connection file can be imported under **Settings → Already have a connection file?**.
 
 ## 3. Open an ArNS website
 
@@ -34,7 +34,7 @@ Mesh resolves the name, finds the files, verifies them and opens the page. **Pag
 
 The large shared index and supporter archives belong on the **server**. You do not download them to browse, and the browser does not automatically serve your disk to other users.
 
-However, 0.5.1 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
+However, 0.6.0 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
 
 There is currently no supported zero-persistent-storage mode. Moving archive work to supporters does not make the existing browser diskless.
 
@@ -46,13 +46,13 @@ Supporters that still reach live sources can continue preparing updates. If thos
 
 **Saved** mode is not an operating-system network-off switch: missing files may still be requested. A bookmark remembers an address; it does not save a site.
 
-Later reachable supporters can be learned automatically after joining. That does not guarantee every site has another copy. [How supporter failover is prepared](resilience.md).
+The supported community code or a durable invitation can find later supporters even if its original server was already offline when they joined. Upgrading to 0.6.0 supplies this independent discovery. That does not guarantee every site has another copy. [How supporter failover is prepared](resilience.md).
 
 ## When something does not open
 
 | What you see | What to check |
 |---|---|
-| Connection setup on first launch | Enter a real operator invitation |
+| Connection setup on first launch | Use the published community code or another trusted invitation |
 | Responding Mesh source, but no page | A response does not prove the requested files exist |
 | Name resolved, location missing | The target is known but its storage location is not |
 | Some images or features missing | Inspect Page information for missing files or external dependencies |

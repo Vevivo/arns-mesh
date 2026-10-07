@@ -1,72 +1,82 @@
-# Ana sunucu kapandığında devralmaya hazırlık
+# Destekçinin bağımsız erişimini kontrol et
 
-[English](../en/resilience.md) · [Destekçi kurulumu](destekci.md)
+[English](../en/resilience.md) · [Tam destekçi kurulumu](destekci.md)
 
-Amaç, ağa katılmış okuyucunun A destekçisi erişilemez olduğunda hazırlanmış içeriği B destekçisinden almasıdır. Bunun hazırlığı kesintiden önce yapılır.
+Amaç, ilk sunucu erişilemez olduğunda okuyucuların aynı Mesh ağıyla devam etmesidir. **0.6.0 keşfi, güncel hazırlığı ve saklanan içeriğin hazır olmasını ayrı gösterir.** Çalışan servis ile eksiksiz içerik kopyası aynı durum değildir.
 
-## B sunucusunda ne bulunmalı?
+## İlk sunucu zaten erişilemezse
 
-| Gereken | Neden? |
+Yeni geliştirici ilk işletmeciyle görüşmeden [standart kurulumu](destekci.md) yapabilir. Genel topluluk ağı, mevcut kodla aynı yetkilinin imzaladığı ve sürüme eklenen ağ tanımını kullanır. Başka ağlarda bağımsız imzalı davet kullanılır. Geliştirici kendi erişilebilir sayısal IP adresini belirtir; Mesh aynı ağın sayısal IP keşif yollarıyla destekçiyi bulur ve duyurur.
+
+Bu bağımsız keşif için okuyucular da 0.6.0 olmalıdır. 0.5.1'in eski başlangıç/adres öğrenme davranışı güncellemeden değişmez. Mevcut topluluk kodu aynı ağı tanımaya devam eder; kullanıcı yeni geliştiricinin ayrı ağına geçmez.
+
+Bağımsız RPC ve içerik kaynakları erişilebilirken yeni sunucu güncel isimleri izler, dosyaları doğrulayarak hazırlar. İlk sunucunun yokluğu sağlıklı yolları kapatmaz. Bütün kaynak yolları da kesilmişse gerekli kabul edilen kayıtlar ve dosyalar başka bir Mesh kopyasından alınmalıdır. Hiçbir erişilebilir kaynağın tutmadığı bilgi yeniden üretilemez.
+
+Adres keşfi, o sunucuya ArNS isimlerini değiştirme yetkisi vermez. Çoğaltılan kaydın özgün imzası korunur.
+
+## Standart kurulum neyi hazırlar?
+
+İki kapasite profili de sürekli isim takibini, geniş hedef taramasını, imzalı kayıt çoğaltmayı ve otomatik dosya hazırlamayı açar. R84 de kuruluma dahildir. Yeni destekçi kendi kimliğini ve diskini kullanır; ilk sunucunun özel verisi kopyalanmaz.
+
+| Katman | Beklenen sonuç |
 |---|---|
-| Bağımsız makine ve erişilebilir IP/port | A içindeki ikinci süreç A ile birlikte kapanır |
-| Kendine ait destekçi kimliği | A'nın özel kimliğini kopyalamak bağımsız destekçi oluşturmaz |
-| Okuyucuların önceden öğrendiği yol | Bilinmeyen adrese kesinti sırasında kendiliğinden ulaşılamaz |
-| Seçilen sürüm için kabul edilmiş isim kaydı | Dosya tek başına ArNS isminin anlamını söylemez |
-| Gerekli kaynaklarıyla doğrulanmış gerçek dosyalar | Konum indeksi yalnızca verinin yerini gösterir |
-| Yeterli disk, bellek ve yükleme kapasitesi | Saklanan kopyanın kullanıcıya sunulabilmesi gerekir |
+| Keşif | İlk sunucuya bağlanmadan destekçinin bulunması |
+| İsim | Güncel bağımsız kontrol veya istenen sürüme ait kabul edilen saklanmış kayıt |
+| İçerik | Konum ipucu yerine gerçek doğrulanmış dosyaların sunulması |
+| Hazır dosya seti | Kök dosya ve desteklenen manifest/statik kaynakların saklanması |
+| Kapasite | Hazırlığın devam edebileceği disk ve günlük bütçe |
+| Bağımsızlık | İlk sunucu dışarıda bırakılmışken ayrı okuyucunun başarılı olması |
 
-B, **aynı mevcut ağın davetiyle** katılır, adresini duyurur ve asıl imzalı ağ listesini yansıtır. Güvenilen yayıncının orijinal imzalı isim kayıtlarını aktarabilir. Kendi kimliği otomatik olarak güvenilen isim yayıncısı olmaz.
+İsim takibi içerik bütçesinden ayrıdır. Çoğaltmanın günlük bütçesi VPS için **8 GiB**, Pi için **2 GiB**; normal içerik hazırlığı ve R84 bütçesi buna ek olarak ayrıdır. Dolu disk veya biten kota hazır olmayan iş olarak görünür. Sınırı artırmak dosyaları kendiliğinden oluşturmaz.
 
-## Seçilen isimleri hazırlayın
+## 1. Sunucuda hazırlığı incele
 
-B'yi [güncel rehberle](destekci.md) kurun. Otomatik hazırlık sınırlıdır. Özellikle tutmak istediğiniz küçük liste için desteklenen `peer-pins.json` dosyası en fazla **16** isim kabul eder.
+```bash
+MESH_ROOT="$HOME/.local/share/ArNS-Mesh-Supporter"
+node scripts/check-supporter.mjs --data "$MESH_ROOT/data" --json
+```
 
-Yalnızca B'nin hizmetini durdurun. B'nin veri klasöründe aşağıdaki dosya yoksa oluşturun. Örnek:
+Rapor; kabul edilen isimleri, saklanan kökleri, tamamlanmış dosya setlerini, çoğaltmayı, indeksi, güven durumunu ve duyurulan adresi gösterir. Yerel rapor her zaman ayrı okuyucu kontrolü ister. Bu kontrol kendi sonucunu verir; yerel rapora dışarıdan erişim sertifikası yazmaz. Çıkış kodu **2**, hazırlık veya doğrulamanın sürdüğünü/eksik olduğunu belirtir.
+
+Öncelikli isimler için destekçiyi durdurup mevcut `data/peer-pins.json` listesini diğer kayıtları koruyarak düzenle, ardından başlat. En fazla 16 açık öncelik kabul edilir:
 
 ```json
 ["vevivo"]
 ```
 
-Yol: `~/.local/share/ArNS-Mesh-Supporter/data/peer-pins.json`. Örneği gerçekten desteklemek istediğiniz isimlerle değiştirin. Dosya varsa üzerine yazmak yerine listeyi inceleyip düzenleyin. Başka destekçinin tüm veri klasörünü kopyalamayın.
+Otomatik hazırlık bu isimlerle sınırlı değildir. Başka destekçinin özel kimliğini kopyalama.
 
-B'yi tekrar başlatın:
+## 2. Başka bilgisayardan saklanan içeriği sına
+
+Ayrı kontrol makinesinde aynı kaynak sürümünü ve bağımlılıklarını kullan. Gerçek IP/portları yaz. Topluluk kodu imzalı paket tanımından okunabilir; başka ağ için kendi davetini ver.
 
 ```bash
-systemctl --user start arns-mesh-supporter
-node scripts/operator.mjs --data "$HOME/.local/share/ArNS-Mesh-Supporter/data" --json
+MESH_CODE="$(node scripts/community-network.mjs)"
+node scripts/check-supporter.mjs \
+  --peer SECOND_SUPPORTER_IP:49741 \
+  --code "$MESH_CODE" \
+  --name vevivo \
+  --exclude ORIGINAL_SUPPORTER_IP:49740 \
+  --json
+unset MESH_CODE
 ```
 
-Hazırlığın ve sonraki durum döngülerinin tamamlanmasını bekleyin. Seçilen isimleri tek tek kontrol edin:
+En fazla 32 isim için `--name` tekrarlanabilir. Kontrol yalnızca seçilen destekçiye gider, saklanmış dosyaları ister, kabul edilen imzalı isim kaydını ve kök/manifest/statik kaynakları doğrular. RPC, ham Arweave, DHT veya okuyucunun sıcak disk önbelleğini kullanmaz; eksik dosyayı ilk sunucudan getirmesini istemez.
 
-- `savedSites.sites`: hedef kimliği, durum, saklanan/toplam dosya, hata ve `scope`.
-- `retainedNames`: toplam sayıdır; seçtiğiniz ismin bulunduğunun kanıtı değildir.
-- `snapshotRelay.records` ve istenen isim cevabı: **aynı içerik sürümü** için güvenilen yayıncının orijinal imzalı kaydının bulunduğunu doğrulayın.
-- İçerik ve isim bütçeleri: bekleyen kuyruk, hazırlığın bitmediği anlamına gelebilir.
+**0** belirtilen isimlerin kontrol makinesinden geçtiğini; **2** eksik kayıt/dosya, bağlantı/imza sorunu veya sınır olduğunu belirtir. Tarih, isim ve hedeflerle sonucu sakla. Başarı bütün ArNS sitelerinin veya harici uygulama API'lerinin hazır olduğu anlamına gelmez.
 
-`document-saved` ana belgeyi kapsar. `linked-resources-saved` ve `manifest-saved` desteklenen, sınırlar içinde gezilen dosyaları kapsar. Haricî API'ler ve dinamik kaynaklar kendiliğinden arşivlenmez. Birçok isim aynı hedefi paylaşabilir.
+## 3. Keşfi ve normal kullanımı ayrıca sına
 
-İsim aktarma sınırlıdır: en fazla 512 kayıt, her döngüde küçük gruplar. Bütün isimlerin aynası değildir. Seçilen sürümün kabul edilmiş kaydı yoksa B o isim için RPC'siz kurtarmaya hazır değildir. İşletmeci ek güvenilen yayıncıları imzalı ağ listesiyle yönetebilir; imza kontrolünü kapatmayın veya yetkili özel anahtarı bütün destekçilere kopyalamayın.
+Adres vererek yapılan kontrol hizmeti kanıtlar; otomatik keşfi ayrıca test et. Üretimi durdurmadan yalıtılmış bir ortamda boş **0.6.0 okuyucu profili** kullan:
 
-## Çalışan ağı kesmeden doğrulayın
+1. İlk sunucuyu yalnızca test ortamından erişilemez yap.
+2. B'nin adresini elle girmeden aynı desteklenen kodla katıl.
+3. Okuyucunun B'yi öğrendiğini ve isimleri ondan açtığını doğrula.
+4. Test okuyucusunu yeniden başlatıp tekrarla.
+5. RPC/Arweave yolları da kesildiğinde saklanmış erişim iddiası varsa, bu yolları yalıtılmış okuyucu/destekçi ortamında da engelleyerek hazır içerikleri yeniden sına. Eksik kaynakları kaydet.
 
-Ayrı okuyucu profili ve yalıtılmış test ortamı kullanın. B'yi denemek için A'yı kapatmayın veya üretim güvenlik duvarlarını değiştirmeyin.
+Önbellek istemiyle API testi, işletim sistemi güvenlik duvarı testi değildir. Tek makinedeki iki süreç protokolü sınar; gerçek makine arızasına karşı bağımsızlık için ayrı makine/sağlayıcı gerekir.
 
-1. **İkisi de erişilebilirken:** Test okuyucusunu mevcut ağa katın, B'yi öğrenmesini bekleyin; A/B kimliklerini ve seçilen isimlerin hedeflerini kaydedin. B ayrı makine/ağda olsun.
-2. **Dosyanın B'den geldiğini gösterin:** B'yi hedefleyen test kaynak ayarıyla seçilen belgeleri ve kaynakları doğrulayın. B'nin veri sunma sayaçlarını inceleyin; sayaç tek başına sitenin eksiksizliğini kanıtlamaz.
-3. **Test okuyucusuna A'yı erişilemez yapın:** Yalnızca yalıtılmış test ortamında A'yı engelleyin. Okuyucu üretim profilini değiştirmeden öğrenilmiş B yolunu kullanabilmelidir.
-4. **RPC ve ham Arweave'i de erişilemez yapın:** Test okuyucusunun bu yollarını sınırlayın. B'nin dışarıdan indirmeye ihtiyaç duymadığını sınarken test tarafındaki destekçi ortamını da yalıtın. B'deki tarihli isim kaydı ve önceden saklanmış dosyaları doğrulayın. Tek kaynak okuyucunun sıcak önbelleği olmamalıdır.
-5. **Test okuyucusunu yeniden başlatın:** Yolların ve verinin korunmasını yeniden kontrol edin. Eksik kaynakları, süresi geçmiş veya güvenilmeyen kayıtları başarı saymayın.
+Kaynaklar sağlıklıyken toplamayı açık bırak; kayıt tarihlerini, hazırlık hatalarını, bütçeyi ve boş alanı izle. Yeni içerik doğrulanana kadar son tamamlanmış sürüm korunur. R84 girişleri site kopyası sayısı değildir. Dinamik harici API'ler ayrıca erişim gerektirebilir.
 
-Yalnızca önbellekten okuyan API kontrolü, elde bulunan veriyi gösterir; işletim sistemi düzeyinde tam ağ yalıtımını kanıtlamaz. Tek HTML belgesinin yanında kullanım için gereken kaynakları da sınayın.
-
-## İlk bağlantı ve uzun kesintiler
-
-Önceden katılmış okuyucular öğrendikleri yolları saklayabilir. **Yeni kurulumun** hâlâ erişilebilir başlangıç adresine ve geçerli imzalı ağ listesine ihtiyacı vardır. İşletmeci kesintiden önce ayakta kalacak giriş noktalarını davet/kaynak listelerine eklemeli, ağ yetkilisinin yenileme ve yedekleme düzenini planlamalıdır. Aynalar yetkilinin imzasını yenileyemez.
-
-B öğrenilmeden bütün başlangıç adresleri kaybolursa yeni ulaşılabilir giriş noktası sağlamak gerekir. Erişilebilen bütün kopyalarda dosya veya isim eşleşmesi eksikse indeks bunları yeniden yaratamaz.
-
-## Mevcut sınır
-
-Adres keşfi, ölçülen içerik kaynağı seçimi ve orijinal imza aktarımı mevcut. **Bağımsız kopyaların otomatik dağıtımı/onarımı, bütün siteleri kapsama ve bağımsız sağlayıcı kaybı kabul testi henüz tamamlanmış değil.**
-
-Devralma sözü vermeden önce işlemi kendi isimleriniz ve makineleriniz için uygulayın. [Ölçülmüş durum](durum.md) · [Protokol sınırları](paylasilan-ag.md).
+Bütün keşif yolları ve bilinen adresler erişilemezse yeni erişilebilir giriş gerekir. Hiçbir kopyanın tutmadığı dosya veya kabul edilen isim kaydı için saklanmış erişim hazır değildir; rapor bunu açıkça gösterir.

@@ -1,6 +1,6 @@
 # Bağlantılar ve destekçi keşfi
 
-Mesh 0.5.1 içinde [bağlantı kodu ve otomatik güncellenen ağ listesi](ag-kodu.md) daha kolay kurulum sağlar. Bu sayfa işletmecilerin ve eski kullanıcıların kullanabildiği JSON biçimini açıklar.
+Mesh 0.6.0 içinde [bağlantı kodu ve otomatik güncellenen ağ listesi](ag-kodu.md) daha kolay kurulum sağlar. Bu sayfa işletmecilerin ve eski kullanıcıların kullanabildiği JSON biçimini açıklar.
 
 ## Şu anki masaüstü
 
