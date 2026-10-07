@@ -19,12 +19,22 @@ async function fixtureMessage(message,match,timeout=20000){
   fixture.on('message',onMessage);fixture.once('exit',onExit);fixture.once('error',onError);if(message)fixture.send(message);
  });
 }
-async function launch(){
+async function launch({restored=false}={}){
  const log=fs.openSync(path.join(output,'electron.log'),'a');
  app=cp.spawn(process.env.QA_EXE,['--remote-debugging-port=9223','--remote-debugging-address=127.0.0.1'],{env:{...process.env,ARNS_MESH_USER_DATA:data},stdio:['ignore',log,log],windowsHide:true});fs.closeSync(log);
  for(let i=0;i<80;i++){try{browser=await chromium.connectOverCDP('http://127.0.0.1:9223',{timeout:800});break;}catch(e){if(i===79)throw e;await pause(300);}}
  let ui;for(let i=0;i<50;i++){ui=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url()==='arnsui://app/index.html');if(ui)break;await pause(200);}
- assert.ok(ui,'Real Electron toolbar must load');ui.setDefaultTimeout(20000);ui.on('pageerror',e=>report.errors.push(e.message));return ui;
+ assert.ok(ui,'Real Electron toolbar must load');ui.setDefaultTimeout(20000);ui.on('pageerror',e=>report.errors.push(e.message));
+ // The toolbar exists before main.start() has finished newTab(). The latter
+ // awaits Home's load, then sends focusAddress:true, which closes any panel.
+ // On a joined restart, wait for that visible startup state before opening
+ // Settings; otherwise its late focus event can close the panel mid-check.
+ let home;for(let i=0;i<80;i++){home=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().startsWith('arnsui://app/welcome.html'));if(home)break;await pause(200);}
+ assert.ok(home,'Initial Home tab must load');
+ await home.waitForLoadState('load',{timeout:30000});
+ await home.locator('#mesh-query').waitFor({timeout:30000});
+ if(restored)await ui.waitForFunction(()=>document.activeElement?.id==='address'&&document.querySelector('#settings-panel')?.classList.contains('hidden')&&document.querySelector('#tabs [aria-selected="true"]'),null,{timeout:30000});
+ return ui;
 }
 async function closeApplication(){
  if(browser){await browser.close().catch(()=>{});browser=null;}
@@ -83,7 +93,7 @@ async function closeApplication(){
  assert.equal(path.dirname(contentPath),data);assert.equal(path.dirname(data),output);
  fs.rmSync(contentPath,{recursive:true,force:true});
  assert.ok(fs.existsSync(path.join(data,'peer-directory.json')));
- ui=await launch();await ui.locator('#address').waitFor();
+ ui=await launch({restored:true});await ui.locator('#address').waitFor();
  if(!await ui.locator('#settings-panel').isVisible())await ui.locator('#settings-button').click();
  await ui.locator('#joined-network-name').filter({hasText:'QA independent supporter'}).waitFor();
  await ui.locator('#peer-discovery-status').filter({hasText:'1 learned peer addresses'}).waitFor({timeout:30000});

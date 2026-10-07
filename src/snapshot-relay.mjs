@@ -141,7 +141,9 @@ export class SnapshotRelay{
    for(let pageNumber=0;pageNumber<this.pagesPerPass;pageNumber++){
     signal?.throwIfAborted();
     const requestedScope=this.context();
-    const result=await this.query(selected,{op:'snapshots',witnessPeerIds:trusted,limit:this.pageSize,cursor:state.cursor},{signal});
+    let result;
+    try{result=await this.query(selected,{op:'snapshots',witnessPeerIds:trusted,limit:this.pageSize,cursor:state.cursor},{signal});}
+    catch(error){if(error.statusCode!==400)throw error;result={ok:false,error:'mesh_operation_not_allowed'};}
     if(!result?.ok){
      // Compatibility with older supporters; a cold new peer uses pagination.
      if(['unknown_op','mesh_operation_not_allowed','snapshot_pages_unavailable'].includes(result?.error)){

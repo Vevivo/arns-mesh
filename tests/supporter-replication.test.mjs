@@ -243,3 +243,15 @@ test('in-flight pages and legacy replies cannot cross publisher revocation or ne
   assert.match(relay.lastError,change==='scope'?/snapshot_network_changed/:/untrusted_snapshot_relay/);
  }
 });
+
+test('an older supporter HTTP 400 for pagination falls back to its signed known-name replies',async t=>{
+ const f=fixture(t),a=f.peer('a'),b=f.peer('b');
+ a.snapshotStore.put(row('legacy-http'),{kind:'local-rpc'});
+ const handle=a._handleAsync.bind(a);
+ a._handleAsync=request=>{if(request.op==='snapshots')throw new Error('mesh_operation_not_allowed');return handle(request);};
+ const server=await startDirectPeerServer(a,{host:'127.0.0.1',port:0});t.after(()=>server.close());
+ const relay=f.relay(b,[a.witnessPeerId]);
+ await relay.sync({names:['legacy-http'],peers:[direct(server)]});
+ assert.equal(relay.reply({name:'legacy-http'}).witnessPeerId,a.witnessPeerId);
+ assert.equal(relay.status().names,1);
+});
