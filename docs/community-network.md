@@ -1,6 +1,6 @@
 # Join the public community network
 
-Use **Mesh 0.6.0**. The public community definition is included in this release and is signed by the same authority as the existing Vevivo ArNS Mesh code. It contains public addresses and public verification keys, never a private signing key.
+Use **Mesh 0.6.1**. The public community definition is included in this release and is signed by the same authority as the existing Vevivo ArNS Mesh code. It contains public addresses and public verification keys, never a private signing key.
 
 ## Readers
 
@@ -10,7 +10,7 @@ Paste this reusable code into **Settings → Mesh connection code → Check code
 mesh1.eyJ2ZXJzaW9uIjoxLCJrZXkiOiJsZW5XUDRrM0xNMWtFQTVZZ0JnczdBUUthUDByTU1icy1DWTB2YnRoZUhnIiwic2VlZHMiOlsiMTk0LjE2My4xNjkuMTM6NDk3NDAiXSwibG9jYWwiOmZhbHNlfQ.450ee05ccbc0
 ```
 
-Existing joined installations keep their settings after upgrading. Version 0.6.0 verifies the bundled durable definition against the key in this code, so the original starting server is not needed to establish this network's identity. Older desktop versions need updating to use independent rendezvous.
+Existing joined installations keep their settings after upgrading. Version 0.6.1 verifies the bundled durable definition against the key in this code, so the original starting server is not needed to establish this network's identity. Older desktop versions need updating to use independent rendezvous.
 
 ## Supporters
 

@@ -2,7 +2,7 @@
 
 [Türkçe](tr/paylasilan-indeks.md) · [Complete supporter setup](en/supporter.md)
 
-The normal **0.6.0 supporter setup includes this step**. R84 location lookup is part of the standard VPS/Pi supporter path, alongside name collection and verified-file preparation. It runs on the server, not on readers' computers. It is not a full AR.IO gateway.
+The normal **0.6.1 supporter setup includes this step**. R84 location lookup is part of the standard VPS/Pi supporter path, alongside name collection and verified-file preparation. It runs on the server, not on readers' computers. It is not a full AR.IO gateway.
 
 The index maps content IDs to their Arweave bundle and position. It improves locating files; the files still have to be fetched, verified and retained. It does not replace the name binding or create a missing copy during an outage.
 

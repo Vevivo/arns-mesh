@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import {awaitPreparedLocation} from './preparation-inbox.mjs';
 import {getSharedIndex,sharedLocation} from './shared-index.mjs';
 import {encodeL1Content} from './l1-content.mjs';
@@ -88,7 +89,8 @@ export async function fetchMeshContent(dataId,{client,contentStore,onProgress=()
   try{saveDiscoveredLocations(locationsFile,[[dataId,record]]);}catch{}
   if(table&&direct.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.includes('application/x.arweave-manifest'))){
    try{
-    const children=new Set(manifestTargetIds(JSON.parse(direct.payload))),hints=[];
+    const view=await decodeVerifiedPayload(direct,{signal:s});
+    const children=new Set(manifestTargetIds(JSON.parse(view.body))),hints=[];
     for(const row of table.entries)if(children.has(row.id)&&row.size<=32*1024*1024){
      const offset=table.weaveBase+row.relativeOffset;
      const position=Number.isSafeInteger(offset)&&offset>=0?{weaveOffset:offset,itemSize:row.size}:{rootTxId:table.rootTxId,rootOffset:table.base+row.relativeOffset,itemSize:row.size,path:table.path};

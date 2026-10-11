@@ -3,8 +3,8 @@ export class ResponseCache extends Map {
  constructor({maxBytes=16*1024*1024,maxEntries=64}={}){super();this.maxBytes=maxBytes;this.maxEntries=maxEntries;this.bytes=0;}
  set(key,response){
   this.delete(key);if(response.body.length>this.maxBytes)return this;
-  const {body,contentType,meta}=response;
-  const stored={body,contentType,meta,at:Date.now()};
+  const {body,contentType,contentEncoding,bodyDecoded,encodedBytes,decodedBytes,meta}=response;
+  const stored={body,contentType,contentEncoding,bodyDecoded,encodedBytes,decodedBytes,meta,at:Date.now()};
   const size=body.length+Buffer.byteLength(JSON.stringify(meta||{}));
   if(size>this.maxBytes)return this;
   super.set(key,{...stored,cacheSize:size});this.bytes+=size;

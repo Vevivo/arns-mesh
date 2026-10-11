@@ -31,4 +31,4 @@ Genel IP değiştiğinde diğer destekçilerin yeni adresi öğrenebileceği ça
 
 Varsayılan topluluk ağı ve `--capacity pi` ile **[destekçi kurulumuna devam edin](destekci.md)**. R84 de kurulur; sonra [bağımsız erişimi doğrulayın](dayaniklilik.md).
 
-0.6.0 destekçi kurulumunda R84, isim çoğaltma ve dosya hazırlama birlikte kurulur. Topluluk ağı varsayılandır; ilk işletmeciden kod istemek gerekmez. VPS profili yeni kurulumda 134 GiB, Pi profili 74 GiB boş alan ister. [Tam kurulum ve kontrol](destekci.md).
+0.6.1 destekçi kurulumunda R84, isim çoğaltma ve dosya hazırlama birlikte kurulur. Topluluk ağı varsayılandır; ilk işletmeciden kod istemek gerekmez. VPS profili yeni kurulumda 134 GiB, Pi profili 74 GiB boş alan ister. [Tam kurulum ve kontrol](destekci.md).

@@ -2,7 +2,7 @@
 
 **Open ArNS sites without domains or DNS.**
 
-[Download Mesh 0.6.0 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.0/ArNS-Mesh-Browser-Windows-x64-0.6.0.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+[Download Mesh 0.6.1 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
 Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
@@ -31,6 +31,10 @@ A supporter that still reaches live sources can continue preparing updates. If t
 
 This scenario concerns interrupted **access routes to external services**. On 6 October 2026, an isolated reader/supporter test exercised this fallback with a selected sample of names. Its sample size is not the network's catalogue size or capacity. [Test scope, counts and results](docs/validation/upstream-outage-2026-10-06.md) · [Preparation status](docs/en/status.md).
 
+## Compressed sites
+
+Mesh 0.6.1 opens gzip and Brotli content after verifying the original signed file. Use the updated desktop and supporter; existing connection settings and verified copies remain usable. [Compatibility checks and limits](docs/validation/compressed-content-2026-10-12.md).
+
 ## How Mesh works
 
 - **While access routes are working:** supporters keep checking names and preparing verified content. R84 indexes help locate files on Arweave.
@@ -43,13 +47,13 @@ Large indexes stay on supporter servers. The Windows reader keeps bounded local 
 
 Install a supporter on a VPS or Raspberry Pi using the [complete setup](docs/en/supporter.md). It starts name/content preparation, accepted-record replication and the R84 index updater with a capacity profile. The community network definition is public; you do not need to contact the original operator for permission or a private key.
 
-Mesh 0.6.0 can discover a new supporter even after the original starting server becomes unreachable. The public signed network definition keeps the same network identity, and independent rendezvous nodes help readers learn new supporter addresses. Existing community codes remain usable after upgrading. Website files still need time and available sources to be prepared; the setup reports preparation and supports a separate reader check before claiming takeover.
+Mesh 0.6.1 can discover a new supporter even after the original starting server becomes unreachable. The public signed network definition keeps the same network identity, and independent rendezvous nodes help readers learn new supporter addresses. Existing community codes remain usable after upgrading. Website files still need time and available sources to be prepared; the setup reports preparation and supports a separate reader check before claiming takeover.
 
 **[VPS setup](docs/en/vps.md)** · **[Raspberry Pi setup](docs/en/raspberry-pi.md)** · [R84 index setup](docs/shared-index.md) · [Prepare another server for takeover](docs/en/resilience.md)
 
 ## Developers
 
-The desktop and supporter share the **0.6.0** source tree. `main` contains the current implementation; use tag `v0.6.0` to reproduce the release.
+The desktop and supporter share the **0.6.1** source tree. `main` contains the current implementation; use tag `v0.6.1` to reproduce the release.
 
 [Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 

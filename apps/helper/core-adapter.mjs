@@ -5,8 +5,8 @@ export const coreRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 export async function resolveArUrl(raw,{quorum=2,onProgress=()=>{},contentStore=null,snapshotStore=null,accessPolicy='auto',trustedPeers=[],signal,preparedSnapshotStore,contentSources='all',fixedSnapshot,nameTimeoutMs}={}){
   const {resolveAndFetchSwarm}=await import('../../src/swarm-access.mjs');
   const r=await resolveAndFetchSwarm(raw,{quorum,onProgress,contentStore,snapshotStore,accessPolicy,trustedPeers,signal,preparedSnapshotStore,contentSources,fixedSnapshot,nameTimeoutMs});
-  return {body:r.body,contentType:r.contentType||'application/octet-stream',peerPayload:r.shareBundle,
-    meta:{contentSource:r.contentSource||null,input:raw,name:r.name,dataId:r.dataId,rootTxId:r.rootTxId,
+  return {body:r.body,contentEncoding:r.contentEncoding,bodyDecoded:r.bodyDecoded,encodedBytes:r.encodedBytes,decodedBytes:r.decodedBytes,contentType:r.contentType||'application/octet-stream',peerPayload:r.shareBundle,
+    meta:{contentEncoding:r.contentEncoding,encodedBytes:r.encodedBytes,decodedBytes:r.decodedBytes,contentSource:r.contentSource||null,input:raw,name:r.name,dataId:r.dataId,rootTxId:r.rootTxId,
       nameObservedAt:r.record?.witnessedAt||r.recovery?.observedAt||null,
       nameTargetId:r.record?.txId||r.recovery?.rootDataId||null,
       verification:r.verification,snapshotSaveError:r.snapshotSaveError||null,recovery:r.recovery||null,accessSnapshot:r.accessSnapshot||null,provider:r.provider?`${r.provider.host}:${r.provider.port}`:null,

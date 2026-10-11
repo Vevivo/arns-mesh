@@ -51,7 +51,7 @@ export class SupporterReplication{
   let candidate;const siteCount=Object.keys(this.pinner.rows).length;
   for(let i=0;i<Math.min(this.scanPerPass,bindings.length);i++){
    const row=bindings[this.state.cursor++%bindings.length],old=this.pinner.rows[row.name];
-   if(this.pinner.isReady(old)&&old.rootDataId===row.txId&&old.snapshot?.antId===row.antId)continue;
+   if(this.pinner.isReady(old)&&old.rootDataId===row.txId&&old.snapshot?.antId===row.antId&&!this.pinner.needsDecodingAudit?.(old))continue;
    const retry=this.state.retries[row.name];if(retry?.target===row.txId&&retry.after>Date.now())continue;
    if(!old&&siteCount>=this.maxSites){this.state.lastError='replication_site_capacity_reached';continue;}
    candidate=row;break;

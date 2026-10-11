@@ -1,6 +1,6 @@
 # Gizlilik ve paylaşım
 
-Mesh 0.6.0, resources/network-continuity.json içinde **ağ yetkilisinin imzaladığı açık topluluk ağ tanımını** bilinçli olarak paylaşır. Dosyada genel servis adresleri, sayısal keşif başlangıçları, yetkilinin açık anahtarı ve kabul edilen yayımlayıcı kimlikleri bulunur. Bunlar paylaşılmak üzere hazırlanmış bağlantı bilgileridir; parola değildir. Desteklenen topluluk kodunu kullanan güncel veya yeni okuyucunun, ilk işletmeci yokken sonradan gelen destekçiyi bulmasını sağlar.
+Mesh 0.6.1, resources/network-continuity.json içinde **ağ yetkilisinin imzaladığı açık topluluk ağ tanımını** bilinçli olarak paylaşır. Dosyada genel servis adresleri, sayısal keşif başlangıçları, yetkilinin açık anahtarı ve kabul edilen yayımlayıcı kimlikleri bulunur. Bunlar paylaşılmak üzere hazırlanmış bağlantı bilgileridir; parola değildir. Desteklenen topluluk kodunu kullanan güncel veya yeni okuyucunun, ilk işletmeci yokken sonradan gelen destekçiyi bulmasını sağlar.
 
 Özel imza anahtarları, SSH bilgileri, cüzdan sırları, sunucuya yönetim erişimi, kişisel profiller, gezinti verileri, çalışma katalogları, özel loglar ve yedekler kaynak/sürüm dışında tutulur. Diğer varsayılan adres dosyaları boş kalır. Açık tanımın paylaşılması, işletmecinin çalışma dizininin paylaşılmasına izin vermez.
 

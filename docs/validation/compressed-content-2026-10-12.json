@@ -1,0 +1,1205 @@
+{
+  "capturedAt": "2026-10-11T23:33:35.370Z",
+  "realPublicContent": true,
+  "currentRetainedName": "docs",
+  "currentRetainedManifest": "x8iDex_AEWK1391dFWOIChmlEM_ufH-tsJD7Y3dwhWQ",
+  "originalNamePublisher": "1330e51e4fc65597312fb9252cf457bf6e0efedf1075bd5d3e977f6dff239d7a",
+  "nameRecord": {
+    "schema": "arns-mesh-name-snapshot/v1",
+    "name": "docs",
+    "txId": "x8iDex_AEWK1391dFWOIChmlEM_ufH-tsJD7Y3dwhWQ",
+    "antId": "G9hyniF3TgBtdDyQ7g5jivwwMostyZKXBWVQnNnJ8HGS",
+    "observedAt": "2026-10-11T23:14:27.411Z",
+    "slot": 455828421,
+    "ttlSeconds": 3600
+  },
+  "rawSource": "Public Turbo gateway root bundle byte ranges; full original ANS104 items verified with Mesh verifier before decoding",
+  "pathsTested": "Real manifest selection through local/saved resource adapter and browser response; actual Windows UI tested separately",
+  "baselineGapConfirmed": true,
+  "items": [
+    {
+      "kind": "html",
+      "dataId": "fpdeWsrSj3OC0QSeq31nIYObtTfZ8PS2LjzKYS4iP38",
+      "path": "",
+      "sourceUrl": "https://docs.ar.io/",
+      "tags": [
+        {
+          "name": "App-Name",
+          "value": "ARIO-Deploy"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/html"
+        },
+        {
+          "name": "File-SHA256",
+          "value": "8a1814e12a653745524b9361f25f2bcf734c3be98eeb843efbdacbffeb9cad4b"
+        },
+        {
+          "name": "Content-Encoding",
+          "value": "gzip"
+        }
+      ],
+      "signatureVerified": true,
+      "signedPayloadSha256": "050c76e980836a63940906bfc4ca2ba2051fed3bfd46cce90e393aec7507fdd3",
+      "signedStoredBytes": 28166,
+      "baseline": {
+        "sourceVersion": "v0.6.0",
+        "contentType": "text/html",
+        "contentEncodingHeader": null,
+        "bodyBytes": 26976,
+        "gzipBytesPresentedAsOriginalMime": true
+      },
+      "fixed": {
+        "verifiedBeforeDecoding": true,
+        "contentType": "text/html",
+        "signedContentEncoding": "gzip",
+        "contentEncodingHeader": null,
+        "decodedBytes": 186681,
+        "decodedSha256": "8a1814e12a653745524b9361f25f2bcf734c3be98eeb843efbdacbffeb9cad4b",
+        "signedFileSha256": "8a1814e12a653745524b9361f25f2bcf734c3be98eeb843efbdacbffeb9cad4b",
+        "decodedHashMatchesSignedTag": true,
+        "contentLengthCorrect": true,
+        "rangeUsesDecodedRepresentation": true,
+        "originalStoredBytesUnchanged": true
+      }
+    },
+    {
+      "kind": "javascript",
+      "dataId": "tBAj_aNi40ppAmUx9cTvMYk3LZbaHw5OqG93z8szD-4",
+      "path": "_next/static/chunks/1kqk4nyuljo1m.js",
+      "sourceUrl": "https://docs.ar.io/_next/static/chunks/1kqk4nyuljo1m.js",
+      "tags": [
+        {
+          "name": "App-Name",
+          "value": "ARIO-Deploy"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/javascript"
+        },
+        {
+          "name": "File-SHA256",
+          "value": "a1dc3dd2ae5210df38cc9f09a0b04f5b687ef629e0572575e922c0fcecb2c94d"
+        },
+        {
+          "name": "Content-Encoding",
+          "value": "gzip"
+        }
+      ],
+      "signatureVerified": true,
+      "signedPayloadSha256": "df59268d08fad7f234844c6595138e1dae6c2e1d8e4a09d803f2b2a35fdf8fc7",
+      "signedStoredBytes": 8690,
+      "baseline": {
+        "sourceVersion": "v0.6.0",
+        "contentType": "text/javascript",
+        "contentEncodingHeader": null,
+        "bodyBytes": 7494,
+        "gzipBytesPresentedAsOriginalMime": true
+      },
+      "fixed": {
+        "verifiedBeforeDecoding": true,
+        "contentType": "text/javascript",
+        "signedContentEncoding": "gzip",
+        "contentEncodingHeader": null,
+        "decodedBytes": 28049,
+        "decodedSha256": "a1dc3dd2ae5210df38cc9f09a0b04f5b687ef629e0572575e922c0fcecb2c94d",
+        "signedFileSha256": "a1dc3dd2ae5210df38cc9f09a0b04f5b687ef629e0572575e922c0fcecb2c94d",
+        "decodedHashMatchesSignedTag": true,
+        "contentLengthCorrect": true,
+        "rangeUsesDecodedRepresentation": true,
+        "originalStoredBytesUnchanged": true
+      }
+    },
+    {
+      "kind": "css",
+      "dataId": "z2k1-5YIjLx4dASwe2SXEgk8XUNjjTAnPLZAdQJ0DRI",
+      "path": "_next/static/chunks/0i1mvfxznl_oz.css",
+      "sourceUrl": "https://docs.ar.io/_next/static/chunks/0i1mvfxznl_oz.css",
+      "tags": [
+        {
+          "name": "App-Name",
+          "value": "ARIO-Deploy"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/css"
+        },
+        {
+          "name": "File-SHA256",
+          "value": "267221c14fc54a2d25c190f67460a25d248fcf3c65ef9ca2b3b4a03c8bca7d3f"
+        },
+        {
+          "name": "Content-Encoding",
+          "value": "gzip"
+        }
+      ],
+      "signatureVerified": true,
+      "signedPayloadSha256": "619a63628451ce72a153d14f8804b0ba9e2f084601d43317e4655a7610acce95",
+      "signedStoredBytes": 20460,
+      "baseline": {
+        "sourceVersion": "v0.6.0",
+        "contentType": "text/css",
+        "contentEncodingHeader": null,
+        "bodyBytes": 19271,
+        "gzipBytesPresentedAsOriginalMime": true
+      },
+      "fixed": {
+        "verifiedBeforeDecoding": true,
+        "contentType": "text/css",
+        "signedContentEncoding": "gzip",
+        "contentEncodingHeader": null,
+        "decodedBytes": 109640,
+        "decodedSha256": "267221c14fc54a2d25c190f67460a25d248fcf3c65ef9ca2b3b4a03c8bca7d3f",
+        "signedFileSha256": "267221c14fc54a2d25c190f67460a25d248fcf3c65ef9ca2b3b4a03c8bca7d3f",
+        "decodedHashMatchesSignedTag": true,
+        "contentLengthCorrect": true,
+        "rangeUsesDecodedRepresentation": true,
+        "originalStoredBytesUnchanged": true
+      }
+    }
+  ],
+  "homeCorpus": {
+    "items": 39,
+    "storedBytes": 823187,
+    "allSignaturesVerified": true,
+    "scope": "Bounded Introduction page and referenced asset set, not all 1594 manifest files",
+    "locations": [
+      {
+        "id": "x8iDex_AEWK1391dFWOIChmlEM_ufH-tsJD7Y3dwhWQ",
+        "root": "rD2T5o2jxWgqBUkSSdNHIrZAW3lB3p729HGzOkRRUR8",
+        "itemOffset": 4463626,
+        "itemSize": 153515,
+        "path": null,
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "GIT-HASH",
+            "value": "7bc65ec2e0cd7523cc1dbb86620785accaf78975"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/x.arweave-manifest+json"
+          },
+          {
+            "name": "Device",
+            "value": "manifest@1.0"
+          }
+        ],
+        "signedPayloadBytes": 152329
+      },
+      {
+        "id": "fpdeWsrSj3OC0QSeq31nIYObtTfZ8PS2LjzKYS4iP38",
+        "root": "N-ZbhwSySDfhJ6qNdOX8SXDPidzqrgLIXr9elVfaM1s",
+        "itemOffset": 9133717,
+        "itemSize": 28166,
+        "path": null,
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/html"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "8a1814e12a653745524b9361f25f2bcf734c3be98eeb843efbdacbffeb9cad4b"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 26976
+      },
+      {
+        "id": "z2k1-5YIjLx4dASwe2SXEgk8XUNjjTAnPLZAdQJ0DRI",
+        "root": "zlbZmoEbKqKM5UizN-etZqCIlRaFtHSvHutpSWXQtZE",
+        "itemOffset": 4834922,
+        "itemSize": 20460,
+        "path": "/_next/static/chunks/0i1mvfxznl_oz.css",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/css"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "267221c14fc54a2d25c190f67460a25d248fcf3c65ef9ca2b3b4a03c8bca7d3f"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 19271
+      },
+      {
+        "id": "GEtRtixsbRQw6XgNKxD605BYl7D71FTwuXMdMDN5haw",
+        "root": "zlbZmoEbKqKM5UizN-etZqCIlRaFtHSvHutpSWXQtZE",
+        "itemOffset": 5957667,
+        "itemSize": 22671,
+        "path": "/learn/index.html",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/html"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "2afed8c52475d6f05489cd53ed7eb4d02fa7ef6ecbb2130ac89a67dbaa8545b2"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 21481
+      },
+      {
+        "id": "zsQu2IPVoBgT23urDb25WQlhcFgRYW4xS8Iue7BdnlY",
+        "root": "gF13rpgkBI1ljQhuy377NZHmtKK0u7jG1vxbcsOpiOM",
+        "itemOffset": 242398,
+        "itemSize": 12427,
+        "path": "/_next/static/chunks/2qu14y6a4g5sg.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "0ebc866b11090a6e8f36d43b751cf6960d03873e6358c25b03435f0fe9af7b9d"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 11231
+      },
+      {
+        "id": "XPac-RBUw84FNCeiHxc_w1Pbw9hR9McGkNzExrKafkc",
+        "root": "gF13rpgkBI1ljQhuy377NZHmtKK0u7jG1vxbcsOpiOM",
+        "itemOffset": 254825,
+        "itemSize": 11859,
+        "path": "/_next/static/chunks/3_ftk6vq-pffp.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "84597f7136ffbf37fd39037a7a4e86975dc98d60398576176e782a576944ab5a"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 10663
+      },
+      {
+        "id": "d5Dgl8ed_8lC9x2JzeAemdYyzf-wyz4zzJqNoTklKAU",
+        "root": "gF13rpgkBI1ljQhuy377NZHmtKK0u7jG1vxbcsOpiOM",
+        "itemOffset": 300639,
+        "itemSize": 11825,
+        "path": "/_next/static/chunks/156urxz1fcsew.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "431f8e48e78ff1a90b27e04db1a2df06c71a20a6ff9c0d61d9be763adbe15576"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 10629
+      },
+      {
+        "id": "LmRHg6CdIoUkVjZvVhguFIUkZl1qy_AebZj5iqUbFtQ",
+        "root": "gF13rpgkBI1ljQhuy377NZHmtKK0u7jG1vxbcsOpiOM",
+        "itemOffset": 312464,
+        "itemSize": 11693,
+        "path": "/_next/static/chunks/0zslk_n1-l3no.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "4ca4721dcb1c79ef74f981318e7cecfab641ba0822289a24e40abdda2f927251"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 10497
+      },
+      {
+        "id": "XPt9_wkWBTOV9zwYJjBCGTq9s4FZ6sfsf265gcFecp0",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 215153,
+        "itemSize": 2528,
+        "path": "/_next/static/chunks/35gwqyz9dgh6z.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "9468a17619d04ff81459d918d21c908d17d9e7d8ebcaf0da4a32fcca0c67bc0c"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 1332
+      },
+      {
+        "id": "PwL_OVS_KcO-knlhtrngffE0L3Lf6YBkEDvSWiocAVY",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 254597,
+        "itemSize": 1500,
+        "path": "/brand/ario-black.svg",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "image/svg+xml"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "267d63fed31ab5db02b32014ac600a57fa2cd5a352d6afb69d891d67cc5f3cbc"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 306
+      },
+      {
+        "id": "TmOhsQfTmPtyqgf2uzgusZU2UpLEOVDSSZi2uNUvw-8",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 606935,
+        "itemSize": 2885,
+        "path": "/_next/static/media/0b1dc8ddaa74ba49-s.0e__wj8580tc5.woff2",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "font/woff2"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "a16f29d7d2a21a4f9b3249a82eb2725ed5bdb91500dfb5c4758977de27477f20"
+          }
+        ],
+        "signedPayloadBytes": 1716
+      },
+      {
+        "id": "baIN-DJ50FRl4w0k_ON9V35797Gl8QTJY70o2zVU2Ok",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 969786,
+        "itemSize": 7041,
+        "path": "/_next/static/chunks/2o1tz1c0zfq1j.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "5bb353dcfe1da41dc99ae4ae780af0ab7180f8ea283380967628717e43c760fb"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 5845
+      },
+      {
+        "id": "b--fsKcKlyiD8QMb6zyMm3DZ8y1UWcTGbue5SFu-2ng",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1105501,
+        "itemSize": 5389,
+        "path": "/_next/static/chunks/turbopack-2ctzojclx1pgj.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "63c4e6807105e25dec9127ba9c5a2bc2c300e43e03afda60f5de2f71a773f03d"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 4193
+      },
+      {
+        "id": "lFaMLaeXKydvNL-TflzUnypjfwEtzsBNn4hW--js4jA",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1244913,
+        "itemSize": 8516,
+        "path": "/_next/static/chunks/0pkja4itk79e9.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "1e8e993061d9d58f6da40afb178f9827330fe4689b3f479866472461271f276b"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 7320
+      },
+      {
+        "id": "tBAj_aNi40ppAmUx9cTvMYk3LZbaHw5OqG93z8szD-4",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1339350,
+        "itemSize": 8690,
+        "path": "/_next/static/chunks/1kqk4nyuljo1m.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "a1dc3dd2ae5210df38cc9f09a0b04f5b687ef629e0572575e922c0fcecb2c94d"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 7494
+      },
+      {
+        "id": "hlxRnudgZ-0w8a32faH1qS0i7OolPdLSv-pjcj4GxxY",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1423483,
+        "itemSize": 10494,
+        "path": "/_next/static/chunks/200m5zr91k55o.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "822d7cd2d0220368f8b6c7b8ad92a937f5e954ae6c11596c93edf28dbafdd11f"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 9298
+      },
+      {
+        "id": "sNfXg2ilh0cxUE6FymOhJb2705g4UPHhP9qSpBHxv1o",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1441886,
+        "itemSize": 11680,
+        "path": "/_next/static/chunks/22cyom2i4xqdj.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "5521b014744ebe80872cc9521650b1d2ed295c42188bc5d45dcabaf9383b3418"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 10484
+      },
+      {
+        "id": "CAw7XYfexgMJqk4YPcHN_K1gvpUDa0cYxhAhCqX8uFY",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1554126,
+        "itemSize": 8957,
+        "path": "/_next/static/chunks/2pzjrw7t7jz3-.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "1000d870e1a3927ac3933b02994f27d794bcf5acbf6a65eb1bd2b63b1975f906"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 7761
+      },
+      {
+        "id": "8oQrnXeCE0hYDSZkMkgC5xjuyroVMy02ksqCF2AZuuI",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1592765,
+        "itemSize": 10490,
+        "path": "/_next/static/chunks/2w85hdimysj-k.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "1c6d766ca8478398e69aae38bd99a36445a557d6d77a64383edfc97cde4db67c"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 9294
+      },
+      {
+        "id": "NZmUECOCOk7EGFxQmCt8Vcc55YMZx4iS4AcuTzTDGQQ",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1725065,
+        "itemSize": 11088,
+        "path": "/_next/static/chunks/3bv2hsfxwk1gg.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "bef06d5def24d0c2abdc52bc71c22e332168f61ab9a32ee9adc2d9e0a3251d0f"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 9892
+      },
+      {
+        "id": "sKzymewI6U_NWZPF1OfWS4wnD890qJoaXHHt-z089Ok",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 1935436,
+        "itemSize": 9461,
+        "path": "/_next/static/media/e629b5bc06499d58-s.10u7vx61f1ie7.woff2",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "font/woff2"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "5c913fc1b1f86f4b475e5df45a796aa480d1f7f0891ed6f1a5991d6d1be887c3"
+          }
+        ],
+        "signedPayloadBytes": 8292
+      },
+      {
+        "id": "ms03gVAI03pD11wbh9_3Y6o5SLN5ccw6d6mKSzYzd30",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 2172252,
+        "itemSize": 12662,
+        "path": "/_next/static/chunks/0lb7gbrzud2bi.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "c2a922dd13f382ff30466985cb50063104c9bcd208cd4b85227d26a3a7f23c72"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 11466
+      },
+      {
+        "id": "LgVyzEUWtp-wWbGcC8hC2tTNszfy9RuTxzIeQb8cso0",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 2250186,
+        "itemSize": 14624,
+        "path": "/_next/static/chunks/1x3vbr942yyfm.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "df70ccb28584043e10919e2dca72ceb21ef9ad52ddaac4579f2b1cc6142a5926"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 13428
+      },
+      {
+        "id": "5kMRBB7MuXdOPWSYUvBX64JtP0Xap2y4Mizd3juTdXk",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 2307434,
+        "itemSize": 12268,
+        "path": "/_next/static/chunks/2enddb8_5yf4w.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "ab1392e6cd979467dc0556612af2bd38183ce9192e8e6443e544402da1a3bd42"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 11072
+      },
+      {
+        "id": "x3TulZ9s4Snx2NGrCk0wB31xyxS5pqBYF0vKP27h3t8",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 2345239,
+        "itemSize": 15190,
+        "path": "/_next/static/chunks/3b_j3rz7pn-ug.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "56338cfd31e896462af689e0c60308a12d1b13112d57374b53366d0ca8bc0e82"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 13994
+      },
+      {
+        "id": "uaP1haI6mOl298zspZtVOyOjiNWLYWtHfUPzlgPCjGM",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 3507342,
+        "itemSize": 16626,
+        "path": "/_next/static/chunks/12xhylgaiak56.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "11edfd273320625702a4ceae3d541d04c3c09f1a15958eea4fb1c42e665826f8"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 15430
+      },
+      {
+        "id": "8Rk7-MpCbUkF_FqS8D0e3KsVAfOBFUennJ_hEFY5_YQ",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 3621048,
+        "itemSize": 16207,
+        "path": "/_next/static/chunks/2il5n-k--6hpz.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "074ea4aa38d730debeb62b1c67d4d35c4b745e5a86e1b306f1f1d21738d0ec55"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 15011
+      },
+      {
+        "id": "TM7YzMVKzrc2Fr_gxM1UWeK4WAvEfj8MksffPh4npKM",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 3669609,
+        "itemSize": 16829,
+        "path": "/_next/static/chunks/456c-vrdiogp_.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "219770f95a1a2203cfc4ef5f507668b67db2ab54206aaaab97f37275d9e78685"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 15633
+      },
+      {
+        "id": "_dxVuJgg5WKfRfdh-yMhG_PLRLocCTCJjG9M5iXyzEw",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 5124375,
+        "itemSize": 17669,
+        "path": "/_next/static/chunks/0i0g6wlstd_w6.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "f55955ae10d293234805f2735ab7873eb7bc9e46945d72abd0c4f3667d95693e"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 16473
+      },
+      {
+        "id": "Xe8JmaNZ3cZBCJoksfiWI1tWgaydWHjl35gv4_s7eF4",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 5301884,
+        "itemSize": 17039,
+        "path": "/_next/static/chunks/3izf6ttmjxev-.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "fa881606e3ccd2c39ef0e35b21c6d7b8c5ae659bb9ed048fcb1149497eea7194"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 15843
+      },
+      {
+        "id": "oRUe0KqpsdzOnaYcHiFUJ4ej4aQSzp7grtyPIxIkSk8",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 6933020,
+        "itemSize": 20983,
+        "path": "/_next/static/chunks/12vjqdx1_fxj1.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "dd7474f36a56d9a0f196c31d870b673d97524921f1528e3f66d361482c9598f1"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 19787
+      },
+      {
+        "id": "v1TGVzWGqec-eFmU4t9b9lWp9owvWqz1zwFUrrbuBS8",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 9104610,
+        "itemSize": 22857,
+        "path": "/_next/static/media/1a099d89ee94ee96-s.35a5cae5tspm2.woff2",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "font/woff2"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "0303e02b53b0298fb26a0193941a2e8754f0f9a9fce50d90b178d8da3424873f"
+          }
+        ],
+        "signedPayloadBytes": 21688
+      },
+      {
+        "id": "RBKIQBoTwtVcNAjWDwSXnp3hduxsJ0HS0spMdSNd3wo",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 9198125,
+        "itemSize": 23470,
+        "path": "/brand/favicon.png",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "image/png"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "b2c4fb83c3dc29d37f90970865ced51b0d7e4d33bac484470b27558f06660515"
+          }
+        ],
+        "signedPayloadBytes": 22302
+      },
+      {
+        "id": "6hErjtzSKXTNfRBXdGY355kl2aEmX_1QnL7NgDPCdFQ",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 11425855,
+        "itemSize": 25894,
+        "path": "/_next/static/chunks/2hxk7t0-0hnod.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "1e4c8a2db9eb5ab9386534ba5b8c8ca07e126db412ae5b8323587e6bdf057260"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 24698
+      },
+      {
+        "id": "3n7cf1kkZjcq3C_vks4FAgOR72biRyKHfAQwyTL-oAk",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 14318337,
+        "itemSize": 28441,
+        "path": "/_next/static/media/fba5a26ea33df6a3-s.p.18rizl4rsrl42.woff2",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "font/woff2"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "cd8db90cd950e26bc8761f65d323588bd5cd112d326d6d322bc7c8ea86771215"
+          }
+        ],
+        "signedPayloadBytes": 27272
+      },
+      {
+        "id": "s8b0jSOUtqm7M5v1UlNHMaCPMhaKCZLO71O0YpkCPuc",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 17011456,
+        "itemSize": 40716,
+        "path": "/_next/static/chunks/0cz1d0mv5g_q7.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 39520
+      },
+      {
+        "id": "J-mpjuOzqdMQatLXXza_84pcnHSio_TlJDgQIZ9qOcE",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 17300655,
+        "itemSize": 36394,
+        "path": "/_next/static/chunks/1cv_f3cq2_iv7.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "79e8836ccd4be640da285ef49136eb31ad77af081057f45ae0455934387d2dca"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 35198
+      },
+      {
+        "id": "Q8XztUxSv1TB-istCproLpRQ5WN8IDSUJv2j5vjr8ak",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 17542427,
+        "itemSize": 74224,
+        "path": "/_next/static/chunks/409e286gdf5ye.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "8e53fdefadf4c8e36c67c9948fbdeab2dcc5f6f2c8e5ea53ff0bfc839a62a561"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 73028
+      },
+      {
+        "id": "nEKtuRvwixzh1GKlwSWFcB1I8pJnjkqYqyUOgCZm9P0",
+        "root": "Py-NVq7jEMBNbsrfAYdpPTONgiqt3Ivde3oU5JW1WLU",
+        "itemOffset": 17616651,
+        "itemSize": 39759,
+        "path": "/_next/static/chunks/3xokny7q6jexa.js",
+        "signatureVerified": true,
+        "tags": [
+          {
+            "name": "App-Name",
+            "value": "ARIO-Deploy"
+          },
+          {
+            "name": "Content-Type",
+            "value": "text/javascript"
+          },
+          {
+            "name": "File-SHA256",
+            "value": "de0713adc76fca6ce21c452b8b4e202176d9618d3791fd3a018b9620b14b3916"
+          },
+          {
+            "name": "Content-Encoding",
+            "value": "gzip"
+          }
+        ],
+        "signedPayloadBytes": 38563
+      }
+    ],
+    "entryPath": "/learn",
+    "expectedHeading": "Introduction"
+  }
+}

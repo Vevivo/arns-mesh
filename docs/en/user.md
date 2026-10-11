@@ -6,11 +6,11 @@ You only need the Windows application and a working connection invitation. You d
 
 ## 1. Download
 
-Use the **[0.6.0 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.0/ArNS-Mesh-Browser-Windows-x64-0.6.0.zip)**. GitHub's **Source code** archives are for developers.
+Use the **[0.6.1 Windows x64 application ZIP](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip)**. GitHub's **Source code** archives are for developers.
 
 Extract the entire ZIP into a folder you want to keep. Open `Mesh-Browser.exe` inside it. Keep the other files beside the EXE; create a shortcut if you want a desktop icon.
 
-This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.6.0) and report the warning. Do not disable security tools to bypass it.
+This is an unsigned community build. If Windows blocks it, check the [release and checksum](https://github.com/Vevivo/arns-mesh/releases/tag/v0.6.1) and report the warning. Do not disable security tools to bypass it.
 
 ## 2. Connect once
 
@@ -34,7 +34,7 @@ Mesh resolves the name, finds the files, verifies them and opens the page. **Pag
 
 The large shared index and supporter archives belong on the **server**. You do not download them to browse, and the browser does not automatically serve your disk to other users.
 
-However, 0.6.0 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
+However, 0.6.1 stores application settings, browsing state, name records and a bounded content cache in `%APPDATA%\ArNS-Mesh-Browser`. **Save current page** stores additional supported files. Avoid that action if you do not want intentional saved page copies; ordinary caching still happens.
 
 There is currently no supported zero-persistent-storage mode. Moving archive work to supporters does not make the existing browser diskless.
 
@@ -46,7 +46,7 @@ Supporters that still reach live sources can continue preparing updates. If thos
 
 **Saved** mode is not an operating-system network-off switch: missing files may still be requested. A bookmark remembers an address; it does not save a site.
 
-The supported community code or a durable invitation can find later supporters even if its original server was already offline when they joined. Upgrading to 0.6.0 supplies this independent discovery. That does not guarantee every site has another copy. [How supporter failover is prepared](resilience.md).
+The supported community code or a durable invitation can find later supporters even if its original server was already offline when they joined. Upgrading to 0.6.1 supplies this independent discovery. That does not guarantee every site has another copy. [How supporter failover is prepared](resilience.md).
 
 ## When something does not open
 

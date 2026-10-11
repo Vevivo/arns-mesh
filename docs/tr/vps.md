@@ -43,4 +43,4 @@ Kurulumdan sonra başka bir ağdan kontrol edin. Sunucunun kendi içinden başar
 
 **[Destekçi kurulumuyla devam edin](destekci.md).** R84 indeksi kurulumun içindedir; ardından [bağımsız erişim kontrolünü](dayaniklilik.md) tamamlayın.
 
-0.6.0 destekçi kurulumunda R84, isim çoğaltma ve dosya hazırlama birlikte kurulur. Topluluk ağı varsayılandır; ilk işletmeciden kod istemek gerekmez. VPS profili yeni kurulumda 134 GiB, Pi profili 74 GiB boş alan ister. [Tam kurulum ve kontrol](destekci.md).
+0.6.1 destekçi kurulumunda R84, isim çoğaltma ve dosya hazırlama birlikte kurulur. Topluluk ağı varsayılandır; ilk işletmeciden kod istemek gerekmez. VPS profili yeni kurulumda 134 GiB, Pi profili 74 GiB boş alan ister. [Tam kurulum ve kontrol](destekci.md).

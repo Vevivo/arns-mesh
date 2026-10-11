@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -80,15 +81,15 @@ export class SearchPublisher{
   // Never attach old keywords to a newly observed target. Also remove evicted
   // documents; retained client catalogues still label availability as dated.
   for(const [name,row] of rows){const s=this.snapshots.exportLocal(name);if(!s||s.txId!==row.targetId||!this.contentStore.has(row.targetId)||!this.contentStore.has(row.documentId))rows.delete(name);}
-  const verified=async id=>{const raw=this.contentStore.get(id,{maxBytes:2*SEARCH_LIMITS.documentBytes});if(!raw)throw new Error('search_content_missing');if(raw.length>2*SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const r=await verifyStoredContent(raw,id);if(r.payload.length>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');return r;};
+  const verified=async id=>{const raw=this.contentStore.get(id,{maxBytes:2*SEARCH_LIMITS.documentBytes});if(!raw)throw new Error('search_content_missing');if(raw.length>2*SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const r=await verifyStoredContent(raw,id);if(r.payload.length>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const view=await decodeVerifiedPayload(r,{maxOutputBytes:SEARCH_LIMITS.documentBytes});return {...r,decodedBody:view.body};};
   for(let count=0;count<Math.min(32,names.length);count++){
    const name=names[this.cursor++%names.length],snapshot=this.snapshots.exportLocal(name);if(!snapshot)continue;
    try{
     let id=snapshot.txId,document=await verified(id);
     const type=r=>r.tags.find(t=>t.name.toLowerCase()==='content-type')?.value.toLowerCase()||'';
-    if(type(document).includes('application/x.arweave-manifest')){id=resolveManifestPath(JSON.parse(document.payload.toString()),'').id;document=await verified(id);}
+    if(type(document).includes('application/x.arweave-manifest')){id=resolveManifestPath(JSON.parse(document.decodedBody.toString()),'').id;document=await verified(id);}
     if(!type(document).includes('text/html')){rows.delete(name);continue;}
-    const fields=extractSearchText(document.payload.toString('utf8'));
+    const fields=extractSearchText(document.decodedBody.toString('utf8'));
     if(!fields.title&&!fields.description&&!fields.text){rows.delete(name);continue;}
     const ready=this.pinner?.rows[name];
     rows.set(name,{name,targetId:snapshot.txId,documentId:id,...fields,observedAt:snapshot.observedAt,indexedAt:new Date().toISOString(),availability:ready?.rootDataId===snapshot.txId&&this.pinner.isReady(ready)?'prepared':'document'});

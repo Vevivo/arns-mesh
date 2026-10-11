@@ -1,6 +1,6 @@
 # Privacy and publishing
 
-Mesh 0.6.0 deliberately publishes **one authority-signed community network definition** in resources/network-continuity.json. It contains public service addresses, numeric-IP rendezvous bootstrap addresses, the network authority's public key and accepted publisher identities. These are connection information intended for sharing, not passwords. The definition lets an upgraded or fresh reader using the supported community code find a later supporter without the original operator.
+Mesh 0.6.1 deliberately publishes **one authority-signed community network definition** in resources/network-continuity.json. It contains public service addresses, numeric-IP rendezvous bootstrap addresses, the network authority's public key and accepted publisher identities. These are connection information intended for sharing, not passwords. The definition lets an upgraded or fresh reader using the supported community code find a later supporter without the original operator.
 
 Private signing keys, SSH credentials, wallet secrets, administrative server access, personal profiles, browsing data, prepared runtime catalogs, private logs and backups remain outside the source and release. Other default endpoint files remain empty. This signed public definition is not permission to copy an operator's working data directory.
 

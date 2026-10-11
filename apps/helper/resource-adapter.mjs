@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from '../../src/content-decoding.mjs';
 import {parseArweaveResourceUrl} from '../../src/arweave-resource-url.mjs';
 import {createSwarmMeshClient} from '../../src/swarm-client.mjs';
 import {fetchMeshContent} from '../../src/content-fetcher.mjs';
@@ -26,9 +27,11 @@ export async function resolveArweaveResource(raw,{contentStore,localOnly=false,s
  try{
   let dataId=parsed.dataId,item=await fetchOne(dataId),type=contentType(item);
   if(!parsed.raw&&type.toLowerCase().includes('application/x.arweave-manifest')){
-   const entry=resolveManifestPath(JSON.parse(item.payload.toString('utf8')),parsed.requestedPath);
+   const manifestView=await decodeVerifiedPayload(item,{signal});
+   const entry=resolveManifestPath(JSON.parse(manifestView.body.toString('utf8')),parsed.requestedPath);
    dataId=entry.id;item=await fetchOne(dataId);type=contentType(item);
   }else if(parsed.requestedPath)throw new Error('arweave_resource_path_requires_manifest');
-  return {body:item.payload,contentType:type,meta:{dataId,rootDataId:parsed.dataId,sha256:item.payloadSha256,contentSignatureVerified:true,source:'arweave-resource-peer-transport',gatewayUsed:false,localOnly}};
+  const view=await decodeVerifiedPayload(item,{signal});
+  return {...view,contentType:type,meta:{contentEncoding:view.contentEncoding,encodedBytes:view.encodedBytes,decodedBytes:view.decodedBytes,dataId,rootDataId:parsed.dataId,sha256:item.payloadSha256,contentSignatureVerified:true,source:'arweave-resource-peer-transport',gatewayUsed:false,localOnly}};
  }finally{if(client&&!providedClient)await client.stop();}
 }
