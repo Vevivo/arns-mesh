@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {WorkBudget} from '../../src/resource-budget.mjs';
 import {accessError} from '../../src/access-error.mjs';
+import {contentResponse} from '../browser/response.mjs';
 import {parseInput} from '../../src/swarm-access.mjs';
 const listen=(server,host)=>new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,host,()=>resolve(server.address().port));});
 export async function startLocalBridge({dataDir,resolve,share=async()=>{},diagnostics=()=>({}),onShutdown=()=>{}}){
@@ -34,9 +35,11 @@ export async function startLocalBridge({dataDir,resolve,share=async()=>{},diagno
            const u=new URL(req.url,'http://'+req.headers.host);
            const arUrl='ar://'+name+u.pathname+u.search;parseInput(arUrl);
            const result=await budget.run(()=>resolve(arUrl,{signal:controller.signal}),{signal:controller.signal});
-           controller.signal.throwIfAborted();await share(result);controller.signal.throwIfAborted();
-           res.writeHead(200,{'Content-Type':result.contentType,'Content-Length':result.body.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':csp,'Permissions-Policy':'camera=(), microphone=(), geolocation=()','X-ArNS-Mesh-Name':name,'X-ArNS-Mesh-Content-Verified':String(result.meta?.contentSignatureVerified===true),'X-ArNS-Mesh-Name-Trust':result.meta?.recovery?'saved-observation':'rpc-observation'});
-           res.end(req.method==='HEAD'?undefined:result.body);
+           controller.signal.throwIfAborted();
+           const response=contentResponse(result,new Request(arUrl,{method:req.method,headers:req.headers.range?{range:req.headers.range}:{}}));
+           await share(result);controller.signal.throwIfAborted();
+           res.writeHead(response.status,{...Object.fromEntries(response.headers),'content-security-policy':csp,'Permissions-Policy':'camera=(), microphone=(), geolocation=()','X-ArNS-Mesh-Name':name,'X-ArNS-Mesh-Content-Verified':'true','X-ArNS-Mesh-Name-Trust':result.meta?.recovery?'saved-observation':'rpc-observation'});
+           res.end(req.method==='HEAD'?undefined:Buffer.from(await response.arrayBuffer()));
          }catch(error){
            const failure=accessError(error);
            try{fs.writeFileSync(path.join(dataDir,'last-content-error.json'),JSON.stringify({at:new Date().toISOString(),code:failure.code,detail:String(error.message||error).slice(0,2000),diagnostics:JSON.stringify(error.diagnostics||null).slice(0,96000)}),{mode:0o600});}catch{}

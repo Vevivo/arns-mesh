@@ -80,6 +80,27 @@ jobs:
             ${{ runner.temp }}/mesh-independent-supporter/*.png
             ${{ runner.temp }}/mesh-independent-supporter/electron.log
           retention-days: 30
+      - name: Seed bounded authentic public compressed documentation files
+        timeout-minutes: 5
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/mesh-compressed-content
+        run: node qa/desktop/seed-public-compressed.mjs
+      - name: Render signed compressed content and reopen saved copies in real Windows Electron
+        timeout-minutes: 9
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/mesh-compressed-content
+        run: node qa/desktop/compressed-content.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: windows-compressed-content
+          path: |
+            ${{ runner.temp }}/mesh-compressed-content/results.json
+            ${{ runner.temp }}/mesh-compressed-content/serving-summary.json
+            ${{ runner.temp }}/mesh-compressed-content/public-content.json
+            ${{ runner.temp }}/mesh-compressed-content/*.png
+            ${{ runner.temp }}/mesh-compressed-content/electron.log
+          retention-days: 30
       - name: Prepare real public content for upstream outage acceptance
         env:
           MESH_QA_PROFILE: ${{ secrets.MESH_QA_PROFILE }}

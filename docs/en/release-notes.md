@@ -1,26 +1,23 @@
-# ArNS Mesh 0.6.0
+# ArNS Mesh 0.6.1
 
-A new supporter can join the same network and be discovered after the original starting server is unavailable. The release preserves existing ArNS access, English topic search, R84 location lookup and content signature checks.
-
-## What changes
-
-- Public, authority-signed durable network definitions support joining without contacting the original server or obtaining its private key. Existing community codes are matched to the bundled definition using the same signing identity.
-- Independent numeric-IP rendezvous locates later supporters. Readers verify the announced endpoint before using it; discovering an address does not grant it permission to redefine names.
-- Supporters copy original accepted name records in bounded pages, with capacity for 40,000 envelopes and 64 MiB. A separate preparation worker retains their verified files and prepared versions.
-- One supporter setup includes capacity selection, continuous name/content preparation, R84 installation, a persistent service and readiness checks.
+Mesh now opens Arweave files uploaded with gzip or Brotli compression, including HTML, JavaScript, CSS and site manifests. The 0.6.0 reader could verify those files but passed their compressed bytes to the viewer or manifest parser.
 
 ## Use it
 
-Update the desktop and supporters to **0.6.0**. Existing community connection settings carry over; another user's separate Mesh network remains a separate trust choice. The public community definition is also available to fresh installations when the original starting server cannot respond.
+Update the Windows desktop and supporter to **0.6.1**. Keep your existing Mesh connection settings and verified files. No network code change or content re-upload is needed.
 
-[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/en/user.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/en/supporter.md) · [Community connection](https://github.com/Vevivo/arns-mesh/blob/v0.6.0/docs/community-network.md)
+An older supporter can still send original signed compressed files to the updated reader. Updating the supporter also enables compressed manifest preparation, linked-file discovery and search indexing. Existing preparation records are rechecked gradually within the supporter's normal budgets; incomplete compressed copies are no longer advertised as ready once detected.
 
-## Verification
+[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/en/user.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/en/supporter.md)
 
-The release workflow runs Linux and Windows source tests, builds the Windows application, checks topic search and opens real public content under OS firewall isolation. New continuity, rendezvous, bulk replication and supporter checks cover the original server being absent.
+## Verification and limits
 
-## Scope
+- Original compressed bytes and their signed tags are verified before decoding. Storage, content hashes and Mesh transfers retain that original representation.
+- Viewing uses a separate decoded representation. Content length, byte ranges and HEAD refer to the bytes actually served; the viewer does not receive a second compression header.
+- Each decoded file is limited to **32 MiB**. Decoding has a **five-second deadline**, one active worker and a bounded queue. Malformed, ambiguous or unsupported encodings fail with an English error.
+- Source tests cover direct numeric-IP Arweave reads, prepared supporters, saved copies, gzip, Brotli, plain content, integrity failures and resource limits. The release gate also exercises the actual packaged Windows application.
+- Real compressed ArNS content and the exact scope of acceptance are documented in the [validation report](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/validation/compressed-content-2026-10-12.md).
 
-A usable network route and a source holding the requested information remain necessary. A new server can prepare from healthy upstream sources or surviving Mesh copies. It cannot reconstruct a never-retained file while every source carrying it is unreachable. Prepared site files do not make external APIs available. Readiness reports describe their checked names and file sets rather than universal coverage.
+R84 lookup, direct-IP transport, name resolution and existing outage alternatives remain in place. This release concerns desktop/supporter compression compatibility; it does not add a separate web version or make external website APIs available offline.
 
-The Windows build is unsigned. Physical Raspberry Pi and complete ArDrive application compatibility are not certified.
+The Windows build remains unsigned.

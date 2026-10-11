@@ -1,4 +1,4 @@
-# Konuya göre arama — Mesh 0.6.0
+# Konuya göre arama — Mesh 0.6.1
 
 **Üstteki adres çubuğu site açar. Ortadaki arama kutusu site bulur.**
 

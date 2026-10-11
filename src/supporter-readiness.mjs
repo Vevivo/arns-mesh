@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import {acceptedReplicaBindings} from './supporter-replication.mjs';
 
 export function supporterReadiness({snapshots,relay,pinners=[],contentStore,trustedPeerIds=[],ownPeerId,names,index=null,discovery=null,replication=null}){
@@ -86,13 +87,14 @@ export async function probeSupporter({peer,invitation,trustedPeers,names,exclude
      const ids=[binding.record.txId],seen=new Set(ids);
      for(let at=0;at<ids.length;at++){
       const item=await client.content(ids[at],{signal:bounded,cacheOnly:true});checkedName.files++;checkedName.bytes+=(item.storedBytes||item.rawItem).length;
+      const view=await decodeVerifiedPayload(item,{signal:bounded});
       const type=item.tags?.find(tag=>tag.name.toLowerCase()==='content-type')?.value||'';
       let children=[];
       if(type.toLowerCase().includes('application/x.arweave-manifest')){
-       const manifest=JSON.parse(item.payload.toString());if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');
+       const manifest=JSON.parse(view.body.toString());if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');
        children=manifestTargetIds(manifest);
       }
-      const references=discoverArweaveReferences(item);if(references.truncated)throw new Error('static_arweave_reference_scan_limit');children.push(...references.ids);
+      const references=discoverArweaveReferences({...item,payload:view.body});if(references.truncated)throw new Error('static_arweave_reference_scan_limit');children.push(...references.ids);
       for(const id of children)if(!seen.has(id)){if(seen.size>=maxFiles)throw new Error('readiness_file_limit');seen.add(id);ids.push(id);}
      }
      checkedName.ready=true;

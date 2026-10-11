@@ -4,7 +4,7 @@
 
 ## Kullanıcı için
 
-Mesh **0.6.0** kurun. [Açık topluluk kodunu](../community-network.md) **Settings → Mesh connection code → Check code → Join this network** alanında kullanın. Mevcut kullanıcıların bağlantısı güncellemede korunur.
+Mesh **0.6.1** kurun. [Açık topluluk kodunu](../community-network.md) **Settings → Mesh connection code → Check code → Join this network** alanında kullanın. Mevcut kullanıcıların bağlantısı güncellemede korunur.
 
 Kod bir ağ davetidir; parola, lisans veya kişisel izin değildir. Topluluk kodu herkese açık paylaşılabilir. Başka bir ağın kodunu kullanmak, o ağın güven ayarlarını seçmektir.
 
@@ -14,7 +14,7 @@ Kod bir ağ davetidir; parola, lisans veya kişisel izin değildir. Topluluk kod
 
 ## İlk sunucu erişilemez olduğunda
 
-0.6.0, ilk sunucunun imzalama kimliğiyle doğrulanan kalıcı bir ağ tanımı taşır. Yeni `mesh2.` kodları bunu kendi içinde taşır; mevcut topluluk `mesh1.` kodu da paketteki aynı anahtarla imzalanmış tanımla eşleştirilir.
+0.6.1, ilk sunucunun imzalama kimliğiyle doğrulanan kalıcı bir ağ tanımı taşır. Yeni `mesh2.` kodları bunu kendi içinde taşır; mevcut topluluk `mesh1.` kodu da paketteki aynı anahtarla imzalanmış tanımla eşleştirilir.
 
 Bu tanım sayesinde ilk sunucu kapalıyken de ağa katılınabilir. Okuyucu ve destekçiler, sayısal IP üzerinden bağımsız buluşma noktalarıyla yeni destekçileri öğrenir ve duyurulan adreslerin kimliğini denetler. Kullanıcının ikinci sunucuyu önceden görmüş olması gerekmez.
 
@@ -28,7 +28,7 @@ Destekçi, kabul edilen isim kayıtlarını özgün imzalarını koruyarak ve do
 
 ## Güncellemeler ve eski kodlar
 
-Canlı imzalı kaynak listeleri geçerlilik süresi, sürüm sırası ve imzaya göre denetlenmeye devam eder. Kalıcı tanımı bulunmayan eski ağlarda ilk katılım için erişilebilir ve süresi geçmemiş liste gerekir. Eski uygulamalar yeni keşif özelliğini kendiliğinden edinmez; 0.6.0'a güncellenmelidir.
+Canlı imzalı kaynak listeleri geçerlilik süresi, sürüm sırası ve imzaya göre denetlenmeye devam eder. Kalıcı tanımı bulunmayan eski ağlarda ilk katılım için erişilebilir ve süresi geçmemiş liste gerekir. Eski uygulamalar yeni keşif özelliğini kendiliğinden edinmez; 0.6.1'a güncellenmelidir.
 
 **Saved** modu otomatik liste yenilemesini ve keşfi durdurur. Ağ üzerinden erişim için kullanılabilir internet/IP yolu gerekir. Bütün bilinen keşif yolları erişilemezse yeni ve bilinmeyen bir sunucu keşfedilemez.
 

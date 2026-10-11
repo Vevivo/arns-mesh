@@ -1,3 +1,5 @@
+import {verifyStoredContent} from './content-store.mjs';
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {createSwarmMeshClient} from './swarm-client.mjs';
@@ -25,6 +27,9 @@ export class SitePinner{
   const ids=this.store.pins?.[row.pinGroup||row.name]||[];
   return ids.length>=row.total&&ids.every(id=>this.store.has(id));
  }
+ // Revisit old preparation metadata gradually under the caller's ordinary
+ // transfer/time budget. Existing plain sites remain available during audit.
+ needsDecodingAudit(row){return Boolean(row&&row.contentDecodingVersion!==1);}
  readySnapshot(name,{trustedPeers=[]}={}){if(!this.isReady(this.rows[name]))return null;return this.snapshotStore({trustedPeers}).get(name);}
  preparedStore({trustedPeers=[]}={}){return {get:name=>this.readySnapshot(name,{trustedPeers})};}
  status(){return {sites:Object.values(this.rows),storage:this.store.pinStats(),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}
@@ -55,29 +60,44 @@ export class SitePinner{
   const job=this.run(name,snapshot,{signal,contentSources,managedBy}).finally(()=>this.jobs.delete(name));this.jobs.set(name,job);return job;
  }
  async run(name,snapshot,{signal,contentSources,managedBy}={}){
-  const old=this.rows[name],previous=this.isReady(old)?{...old,update:undefined}:null;
+  const old=this.rows[name];let previous=this.isReady(old)?{...old,update:undefined}:null,legacyCompressed=false;
   const pinGroup='site:'+crypto.createHash('sha256').update(this.pinNamespace==='site'?name:this.pinNamespace+'|'+name).digest('hex')+':'+snapshot.txId;
-  const row={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},pinGroup,...(managedBy==='catalog'?{managedBy:'catalog'}:{}),status:'saving',scope:'document',total:1,saved:0,failed:0,errors:[]};
+  const row={name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot:{...validateSnapshot(snapshot,name),provenance:{...snapshot.provenance}},pinGroup,...(managedBy==='catalog'?{managedBy:'catalog'}:{}),status:'saving',scope:'document',contentDecodingVersion:1,total:1,saved:0,failed:0,errors:[]};
   this.rows[name]=previous?{...previous,update:row}:row;try{this.save();}catch(error){if(old)this.rows[name]=old;else delete this.rows[name];throw error;}
   const stale=old?.update?.pinGroup||(!previous&&old?.pinGroup);if(stale&&stale!==pinGroup&&stale!==previous?.pinGroup)this.store.unpin(stale);
   const client=this.createClient();client.setName(name);
   const fetchOne=async id=>{
-   signal?.throwIfAborted();
-   const item=await this.fetchContent(id,{client,contentStore:this.store,signal,contentSources});
-   signal?.throwIfAborted();
-   if(item.cacheError)throw new Error('content_cache_failed: '+item.cacheError);if(!this.store.has(id))throw new Error('content_not_cached');
-   await this.store.pin(id,pinGroup);return item;
+   try{
+    signal?.throwIfAborted();
+    const item=await this.fetchContent(id,{client,contentStore:this.store,signal,contentSources});
+    signal?.throwIfAborted();
+    if(item.cacheError)throw new Error('content_cache_failed: '+item.cacheError);if(!this.store.has(id))throw new Error('content_not_cached');
+    await this.store.pin(id,pinGroup);return item;
+   }catch(error){
+    // A failed cache verification can be hidden by an unavailable alternative.
+    // During this bounded legacy audit, withdraw a same-target ready claim if
+    // its retained signed bytes are actually corrupt, even before tags decode.
+    if(previous?.rootDataId===snapshot.txId&&this.needsDecodingAudit(previous)&&(this.store.pins?.[previous.pinGroup||previous.name]||[]).includes(id)){
+     let retained;try{retained=this.store.get(id);}catch{}
+     if(retained)try{await verifyStoredContent(retained,id);}catch{previous=null;}
+    }
+    throw error;
+   }
   };
   const ids=[],seen=new Set([snapshot.txId]);let next=0,limitReported=false;
-  const expand=item=>{
+  const expand=async item=>{
+   // Tags are inspected only after fetchContent has verified the signed item.
+   // A failed audit of compressed bytes cannot keep an older false-ready claim.
+   if(previous?.rootDataId===snapshot.txId&&this.needsDecodingAudit(previous)&&item.direct.tags?.some(tag=>String(tag.name).toLowerCase()==='content-encoding'))legacyCompressed=true;
+   const view=await decodeVerifiedPayload(item.direct,{signal});
    const type=item.direct.tags?.find(t=>t.name.toLowerCase()==='content-type')?.value||'';
    let children=[];
    if(type.toLowerCase().includes('application/x.arweave-manifest')){
-    const manifest=JSON.parse(item.direct.payload.toString());
+    const manifest=JSON.parse(view.body.toString());
     if(manifest.manifest!=='arweave/paths'||!manifest.paths||typeof manifest.paths!=='object')throw new Error('invalid_manifest');
     children=manifestTargetIds(manifest);if(row.scope==='document')row.scope='manifest';
    }
-   const references=discoverArweaveReferences(item.direct);
+   const references=discoverArweaveReferences({...item.direct,payload:view.body});
    if(references.ids.length){row.scope='linked-arweave';children.push(...references.ids);}
    if(references.truncated){row.failed++;row.errors.push({error:'static_arweave_reference_scan_limit'});}
    for(const id of children){
@@ -88,14 +108,15 @@ export class SitePinner{
    }
   };
   try{
-   const root=await fetchOne(snapshot.txId);row.saved=1;expand(root);this.save();
-   const worker=async()=>{while(next<ids.length){signal?.throwIfAborted();const id=ids[next++];try{const item=await fetchOne(id);row.saved++;expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
+   const root=await fetchOne(snapshot.txId);row.saved=1;await expand(root);this.save();
+   const worker=async()=>{while(next<ids.length){signal?.throwIfAborted();const id=ids[next++];try{const item=await fetchOne(id);row.saved++;await expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
    await worker(); // One preparation transfer at a time; shared server work is bounded separately.
    row.status=row.failed?'partial':row.scope==='linked-arweave'?'linked-resources-saved':row.scope==='manifest'?'manifest-saved':'document-saved';
   }catch(e){row.status='partial';row.failed++;row.errors.push({error:String(e.message).slice(0,240)});}
   finally{
    try{
    row.updatedAt=new Date().toISOString();
+   if(legacyCompressed&&!this.isReady(row))previous=null;
    if(this.isReady(row)){
     // Publish the new binding only after all files are pinned. Old groups stay
     // pinned until that atomic metadata commit succeeds, including on crashes.

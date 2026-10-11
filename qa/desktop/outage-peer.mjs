@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from '../../src/content-decoding.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -38,8 +39,9 @@ if(mode==='seed'){
     const item=await client.content(ids[i],{signal:AbortSignal.timeout(25000),cacheOnly:true});
     await store.put(ids[i],item.storedBytes||item.rawItem);
     files.push({dataId:ids[i],bytes:item.payload.length,sha256:crypto.createHash('sha256').update(item.payload).digest('hex')});
-    const children=discoverArweaveReferences(item).ids;
-    if(item.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.includes('application/x.arweave-manifest')))children.push(...manifestTargetIds(JSON.parse(item.payload)));
+    const view=await decodeVerifiedPayload(item);
+    const children=discoverArweaveReferences({...item,payload:view.body}).ids;
+    if(item.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.includes('application/x.arweave-manifest')))children.push(...manifestTargetIds(JSON.parse(view.body)));
     for(const id of children)if(!seen.has(id)){seen.add(id);ids.push(id);}
    }
    rows.push({name,target:record.txId,files});

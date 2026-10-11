@@ -8,6 +8,9 @@ const resources=arweaveResourceOrigins.join(' ');
 export const contentCsp=`default-src 'self' data: blob: ${resources}; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${resources}; style-src 'self' 'unsafe-inline' ${resources}; connect-src 'self' ${resources}; worker-src 'none'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`;
 export function contentResponse(result,request){
   if(result.meta?.contentSignatureVerified!==true)throw new Error('unverified_content_rejected');
+  // Adapters deliver decoded view bytes; transport encoding must never be
+  // forwarded to Chromium (which could decode this representation twice).
+  if((result.contentEncoding||result.meta?.contentEncoding)&&result.bodyDecoded!==true)throw new Error('content_decoding_required');
   const body=result.body,headers={'content-type':result.contentType,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':contentCsp,'accept-ranges':'bytes'};
   const range=request.headers.get('range');let start=0,end=body.length-1,status=200;
   if(range){
@@ -26,6 +29,12 @@ export function isAllowedRendererUrl(raw,{resourceType}={}){
 }
 export function plainError(error){
   const value=String(error.message||error);
+  if(/content_decoded_size_limit/.test(value))return 'This file expands beyond the 32 MiB viewing limit.';
+  if(/content_decode_timeout/.test(value))return 'This compressed file took too long to open. The decoding task was stopped.';
+  if(/content_encoding_unsupported|content_encoding_ambiguous/.test(value))return 'This file uses an unsupported or ambiguous Content-Encoding. Mesh supports gzip and Brotli.';
+  if(/content_encoding_corrupt/.test(value))return 'The signed file was verified, but its compressed data is damaged or does not match its Content-Encoding tag.';
+  if(/content_decode_busy/.test(value))return 'Too many compressed files are opening. Please try again.';
+  if(/content_decoding_required|content_decode_failed/.test(value))return 'This compressed file could not be safely opened.';
   if(/saved_binding_unavailable/.test(value))return 'This older saved entry has no matching saved name observation. Its files were kept. Save the site again in live mode to bind a new copy.';
   if(/saved_peer_trust_required/.test(value))return 'The peer whose name observation was saved is no longer trusted. Review your trusted peers before opening this saved version.';
   if(/saved_name_unavailable/.test(value))return 'No saved name record is available. Live resolution requires a reachable Solana RPC source.';

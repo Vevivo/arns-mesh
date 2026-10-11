@@ -4,7 +4,7 @@
 
 A supporter keeps ArNS name observations and verified files on its own server, follows updates while sources are reachable, and serves readers when another supporter is unavailable. **Join the same Mesh network; you do not create a separate code for its readers.**
 
-Use Mesh **0.6.0** on both supporters and readers for independent discovery. A 0.5.1 reader can use previously learned routes, but does not gain the new discovery mechanism without upgrading.
+Use Mesh **0.6.1** on both supporters and readers for independent discovery. A 0.5.1 reader can use previously learned routes, but does not gain the new discovery mechanism without upgrading.
 
 ## Before you start
 
@@ -28,7 +28,7 @@ Run as the ordinary supporter account. Replace the sample IP with **your own rea
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.6.0
+git checkout --detach v0.6.1
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
@@ -51,7 +51,7 @@ Existing identities, connection files and explicit settings are preserved. The s
 
 The advertised IP is your server's address; the **network code identifies the shared network**. They are different things. Mesh advertises and discovers supporter addresses within that network, including through its signed numeric-IP rendezvous configuration when the first server is unavailable. An address announcement never grants authority to change an ArNS name.
 
-Readers on 0.6.0 keep the same supported network code. The original operator does not have to distribute a second developer's separate code or approve each server. The discovery routes themselves still need to be reachable; no network can discover an address with no available communication path.
+Readers on 0.6.1 keep the same supported network code. The original operator does not have to distribute a second developer's separate code or approve each server. The discovery routes themselves still need to be reachable; no network can discover an address with no available communication path.
 
 Check the TCP endpoint from another network:
 

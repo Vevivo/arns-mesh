@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {TargetCatalog} from './target-catalog.mjs';
@@ -178,12 +179,13 @@ export class CatalogWorker {
     this.state.lastSuccess={dataId:job.id,source,stored,locationReplication:result.locationReplication?.status||null,storageKind:result.storageKind||result.direct.storageKind||'ans104',at:new Date().toISOString()};
     if(!job.fetchedAt){job.fetchedAt=Date.now();this.state.completed++;}
     this.state.lastError=null;let graphPending=false;
-    const references=discoverArweaveReferences(result.direct);
+    const view=await decodeVerifiedPayload(result.direct,{signal:controller.signal});
+    const references=discoverArweaveReferences({...result.direct,payload:view.body});
     const isManifest=result.direct.tags?.some(t=>t.name.toLowerCase()==='content-type'&&t.value.toLowerCase().includes('application/x.arweave-manifest'));
     if(isManifest||references.scanned){
      try{
       let ids=references.ids;
-      if(isManifest){const manifest=JSON.parse(result.direct.payload.toString());if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');ids=manifestTargetIds(manifest);}
+      if(isManifest){const manifest=JSON.parse(view.body.toString());if(manifest.manifest!=='arweave/paths'||!manifest.paths)throw new Error('invalid_manifest');ids=manifestTargetIds(manifest);}
       let cursor=job.graphCursor||0;
       while(cursor<ids.length){
        const id=ids[cursor];
@@ -222,7 +224,7 @@ export class CatalogWorker {
    const name=names[cursor];cursor=(cursor+1)%names.length;this.state.prepareCursor=cursor;
    const snapshot=this.snapshotStore.get(name),row=this.pinner.rows[name];
    if(!this.peer.contentStore.has?.(snapshot.txId))continue;
-   if(row&&this.pinner.isReady(row)&&row.rootDataId===snapshot.txId)continue;
+   if(row&&this.pinner.isReady(row)&&row.rootDataId===snapshot.txId&&!this.pinner.needsDecodingAudit?.(row))continue;
    if(!row&&Object.keys(this.pinner.rows).length>=this.maxPreparedSites){
     const stale=Object.values(this.pinner.rows).find(r=>r.managedBy==='catalog'&&!this.pinner.isReady(r)&&!this.pinner.jobs.has(r.name)&&Date.now()-Date.parse(r.updatedAt||0)>=5*60000);
     if(stale)this.pinner.remove(stale.name);else{this.state.preparationError='prepared_site_limit';continue;}

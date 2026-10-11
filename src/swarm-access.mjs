@@ -1,3 +1,4 @@
+import {decodeVerifiedPayload} from './content-decoding.mjs';
 import {fetchMeshContent} from './content-fetcher.mjs';
 import {resolveManifestPath} from './manifest-path.mjs';
 import {resolveSavedContent} from './saved-access.mjs';
@@ -215,7 +216,8 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
     let manifestUsed=false,manifestPath=null;
 
     if(contentType.toLowerCase().includes('application/x.arweave-manifest')){
-      const manifest=JSON.parse(current.direct.payload.toString('utf8'));
+      const manifestView=await decodeVerifiedPayload(current.direct,{signal});
+      const manifest=JSON.parse(manifestView.body.toString('utf8'));
       const entry=resolveManifestPath(manifest,requestedPath);
       manifestPath=entry.path;
       dataId=entry.id;
@@ -225,6 +227,7 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
       manifestUsed=true;
     }
 
+    const view=await decodeVerifiedPayload(current.direct,{signal});
     const verification=assessArNSVerification({stateEvidence,witness,live,authorizedUpdateProof,chainStateProof,transitionJournal:transitionJournal?.result});
     const remoteShare=(remoteProofBundles||[])[0]||null;
     const shareBundle={
@@ -277,7 +280,7 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
       l1DataRootVerified:Boolean(current.direct.l1DataRootVerified),
       manifestUsed,manifestPath,
       contentType,
-      body:current.direct.payload,
+      ...view,
       shareBundle,
       sha256:current.direct.payloadSha256,
       networkPolicy:'literal-ip-raw-only',

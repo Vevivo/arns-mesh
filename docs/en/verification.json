@@ -1,14 +1,8 @@
 {
-  "version": "0.6.0",
-  "date": "2026-10-06",
-  "continuityEvidence": "../validation/independent-supporters-2026-10-06.json",
-  "sourceTests": {
-    "passed": 219,
-    "failed": 0,
-    "platform": "Linux",
-    "runnerConcurrency": 2,
-    "scope": "Pre-final full suite; subsequent expired-publication and readiness fixes also passed targeted tests. Exact final commit is checked by release CI."
-  },
-  "windowsAcceptance": "Publication requires successful exact-commit Linux/Windows source tests and packaged Windows search, original-seed-absent discovery, and real-content OS firewall checks. See release build.json for acceptanceRun.",
-  "baselineEvidence": "../archive/verification-0.5.1.json"
+  "version": "0.6.1",
+  "date": "2026-10-12",
+  "compressionEvidence": "../validation/compressed-content-2026-10-12.md",
+  "sourceTests": "Publication requires exact-commit Linux and Windows source tests; test totals and logs are in the release acceptance run.",
+  "windowsAcceptance": "Publication requires packaged Windows compression (gzip/Brotli/plain, saved restart, rejected corrupt/oversized/unverified content), search, original-seed-absent discovery and real-content OS firewall checks. See release build.json for acceptanceRun.",
+  "baselineEvidence": "../archive/verification-0.6.0.json"
 }
