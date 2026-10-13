@@ -2,7 +2,7 @@
 
 The standalone desktop registers `ar:` inside its own Electron browser. It does not depend on Chrome extensions or disguise a gateway URL. Electron includes Chromium; it is still a software dependency whose updates and security maintenance matter. Removing a separately installed Chrome application does not remove the bundled engine.
 
-The desktop and supporter share Mesh 0.6.1. See the [outage test](../validation/upstream-outage-2026-10-06.md) and [shared-network behavior](shared-network.md).
+The desktop and supporter share Mesh 0.6.2. See the [outage test](../validation/upstream-outage-2026-10-06.md) and [shared-network behavior](shared-network.md).
 
 ## Two runtime roles
 
@@ -31,7 +31,7 @@ Direct Mesh/RPC HTTP is not encrypted. Content checks detect invalid data; they 
 
 Mesh also lets a reader search for a missing linked item near the already-known parent page location: the anchor and up to 64 earlier blocks, up to 256 transaction IDs per block, outer bundle headers only. A scan has a three-minute deadline and a 96 MiB response budget; the reader reserves at most 256 MiB/day for this work. It still verifies the full requested item before use. This is demand-driven recovery, not universal first-root discovery or continuous ledger scanning. See [resource behavior and measured media results](../archive/arweave-resources.md).
 
-The 0.6.1 supporter enables an independent name-sync loop when the catalog is enabled: its default scheduling interval is five seconds, with registry refresh around every 60 seconds and optional broad target scans every five minutes. Name records are retained separately from the content-download queue, so a slow file does not stop name checks. Processing time, budgets, RPC errors and queues affect actual freshness; these intervals are not completion guarantees. The catalog selects the first configured RPC; more addresses do not imply automatic RPC failover for every worker. [Preparation and timing](continuous-preparation.md).
+The 0.6.2 supporter enables an independent name-sync loop when the catalog is enabled: its default scheduling interval is five seconds, with registry refresh around every 60 seconds and optional broad target scans every five minutes. Name records are retained separately from the content-download queue, so a slow file does not stop name checks. Processing time, budgets, RPC errors and queues affect actual freshness; these intervals are not completion guarantees. The catalog selects the first configured RPC; more addresses do not imply automatic RPC failover for every worker. [Preparation and timing](continuous-preparation.md).
 
 
 ## Access-route interruption cases
@@ -49,7 +49,7 @@ The 0.6.1 supporter enables an independent name-sync loop when the catalog is en
 
 Readers have 256 MiB automatic content, a separate 512 MiB saved-content budget, a 16 MiB response cache, two content transfers and a 32 MiB signed-item limit. This is not a total RAM/disk cap: Chromium, page scripts, dependencies, logs and metadata consume additional resources. Large verified streaming is not complete. Supporter scan quotas limit accounted work, not total serving traffic or index growth.
 
-GitHub/npm and the official Electron download are build/distribution dependencies. Preinstalled operation does not require these sites. The 0.6.1 distribution deliberately includes the signed public community definition, with public endpoints and trust anchors; it contains no private authority or peer key. Existing community codes can use that same-authority definition. Other networks can supply a self-contained durable invitation.
+GitHub/npm and the official Electron download are build/distribution dependencies. Preinstalled operation does not require these sites. The 0.6.2 distribution deliberately includes the signed public community definition, with public endpoints and trust anchors; it contains no private authority or peer key. Existing community codes can use that same-authority definition. Other networks can supply a self-contained durable invitation.
 
 ## Independent discovery and authority continuity
 

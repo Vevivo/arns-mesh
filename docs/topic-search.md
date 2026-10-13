@@ -1,4 +1,4 @@
-# Topic search — Mesh 0.6.1
+# Topic search — Mesh 0.6.2
 
 The top address bar opens an ArNS name. The Home search box finds ArNS sites by name, topic, description or keyword. Click a result to open it, or click a topic label to search that topic.
 
@@ -36,3 +36,9 @@ Search catalogue replication is separate from website file replication. Dates an
 Tests cover account bindings, cleared keywords, changed targets, RPC failure, quota charging, 700 metadata-only results, English keyword matching without query translation, escaped labels, signed transport, offline restart and legacy compatibility. Windows package acceptance searches a topic found only in an ANT keyword, clicks its tag, restarts offline, and opens the result through the existing renderer.
 
 [Turkish guide](tr/konu-aramasi.md) · [ANT metadata specification](https://github.com/ar-io/specs/blob/main/arns/arns-token-1.md)
+
+## Catalogue freshness
+
+While connected, a successful background update is followed by another check after about fifteen minutes. Failed attempts retain the accepted catalogue and retry after about a minute. An already open Home page updates its results and catalogue date without clearing text you are typing. Use **Refresh catalogue** for an immediate check.
+
+Counts can rise or fall as registrations, target records and listings change. Retained name records, searchable listings and fully prepared sites measure different things.

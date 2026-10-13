@@ -197,7 +197,7 @@ async function newTab(raw=''){
     ses.protocol.handle('https',request=>resourceHandler(tab,request));
     filterSession(ses,{tab});ses.protocol.handle('ar',request=>arHandler(tab,request));
     ses.protocol.handle('arnsui',request=>homeQuery(request.url)!==null||/^(?:arnsui:\/\/app\/)(?:welcome\.css|brand\.css|mesh\.svg|ario-full-black\.svg|fonts\/(?:besley|plus-jakarta-sans)\.woff2)$/.test(request.url)?uiHandler(request):new Response('Not found',{status:404}));
-    tab.view=new WebContentsView({webPreferences:{session:ses,nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
+    tab.view=new WebContentsView({webPreferences:{session:ses,preload:path.join(here,'home-preload.cjs'),nodeIntegration:false,nodeIntegrationInWorker:false,contextIsolation:true,sandbox:true,webSecurity:true,webviewTag:false,allowRunningInsecureContent:false,spellcheck:false}});
     tab.view.setBackgroundColor('#f6f4ef');win.contentView.addChildView(tab.view,0);guardTab(tab);layout();
     await navigate(raw,tab);send({focusAddress:!raw});return tab.id;
   }catch(error){if(tabs.rows.has(tab.id))tabs.close(tab.id);tab.view?.webContents.close();throw error;}
@@ -236,6 +236,14 @@ function shortcuts(wc){wc.on('before-input-event',(event,input)=>{
 });}
 function guardTab(tab){
   const wc=tab.view.webContents;shortcuts(wc);attachContextMenu(wc,Menu,()=>win);wc.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
+  wc.on('ipc-message',(event,channel,action)=>{
+    if(channel!=='mesh-home-action'||!['refresh','connect'].includes(action))return;
+    try{
+      if(tabs.rows.get(tab.id)!==tab||event.sender!==wc||event.senderFrame!==event.sender.mainFrame||homeQuery(event.senderFrame?.url)===null||homeQuery(wc.getURL())===null)return;
+    }catch{return;}
+    if(action==='connect')send({command:'settings'});
+    else void syncSearch({force:true}).catch(error=>report(error,tab));
+  });
   const target=url=>{if(homeQuery(url)!==null)return '';try{return /^ar:\/\//i.test(url)?normalizeAddress(url):null;}catch{return null;}};
   const blocked=url=>{
     report(new Error('External or invalid link blocked. This browser opens ar:// addresses; no gateway fallback.'),tab);

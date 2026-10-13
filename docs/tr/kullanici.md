@@ -6,11 +6,11 @@ Windows uygulaması ve çalışan bir ağ daveti yeterlidir. VPS, cüzdan, Node.
 
 ## 1. İndirin
 
-**[0.6.1 Windows x64 uygulama ZIP'ini](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip)** indirin. GitHub'daki **Source code** arşivleri geliştiriciler içindir.
+**[0.6.2 Windows x64 uygulama ZIP'ini](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.2/ArNS-Mesh-Browser-Windows-x64-0.6.2.zip)** indirin. GitHub'daki **Source code** arşivleri geliştiriciler içindir.
 
 ZIP'in tamamını kalıcı bir klasöre çıkarın. İçindeki `Mesh-Browser.exe` dosyasını açın. Diğer dosyaları yanında bırakın; masaüstünde simge istiyorsanız kısayol oluşturun.
 
-Bu, topluluk tarafından yayımlanan imzasız bir uygulamadır. Windows engellerse [sürüm ve dosya doğrulama bilgilerini](https://github.com/Vevivo/arns-mesh/releases/tag/v0.6.1) kontrol edip uyarıyı bildirin. Güvenlik yazılımını kapatarak engeli aşmayın.
+Bu, topluluk tarafından yayımlanan imzasız bir uygulamadır. Windows engellerse [sürüm ve dosya doğrulama bilgilerini](https://github.com/Vevivo/arns-mesh/releases/tag/v0.6.2) kontrol edip uyarıyı bildirin. Güvenlik yazılımını kapatarak engeli aşmayın.
 
 ## 2. Bir kez bağlanın
 
@@ -34,7 +34,7 @@ Mesh ismi çözer, dosyaları bulur, doğrular ve sayfayı açar. **Page informa
 
 Büyük paylaşılan indeks ve destekçi arşivleri **sunucuda** tutulur. Gezinmek için bunları indirmeniz gerekmez; tarayıcı diskinizi otomatik olarak diğer kullanıcılara sunmaz.
 
-Ancak 0.6.1; uygulama ayarlarını, gezinme durumunu, isim kayıtlarını ve sınırlı içerik önbelleğini `%APPDATA%\ArNS-Mesh-Browser` altında tutar. **Save current page** ek dosyalar saklar. Bilerek sayfa kopyası kaydetmek istemiyorsanız bu işlemi kullanmayın; normal önbellekleme yine devam eder.
+Ancak 0.6.2; uygulama ayarlarını, gezinme durumunu, isim kayıtlarını ve sınırlı içerik önbelleğini `%APPDATA%\ArNS-Mesh-Browser` altında tutar. **Save current page** ek dosyalar saklar. Bilerek sayfa kopyası kaydetmek istemiyorsanız bu işlemi kullanmayın; normal önbellekleme yine devam eder.
 
 Bu sürümde desteklenen bir sıfır kalıcı depolama modu yoktur. Arşiv işinin destekçilerde yapılması, mevcut tarayıcıyı disksiz yapmaz.
 

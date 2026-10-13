@@ -2,13 +2,13 @@
 
 [Türkçe](../tr/dayaniklilik.md) · [Complete supporter installation](supporter.md)
 
-The goal is for readers to keep using the same network when its first server is unavailable. **Mesh 0.6.1 separates discovery, live preparation and retained-content readiness**, so a running service is not confused with a complete content replica.
+The goal is for readers to keep using the same network when its first server is unavailable. **Mesh 0.6.2 separates discovery, live preparation and retained-content readiness**, so a running service is not confused with a complete content replica.
 
 ## When the first server is already unavailable
 
 A new developer can run the [standard setup](supporter.md) without contacting the original operator. The bundled community definition is signed by the same network authority as the existing public code. Other networks use a self-contained signed invitation. The developer supplies their own reachable numeric IP; Mesh discovers and advertises that supporter through the signed network's numeric-IP rendezvous paths.
 
-Readers need 0.6.1 for this independent discovery. Existing 0.5.1 installations only have their older seed/learned-route behavior until upgraded. The original code and the new durable invitation identify the same community network; there is no separate developer network for users to join.
+Readers need 0.6.2 for this independent discovery. Existing 0.5.1 installations only have their older seed/learned-route behavior until upgraded. The original code and the new durable invitation identify the same community network; there is no separate developer network for users to join.
 
 While independent RPC and content sources remain reachable, the new supporter observes current names and prepares verified files. Loss of the first server does not turn those healthy paths off. If all upstream paths are also unavailable, the new supporter must obtain accepted name records and files from another surviving Mesh copy. It cannot reconstruct information that no reachable source holds.
 
@@ -67,7 +67,7 @@ Exit **0** means the stated names passed from that checking machine. Exit **2** 
 
 ## 3. Check discovery and normal browsing separately
 
-The explicit-endpoint check proves serving, not automatic discovery. Use a fresh **0.6.1 reader profile** in an isolated environment:
+The explicit-endpoint check proves serving, not automatic discovery. Use a fresh **0.6.2 reader profile** in an isolated environment:
 
 1. Exclude the original server from that environment; leave the working production server running.
 2. Join using the same supported community code, with no manually entered B endpoint.

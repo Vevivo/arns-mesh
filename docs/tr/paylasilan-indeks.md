@@ -2,7 +2,7 @@
 
 [English](../shared-index.md) · [Tam destekçi kurulumu](destekci.md)
 
-**0.6.1 standart destekçi kurulumu R84 adımını içerir.** VPS ve SSD kullanan Pi, isim kayıtları ve doğrulanmış dosyalarla birlikte içerik konum indeksini de hazırlar. İndeks sunucuda tutulur; okuyucunun bilgisayarına indirilmez. Tam AR.IO gateway kurulmaz.
+**0.6.2 standart destekçi kurulumu R84 adımını içerir.** VPS ve SSD kullanan Pi, isim kayıtları ve doğrulanmış dosyalarla birlikte içerik konum indeksini de hazırlar. İndeks sunucuda tutulur; okuyucunun bilgisayarına indirilmez. Tam AR.IO gateway kurulmaz.
 
 İndeks içerik kimliğinin Arweave paketindeki yerini gösterir. Dosyanın bulunmasını hızlandırır; dosyanın kendisini veya isim kaydını oluşturmaz. Kesintide hizmet için gerçek doğrulanmış kopyalar da gerekir.
 

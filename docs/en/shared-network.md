@@ -1,8 +1,8 @@
-# Shared supporter network — 0.6.1
+# Shared supporter network — 0.6.2
 
 [Türkçe](../tr/paylasilan-ag.md) · [Home](../../README.md) · [VPS / Pi setup](supporter.md)
 
-**A new supporter can join the community network after the original server is unavailable. Readers on 0.6.1 keep the same supported network code and discover that supporter automatically.** The installer includes the authority-signed public network definition. A developer does not need the original operator's permission, private key or a separate code for every reader.
+**A new supporter can join the community network after the original server is unavailable. Readers on 0.6.2 keep the same supported network code and discover that supporter automatically.** The installer includes the authority-signed public network definition. A developer does not need the original operator's permission, private key or a separate code for every reader.
 
 Discovery and content preparation are both part of the supporter setup. Independent access needs a reachable discovery route, a reachable supporter, and the records and files required by the requested site. Preparation continues in the background; its actual progress is reported.
 
@@ -16,7 +16,7 @@ Discovery and content preparation are both part of the supporter setup. Independ
 
 A supporter installed after the first server disappeared can obtain current names and files from remaining configured upstream routes and other supporters. If all upstream routes are also unavailable, it needs previously retained records and verified copies from a reachable supporter. A code or index cannot reconstruct files that no reachable source holds.
 
-Use **0.6.1 on readers and supporters** for this lifecycle. Older installations gain the new discovery mechanism only after upgrading.
+Use **0.6.2 on readers and supporters** for this lifecycle. Older installations gain the new discovery mechanism only after upgrading.
 
 ## What discovery shares
 

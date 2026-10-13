@@ -2,7 +2,7 @@
 
 [Home](../../README.md) · [VPS / Pi setup](supporter.md) · [Türkçe](../tr/ag-kodu.md)
 
-Use **Mesh 0.6.1** for the desktop and supporter. Updating the desktop does not update a server installation.
+Use **Mesh 0.6.2** for the desktop and supporter. Updating the desktop does not update a server installation.
 
 ## Which item do I need?
 
@@ -12,7 +12,7 @@ Use **Mesh 0.6.1** for the desktop and supporter. Updating the desktop does not 
 | Network invitation (`mesh1.…` or `mesh2.…`) | Network identity and starting configuration; durable definitions allow independent joining |
 | Connection profile (`mesh-connect.json`) | Legacy/manual source settings; not website files |
 
-**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. 0.6.1 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
+**Supporting the existing network?** Start with the [short VPS/Pi setup](supporter.md). Join with the existing invitation. 0.6.2 automatically announces a reachable content endpoint; no separate network or per-reader code is needed. [Implemented flow and limits](shared-network.md).
 
 The sections below document today's connection mechanism and advanced operator actions. Codes remain an optional advanced/recovery mechanism in the intended product; normal users should eventually receive a prepared connected download. Current standard ZIPs provide the public community definition; select it with the public community code or use another trusted network's code.
 
@@ -46,7 +46,7 @@ node scripts/network.mjs publish --data "$HOME/.local/share/ArNS-Mesh-Supporter/
 
 Give readers the returned `code`, the Windows download link and the steps above. The first publication creates an Ed25519 authority key. The updated peer serves the signed announcement from its data directory without requiring a domain or another listener.
 
-The first eight profile Mesh addresses become starting peers by default. Use repeated `--seed REAL_IP:PORT` options to choose only peers that actually serve **this network's announcement**. Other content peers can remain in the signed profile. With a durable definition, 0.6.1 can join and discover later supporters when these initial HTTP peers are unreachable. Legacy invitations without continuity still require a starting peer.
+The first eight profile Mesh addresses become starting peers by default. Use repeated `--seed REAL_IP:PORT` options to choose only peers that actually serve **this network's announcement**. Other content peers can remain in the signed profile. With a durable definition, 0.6.2 can join and discover later supporters when these initial HTTP peers are unreachable. Legacy invitations without continuity still require a starting peer.
 
 ## Add a supporter and a mirror
 
@@ -56,7 +56,7 @@ For a fresh installation, the installer accepts a code instead of JSON:
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
 
-Replace the address with your own reachable public IP and port. Add `--network COMPLETE_CODE` only when selecting another network. In 0.6.1 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
+Replace the address with your own reachable public IP and port. Add `--network COMPLETE_CODE` only when selecting another network. In 0.6.2 the peer follows the network's sources and automatically announces its reachable content endpoint to upgraded peers/readers. This does not edit the authority-signed list or grant name trust. For older readers, the operator can still check/add the endpoint and republish. [Details](shared-network.md).
 
 Updates preserve existing configuration. To deliberately join an existing installation, stop its peer, back up its data, run `node scripts/network.mjs join 'REAL_CODE' --data DATA_DIRECTORY`, then restart. The CLI invocation is explicit trust and does not show a second confirmation screen.
 
@@ -72,7 +72,7 @@ Copying a list does **not** copy website content. Catalog/content replication re
 
 ## Independent joining and updates
 
-Mesh 0.6.1 supports a durable, authority-signed network definition. A `mesh2.` code carries that definition; the public community release also carries a same-key signed definition for the existing community `mesh1.` code. A fresh supporter or reader can accept this definition even while the original starting server is unreachable.
+Mesh 0.6.2 supports a durable, authority-signed network definition. A `mesh2.` code carries that definition; the public community release also carries a same-key signed definition for the existing community `mesh1.` code. A fresh supporter or reader can accept this definition even while the original starting server is unreachable.
 
 The definition supplies numeric-IP rendezvous bootstrap addresses. Readers and supporters discover announcements for this network, verify each endpoint with a signed challenge and retain valid routes. A supporter may join after the original server is already absent. Learned addresses never become trusted name publishers merely through discovery.
 

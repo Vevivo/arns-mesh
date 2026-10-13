@@ -31,9 +31,9 @@ Four focused regression tests cover:
 
 The desktop stored a new catalogue after an automatic download but only repainted an already open Home view for a forced manual refresh. A failed attempt also consumed the same 15-minute cooldown as a successful download. The retained catalogue can therefore look unchanged even when a later background download succeeds, and recovery after a temporary failure is unnecessarily slow.
 
-The proposed desktop change refreshes the search results and status while preserving text being entered, selection, focus and scroll. Successful updates keep the 15-minute cadence. Failed updates preserve the last accepted catalogue and retry after about one minute. Work already in progress is shared, and changing network scope cancels or resets the old work.
+The desktop change refreshes the search results and status while preserving text being entered, selection, focus and scroll. Successful updates keep the 15-minute cadence. Failed updates preserve the last accepted catalogue and retry after about one minute. Work already in progress is shared, and changing network scope cancels or resets the old work.
 
-Eight focused scheduling and Home-update tests passed with controlled dependencies. Packaged Windows acceptance is a separate check; its result must be recorded from CI before claiming it passed.
+Eight focused scheduling and Home-update tests passed with controlled dependencies. Packaged Windows acceptance is a separate release gate. The new automatic-update check has passed; the full package is not accepted until every Windows acceptance step succeeds.
 
 ## Other load identified
 
@@ -43,4 +43,16 @@ The content store still scans the full content directory during insertion/prunin
 
 The focused tests passed in a real Node process with an in-memory filesystem fixture. They do not constitute a production load test, a Windows packaged application acceptance test, or proof that every cause of the observed outage has been eliminated.
 
-Production command execution and service restart were blocked by this session's approval policy. Reading the service status was permitted. No restart, configuration change, or production code deployment was performed during this investigation. Retest HTTP latency, name observation timestamps, catalogue publication, preparation progress, and resource use on the operator's server after deployment before marking the incident resolved.
+After the operator authorized server intervention, journal inspection confirmed repeated service memory-limit kills (11 restarts). The service was limited to 768 MiB and half of one CPU on a four-CPU server. Configuration and source were backed up on the server. The preparation fix was deployed with a 640 MiB V8 heap, a 1280 MiB service limit and one CPU's quota; the network identity and content directories were preserved.
+
+After deployment, twelve consecutive network-announcement probes succeeded in 11–850 ms. A 4.37 MB signed catalogue response completed in 6.26 seconds. The existing Windows reader's own request log also changed from timeouts to HTTP 200 replies from the same original supporter (including 649, 215 and 179 ms responses). These are bounded samples, not a guarantee of uninterrupted availability.
+
+At 11:25 UTC, independent inspection found a fresh catalogue generated at 11:24:54, successful registry refresh, advancing name observations and no service restart since the deployment. The retained name count was 13,361 and the published catalogue contained 13,290 entries. Updated registry data can reduce the current searchable count; retention totals measure a different set.
+
+## R84 publication compatibility
+
+The index updater had rejected current signed publications since 7 October. The publisher added Parquet files larger than 128 MiB alongside the root-transaction CDB index. Mesh incorrectly applied its CDB-specific per-file limit to those unused entries, rejecting the entire publication before updating its supported index.
+
+The fix retains full-document signature verification and metadata shape checks. The 128 MiB file limit is applied to the root CDB index and independently enforced by its partition-manifest validator. Unknown formats remain signed metadata and are never downloaded as CDB files. Three regression tests cover signed mixed-format acceptance and tampering, downloader/reader selection, and independent manifest bounds.
+
+The current publication was cryptographically checked against the server's existing trusted publisher. Complete catch-up requires approximately 22.58 GB of index downloads. The repaired updater was started with a temporary 32 GiB allowance under its existing 50 GiB disk budget, preserving old bands until replacements validate. Completion and restoration of the ordinary 4 GiB daily allowance must be checked separately; starting the updater is not evidence that catch-up has finished.
