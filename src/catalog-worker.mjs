@@ -221,6 +221,8 @@ export class CatalogWorker {
   const names=this.snapshotStore?.names()||[];if(!names.length||!this.maxPreparedSites)return;
   let cursor=(this.state.prepareCursor||0)%names.length;
   for(let checked=0;checked<names.length;checked++){
+   // Skipping cached/ready names must still allow peer replies and deadlines.
+   if(checked%32===0){await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();}
    const name=names[cursor];cursor=(cursor+1)%names.length;this.state.prepareCursor=cursor;
    const snapshot=this.snapshotStore.get(name),row=this.pinner.rows[name];
    if(!this.peer.contentStore.has?.(snapshot.txId))continue;
