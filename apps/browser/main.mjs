@@ -246,8 +246,8 @@ function guardTab(tab){
   wc.setWindowOpenHandler(({url})=>{const canonical=target(url);if(canonical!==null)void newTab(canonical).catch(error=>report(error,tab));else blocked(url);return {action:'deny'};});
   wc.on('will-navigate',(event,url)=>{event.preventDefault();
     if(homeQuery(wc.getURL())!==null){
-      if(url==='arnsui://app/connect'){send({command:'settings'});return;}
-      if(url==='arnsui://app/search-refresh'){void syncSearch({force:true}).catch(error=>report(error,tab));return;}
+      if(url==='arnsui://app/connect'){wc.stop();send({command:'settings'});return;}
+      if(url==='arnsui://app/search-refresh'){wc.stop();void syncSearch({force:true}).catch(error=>report(error,tab));return;}
       if(homeQuery(url)!==null){tabs.begin(tab.id,'');void wc.loadURL(url).catch(error=>report(error,tab));return;}
     }
     const canonical=target(url);if(canonical!==null)void navigate(canonical,tab).catch(error=>report(error,tab));else blocked(url);

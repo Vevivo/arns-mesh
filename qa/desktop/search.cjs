@@ -76,8 +76,10 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await ui.getByRole('button',{name:'Close settings',exact:true}).click();
  await new Promise(resolve=>{peerApp.on('message',m=>{if(m.seedStopped)resolve();});peerApp.send('stop-seed');});
  // Refresh is intercepted and updates this page in place; await the signed response below.
- const beforeLate=lateRequests;await home.locator('.refresh-catalogue').click({noWaitAfter:true});for(let i=0;i<150&&lateRequests===beforeLate;i++)await pause(100);await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
+ const homeBeforeRefresh=home.url();await home.locator('#mesh-query').fill('unfinished survivor search');const draftBeforeRefresh=await home.locator('#mesh-query').inputValue();const beforeLate=lateRequests;await home.locator('.refresh-catalogue').click();for(let i=0;i<150&&lateRequests===beforeLate;i++)await pause(100);await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
  assert.ok(lateRequests>beforeLate,'catalogue requested from learned survivor after seed loss');assert.match(await home.locator('.catalogue-status').innerText(),/1 indexed site/);
+ assert.equal(home.url(),homeBeforeRefresh);assert.equal(await home.locator('#mesh-query').inputValue(),draftBeforeRefresh);
+ report.checks.push('manual refresh finishes in place and preserves the unsent query');
  report.checks.push('seed stopped; real reader retrieves the original signed catalogue through the automatically learned survivor');
  await closeProvider();await close();
  fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'saved',trustedPeers:[],witnessQuorum:2}));
