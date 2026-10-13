@@ -5,17 +5,20 @@ import {canonicalize} from 'json-canonicalize';
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const safeName=s=>typeof s==='string'&&/^[A-Za-z0-9._-]{1,128}$/.test(s)&&!['.','..'].includes(s)&&!Object.hasOwn(Object.prototype,s);
 export const hashPattern=/^[a-f0-9]{64}$/;
+export const MAX_ROOT_INDEX_FILE_BYTES=128*1024*1024;
 export function verifyPublication(doc,trust,{sequence=0,acceptedDigest=null,now=Date.now(),allowExpired=true}={}){
  if(!doc||doc.version!==1||doc.publisher!==trust.publisher||!Number.isSafeInteger(doc.sequence)||doc.sequence<1||!Number.isFinite(Date.parse(doc.issuedAt))||!Number.isFinite(Date.parse(doc.expiresAt))||Date.parse(doc.expiresAt)<=Date.parse(doc.issuedAt)||Date.parse(doc.issuedAt)>now+300000)throw new Error('invalid_index_publication');
  if(!Array.isArray(doc.indexes)||doc.indexes.length>64)throw new Error('invalid_index_shape');
  const names=new Set();
  for(const index of doc.indexes){
   if(!safeName(index.name)||names.has(index.name)||!safeName(index.kind)||!Array.isArray(index.bands)||index.bands.length>1024)throw new Error('invalid_index_shape');names.add(index.name);
+  // Other signed formats are metadata only for this consumer.
+  const rootCdb=index.name==='root-tx-index'&&index.kind==='cdb64-root-tx';
   const bands=new Set();
   for(const band of index.bands){
    if(!safeName(band.id)||bands.has(band.id)||!Array.isArray(band.files)||band.files.length>1024)throw new Error('invalid_index_band');bands.add(band.id);
    if(band.heightRange&&(!Array.isArray(band.heightRange)||band.heightRange.length!==2||!Number.isSafeInteger(band.heightRange[0])||band.heightRange[0]<0||(band.heightRange[1]!==null&&(!Number.isSafeInteger(band.heightRange[1])||band.heightRange[1]<band.heightRange[0]))))throw new Error('invalid_index_height');
-   const files=new Set();for(const f of band.files){if(!safeName(f.name)||files.has(f.name)||!hashPattern.test(f.sha256)||!Number.isSafeInteger(f.size)||f.size<0||f.size>128*1024*1024)throw new Error('invalid_index_file');files.add(f.name);}
+   const files=new Set();for(const f of band.files){if(!safeName(f.name)||files.has(f.name)||!hashPattern.test(f.sha256)||!Number.isSafeInteger(f.size)||f.size<0||(rootCdb&&f.size>MAX_ROOT_INDEX_FILE_BYTES))throw new Error('invalid_index_file');files.add(f.name);}
   }
  }
  const {signature,...unsigned}=doc;
@@ -35,7 +38,7 @@ export function validateBandManifest(manifest,band){
  const prefixes=new Set(),files=new Map(band.files.map(f=>[f.name,f]));
  return manifest.partitions.map(p=>{
   const f=files.get(p.location?.filename);
-  if(!/^[a-f0-9]{2}$/.test(p.prefix)||prefixes.has(p.prefix)||p.location?.type!=='file'||!f||!f.name.endsWith('.cdb')||f.size<4096)throw new Error('invalid_shared_partition');
+  if(!/^[a-f0-9]{2}$/.test(p.prefix)||prefixes.has(p.prefix)||p.location?.type!=='file'||!f||!f.name.endsWith('.cdb')||!Number.isSafeInteger(f.size)||f.size<4096||f.size>MAX_ROOT_INDEX_FILE_BYTES)throw new Error('invalid_shared_partition');
   prefixes.add(p.prefix);return {...f,prefix:p.prefix};
  });
 }
