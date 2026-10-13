@@ -14,7 +14,7 @@ import {manifestTargetIds} from '../../src/manifest-path.mjs';
 import {applyProfile,validateProfile} from '../../apps/helper/network-profile.mjs';
 import {peerIdFromPublicKey} from '../../src/common.mjs';
 const dir=path.resolve(process.env.QA_OUTPUT),mode=process.argv[2];
-const names=['vevivo','bilolbabagate','bionica','ardrive-logo-2026'];
+const names=['vevivo','bilolbabagate','bionica','ardrive-logo-2026','indie-publisher-demo'];
 const privateEndpoints=[];
 process.on('uncaughtException',error=>{let message=String(error.stack||error);for(const value of privateEndpoints)message=message.split(value).join('[operator-endpoint]');console.error(message);process.exit(1);});
 process.env.ARNS_MESH_DIRECT_ONLY='1';

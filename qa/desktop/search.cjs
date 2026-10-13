@@ -25,9 +25,23 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  peerApp.on('message',message=>{if(message.request)peerRequests++;if(message.route==='b')lateRequests++;});
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('fixture peer startup timeout')),15000);peerApp.once('error',reject);peerApp.on('message',m=>{if(m.ready){clearTimeout(timer);resolve();}});});
  let {ui,home}=await launch();
- await home.locator('.refresh-catalogue').click();await home.locator('.catalogue-status').filter({hasText:'1 indexed site'}).waitFor();
- await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();await pause(100);
- assert.ok(fs.existsSync(path.join(data,'search-cache.json')));report.checks.push('signed catalogue downloaded through real Home refresh');
+ // Hold the first signed response until the already-open Home contains a draft.
+ // Releasing it exercises startup's automatic sync, without clicking Refresh.
+ assert.match(await home.locator('.catalogue-status').innerText(),/^0 indexed sites$/);
+ await home.locator('#mesh-query').fill('unsent astronomy');
+ await home.evaluate(()=>{
+  document.body.style.minHeight='200vh';document.querySelector('.catalogue-details').open=true;
+  const input=document.querySelector('#mesh-query');input.focus();input.setSelectionRange(3,7);scrollTo(0,120);
+ });
+ const oldScroll=await home.evaluate(()=>scrollY);
+ await new Promise(resolve=>{peerApp.on('message',m=>{if(m.catalogueReleased)resolve();});peerApp.send('release-catalogue');});
+ await home.locator('.catalogue-status').filter({hasText:'1 indexed site'}).waitFor();
+ await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
+ assert.equal(await home.locator('#mesh-query').inputValue(),'unsent astronomy');
+ assert.deepEqual(await home.evaluate(()=>({focused:document.activeElement.id,start:document.querySelector('#mesh-query').selectionStart,end:document.querySelector('#mesh-query').selectionEnd,scroll:scrollY,expanded:document.querySelector('.catalogue-details').open})),{focused:'mesh-query',start:3,end:7,scroll:oldScroll,expanded:true});
+ assert.ok(fs.existsSync(path.join(data,'search-cache.json')));
+ report.checks.push('automatic signed catalogue updates already-open Home count while preserving unsent search draft, selection, focus, scroll and details');
+ await home.evaluate(()=>{document.body.style.minHeight='';document.querySelector('.catalogue-details').open=false;scrollTo(0,0);});await home.locator('#mesh-query').fill('');
  await capture('09-home-automatic.png');
  const before=peerRequests;await home.locator('#mesh-query').fill('verified');await home.getByRole('button',{name:/Search Mesh/}).click();await home.locator('.search-result h3 a').waitFor();
  assert.match(home.url(),/welcome.html\?q=verified$/);assert.equal(await home.locator('.search-result h3 a').innerText(),'Signed QA page');assert.equal(await ui.locator('#address').inputValue(),'');assert.equal(peerRequests,before);report.checks.push('GET form submits; topic query stays local; address bar remains empty');
@@ -61,8 +75,11 @@ async function closeProvider(){if(!peerApp||peerApp.exitCode!==null)return;const
  await capture('10-learned-supporter.png');report.checks.push('already joined Windows reader automatically learns a later supporter without code or profile changes');
  await ui.getByRole('button',{name:'Close settings',exact:true}).click();
  await new Promise(resolve=>{peerApp.on('message',m=>{if(m.seedStopped)resolve();});peerApp.send('stop-seed');});
- const beforeLate=lateRequests;await home.locator('.refresh-catalogue').click();for(let i=0;i<150&&lateRequests===beforeLate;i++)await pause(100);await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
+ // Refresh is intercepted and updates this page in place; await the signed response below.
+ const homeBeforeRefresh=home.url();await home.locator('#mesh-query').fill('unfinished survivor search');const draftBeforeRefresh=await home.locator('#mesh-query').inputValue();const beforeLate=lateRequests;await home.locator('.refresh-catalogue').click();for(let i=0;i<150&&lateRequests===beforeLate;i++)await pause(100);await home.locator('.refresh-catalogue').filter({hasText:'Refresh catalogue'}).waitFor();
  assert.ok(lateRequests>beforeLate,'catalogue requested from learned survivor after seed loss');assert.match(await home.locator('.catalogue-status').innerText(),/1 indexed site/);
+ assert.equal(home.url(),homeBeforeRefresh);assert.equal(await home.locator('#mesh-query').inputValue(),draftBeforeRefresh);
+ report.checks.push('manual refresh finishes in place and preserves the unsent query');
  report.checks.push('seed stopped; real reader retrieves the original signed catalogue through the automatically learned survivor');
  await closeProvider();await close();
  fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'saved',trustedPeers:[],witnessQuorum:2}));

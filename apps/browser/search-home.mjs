@@ -16,3 +16,28 @@ export function renderSearchHome(template,result){
  const results=`<section class="search-results" ${r.query?'aria-labelledby="results-title"':'aria-label="Search catalogue"'}>${heading}${!r.sources?'<p class="search-notice"><a href="arnsui://app/connect">Connect to Mesh</a> to download a search catalogue.</p>':''}${r.error?'<p class="search-notice">Catalogue update unavailable. Any saved catalogue remains searchable.</p>':''}${r.query&&!r.total&&r.sources?'<p class="search-notice">No matching ArNS sites in this catalogue. Try a related word or the site’s language. You can also open a known name in the address bar.</p>':''}${items}${r.total>30?'<p class="result-limit">Showing the first 30 results. Add another word to narrow your search.</p>':''}<details class="catalogue-details"><summary>${r.query?'About these results':'Catalogue details'}</summary><p>${r.sources} trusted publisher${r.sources===1?'':'s'} · Catalogue: ${escape(date(r.generatedAt))}</p><p>Your search words stay on this device. Results match ArNS names, publisher descriptions and keywords, plus prepared page titles and text. Topics are supplied by site owners or pages, not endorsements. This catalogue has limited coverage; a missing result does not mean the site does not exist. Dates and availability are reports from your trusted publisher. Opening a result checks the name and files again; missing files and external services may still prevent a complete page.</p></details></section>`;
  return template.replace('<body>',r.query?'<body class="searching">':'<body>').replace('<!-- MESH_SEARCH -->',search).replace('<!-- MESH_RESULTS -->',results);
 }
+
+export function searchHomeUpdateScript(url,html){
+ if(homeQuery(url)===null)throw new Error('invalid_search_home');
+ return '('+updateSearchResults.toString()+')('+JSON.stringify(url)+','+JSON.stringify(html)+')';
+}
+function updateSearchResults(url,html){
+ // Navigation can race the main-process snapshot; never touch an ArNS page.
+ if(location.href!==url)return false;
+ const old=document.querySelector('.search-results');
+ if(!old)return false;
+ const next=new DOMParser().parseFromString(html,'text/html').querySelector('.search-results');
+ if(!next)return false;
+ const x=scrollX,y=scrollY,active=document.activeElement,focused=old.contains(active);
+ const href=focused?active.getAttribute('href'):null,summary=focused&&active.tagName==='SUMMARY';
+ const expanded=old.querySelector('.catalogue-details')?.open;
+ const details=next.querySelector('.catalogue-details');if(details)details.open=Boolean(expanded);
+ old.replaceWith(next);
+ // The form, its draft, selection and focus are left in place.
+ if(focused){
+  const target=summary?next.querySelector('.catalogue-details summary'):href?[...next.querySelectorAll('a')].find(a=>a.getAttribute('href')===href):null;
+  target?.focus({preventScroll:true});
+ }
+ scrollTo(x,y);
+ return true;
+}

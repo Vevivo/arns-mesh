@@ -2,13 +2,13 @@
 
 [English](../en/resilience.md) · [Tam destekçi kurulumu](destekci.md)
 
-Amaç, ilk sunucu erişilemez olduğunda okuyucuların aynı Mesh ağıyla devam etmesidir. **0.6.1 keşfi, güncel hazırlığı ve saklanan içeriğin hazır olmasını ayrı gösterir.** Çalışan servis ile eksiksiz içerik kopyası aynı durum değildir.
+Amaç, ilk sunucu erişilemez olduğunda okuyucuların aynı Mesh ağıyla devam etmesidir. **0.6.2 keşfi, güncel hazırlığı ve saklanan içeriğin hazır olmasını ayrı gösterir.** Çalışan servis ile eksiksiz içerik kopyası aynı durum değildir.
 
 ## İlk sunucu zaten erişilemezse
 
 Yeni geliştirici ilk işletmeciyle görüşmeden [standart kurulumu](destekci.md) yapabilir. Genel topluluk ağı, mevcut kodla aynı yetkilinin imzaladığı ve sürüme eklenen ağ tanımını kullanır. Başka ağlarda bağımsız imzalı davet kullanılır. Geliştirici kendi erişilebilir sayısal IP adresini belirtir; Mesh aynı ağın sayısal IP keşif yollarıyla destekçiyi bulur ve duyurur.
 
-Bu bağımsız keşif için okuyucular da 0.6.1 olmalıdır. 0.5.1'in eski başlangıç/adres öğrenme davranışı güncellemeden değişmez. Mevcut topluluk kodu aynı ağı tanımaya devam eder; kullanıcı yeni geliştiricinin ayrı ağına geçmez.
+Bağımsız keşif 0.6.1 ve sonrasında vardır. Güncel yanıt süresi ve arama düzeltmeleri için 0.6.2 kullanın. 0.5.1'in eski başlangıç/adres öğrenme davranışı güncellemeden değişmez. Mevcut topluluk kodu aynı ağı tanımaya devam eder; kullanıcı yeni geliştiricinin ayrı ağına geçmez.
 
 Bağımsız RPC ve içerik kaynakları erişilebilirken yeni sunucu güncel isimleri izler, dosyaları doğrulayarak hazırlar. İlk sunucunun yokluğu sağlıklı yolları kapatmaz. Bütün kaynak yolları da kesilmişse gerekli kabul edilen kayıtlar ve dosyalar başka bir Mesh kopyasından alınmalıdır. Hiçbir erişilebilir kaynağın tutmadığı bilgi yeniden üretilemez.
 
@@ -67,7 +67,7 @@ En fazla 32 isim için `--name` tekrarlanabilir. Kontrol yalnızca seçilen dest
 
 ## 3. Keşfi ve normal kullanımı ayrıca sına
 
-Adres vererek yapılan kontrol hizmeti kanıtlar; otomatik keşfi ayrıca test et. Üretimi durdurmadan yalıtılmış bir ortamda boş **0.6.1 okuyucu profili** kullan:
+Adres vererek yapılan kontrol hizmeti kanıtlar; otomatik keşfi ayrıca test et. Üretimi durdurmadan yalıtılmış bir ortamda boş **0.6.2 okuyucu profili** kullan:
 
 1. İlk sunucuyu yalnızca test ortamından erişilemez yap.
 2. B'nin adresini elle girmeden aynı desteklenen kodla katıl.

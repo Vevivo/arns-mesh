@@ -1,8 +1,9 @@
 {
-  "version": "0.6.1",
-  "date": "2026-10-12",
+  "version": "0.6.2",
+  "date": "2026-10-13",
   "compressionEvidence": "../validation/compressed-content-2026-10-12.md",
   "sourceTests": "Publication requires exact-commit Linux and Windows source tests; test totals and logs are in the release acceptance run.",
   "windowsAcceptance": "Publication requires packaged Windows compression (gzip/Brotli/plain, saved restart, rejected corrupt/oversized/unverified content), search, original-seed-absent discovery and real-content OS firewall checks. See release build.json for acceptanceRun.",
-  "baselineEvidence": "../archive/verification-0.6.0.json"
+  "baselineEvidence": "../archive/verification-0.6.0.json",
+  "responsivenessEvidence": "../validation/peer-responsiveness-2026-10-13.md"
 }

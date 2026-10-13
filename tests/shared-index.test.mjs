@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import bs58 from 'bs58';
 import {canonicalize} from 'json-canonicalize';
-import {verifyPublication,digest} from '../src/index-publication.mjs';
+import {verifyPublication,digest,validateBandManifest} from '../src/index-publication.mjs';
 import {cdbHash,decodeIndexValue} from '../src/cdb64-format.mjs';
 import {SharedIndex} from '../src/shared-index.mjs';
 import {syncSharedIndex,validateCdb,atomicJson} from '../scripts/sync-shared-index.mjs';
@@ -67,4 +67,52 @@ test('Mesh peer serves a signed location directly from installed index with upst
  const peer=new MeshPeer({dataDir:path.join(dir,'peer'),locationsFile:path.join(dir,'locations.json'),allowRemoteFetch:false});peer.identity={privateKeyPem:pair.privateKey.export({format:'pem',type:'pkcs8'}),publicKeyPem:pair.publicKey.export({format:'pem',type:'spki'})};peer.witnessPeerId=peerIdFromPublicKey(peer.identity.publicKeyPem);peer._warmLocation=()=>{throw new Error('must_not_fetch');};
  const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0});t.after(()=>server.close());
  const reply=await queryDirectPeer({host:'127.0.0.1',port:server.address.port},{op:'location',dataId:f.id,cacheOnly:true});assert.equal(reply.ok,true);assert.ok(verifyRecord(reply.recordJson,reply.signature,reply.witnessPublicKeyPem));assert.equal(JSON.parse(reply.recordJson).rootTxId,f.root);assert.equal(JSON.parse(reply.recordJson).rootOffset,2**40);assert.equal(peer.historyLookups.size,0);
+});
+
+function withExtraIndex(f,{size=612904773,kind='parquet',name='parquet-l1'}={}){
+ const {signature,...unsigned}=f.doc;
+ return sign({...unsigned,indexes:[...unsigned.indexes,{name,kind,bands:[{id:'large-history',files:[{name:'transactions.parquet',size,sha256:'a'.repeat(64)}]}]}]});
+}
+test('large unrelated signed indexes do not block CDB metadata; every field stays signed and sizes bounded',()=>{
+ const f=fixture(),doc=withExtraIndex(f);assert.equal(verifyPublication(doc,trust).stale,false);
+ const forged=structuredClone(doc);forged.indexes[1].bands[0].files[0].size++;assert.throws(()=>verifyPublication(forged,trust),/invalid_index_signature/);
+ assert.equal(verifyPublication(withExtraIndex(f,{kind:'future-format',size:2**40}),trust).stale,false);
+ for(const size of [-1,1.5,Number.MAX_SAFE_INTEGER+1]){
+  const invalid=structuredClone(doc);invalid.indexes[1].bands[0].files[0].size=size;
+  assert.throws(()=>verifyPublication(invalid,trust),/invalid_index_file/);
+ }
+ for(const name of ['../bad','__proto__']){
+  const invalid=structuredClone(doc);invalid.indexes[1].bands[0].files[0].name=name;
+  assert.throws(()=>verifyPublication(invalid,trust),/invalid_index_file/);
+ }
+ const duplicate=structuredClone(doc);duplicate.indexes[1].bands[0].files.push({...duplicate.indexes[1].bands[0].files[0]});
+ assert.throws(()=>verifyPublication(duplicate,trust),/invalid_index_file/);
+ const wrongHash=structuredClone(doc);wrongHash.indexes[1].bands[0].files[0].sha256='not-a-digest';
+ assert.throws(()=>verifyPublication(wrongHash,trust),/invalid_index_file/);
+ const {signature,...unsigned}=f.doc;unsigned.indexes[0].bands[0].files[0].size=128*1024*1024+1;
+ assert.throws(()=>verifyPublication(sign(unsigned),trust),/invalid_index_file/);
+});
+test('mixed-format publication downloads and serves only its bounded root CDB, never Parquet',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mesh-mixed-index-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ atomicJson(path.join(dir,'trust.json'),trust);const f=fixture(),doc=withExtraIndex(f),requested=[];
+ const original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
+ globalThis.fetch=async url=>{
+  const sha=String(url).split('/').at(-1);requested.push(sha);
+  assert.ok(f.files.has(sha),'only signed CDB and manifest blobs are requested');
+  return new Response(f.files.get(sha),{status:200});
+ };
+ await syncSharedIndex({dir,origin:'https://publisher.example',maxDiskBytes:1024*1024,fetchJson:async()=>doc});
+ assert.equal(requested.length,2);assert.equal(new Set(requested).size,2);
+ globalThis.fetch=()=>{throw new Error('reader_network_forbidden');};
+ const reader=new SharedIndex(dir);assert.equal((await reader.find(f.id)).rootTxId,f.root);assert.equal(reader.status().bands,1);
+ const {signature,...unsigned}=doc;unsigned.sequence++;unsigned.indexes[0].kind='future-format';
+ await assert.rejects(syncSharedIndex({dir,origin:'https://publisher.example',fetchJson:async()=>sign(unsigned)}),/root_tx_index_missing/);
+});
+test('manifest rejects an oversized or noninteger CDB partition even when called independently',()=>{
+ const f=fixture(),band=structuredClone(f.doc.indexes[0].bands[0]);
+ const mf=f.files.get(band.files.find(x=>x.name==='manifest.json').sha256),manifest=JSON.parse(mf);
+ for(const size of [128*1024*1024+1,4096.5,Number.MAX_SAFE_INTEGER+1]){
+  band.files.find(x=>x.name.endsWith('.cdb')).size=size;
+  assert.throws(()=>validateBandManifest(manifest,band),/invalid_shared_partition/);
+ }
 });

@@ -1,6 +1,7 @@
 import {verifyStoredContent} from './content-store.mjs';
 import {decodeVerifiedPayload} from './content-decoding.mjs';
 import fs from 'node:fs';
+import {setImmediate as yieldToEventLoop} from 'node:timers/promises';
 import crypto from 'node:crypto';
 import {createSwarmMeshClient} from './swarm-client.mjs';
 import {fetchMeshContent} from './content-fetcher.mjs';
@@ -109,7 +110,16 @@ export class SitePinner{
   };
   try{
    const root=await fetchOne(snapshot.txId);row.saved=1;await expand(root);this.save();
-   const worker=async()=>{while(next<ids.length){signal?.throwIfAborted();const id=ids[next++];try{const item=await fetchOne(id);row.saved++;await expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}this.save();}};
+   let checkpointAt=Date.now();
+   const worker=async()=>{while(next<ids.length){
+    // Cached misses settle immediately. Yield so HTTP replies and the caller's
+    // preparation deadline can run even when every lookup resolves locally.
+    await yieldToEventLoop();signal?.throwIfAborted();
+    const id=ids[next++];try{const item=await fetchOne(id);row.saved++;await expand(item);}catch(e){row.failed++;row.errors.push({id,error:String(e.message).slice(0,200)});}
+    // Initial and final commits stay synchronous and atomic. Intermediate
+    // progress is recoverable, so avoid rewriting every site's metadata per file.
+    if(Date.now()-checkpointAt>=1000){this.save();checkpointAt=Date.now();}
+   }};
    await worker(); // One preparation transfer at a time; shared server work is bounded separately.
    row.status=row.failed?'partial':row.scope==='linked-arweave'?'linked-resources-saved':row.scope==='manifest'?'manifest-saved':'document-saved';
   }catch(e){row.status='partial';row.failed++;row.errors.push({error:String(e.message).slice(0,240)});}

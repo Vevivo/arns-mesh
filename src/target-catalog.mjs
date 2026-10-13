@@ -89,7 +89,19 @@ export class TargetCatalog {
    try{await this.refresh({signal});this.state.registryError=null;this.state.registryRetryMs=0;}
    catch(error){this.state.registryError=String(error.message).slice(0,240);this.state.registryRetryMs=error.message==='catalog_refresh_timeout'&&registryPdas.size>validatedBefore?60000:5*60000;if(!this.state.registry.length||signal?.aborted){this.save();throw error;}}
   }
-  for(let i=0;i<Math.min(mints,this.state.registry.length);i++){
+  const byBase=new Map(),mintSlots=new Map();
+  for(const [name,row] of Object.entries(this.state.targets)){
+   if(!byBase.has(row.baseName))byBase.set(row.baseName,new Set());
+   byBase.get(row.baseName).add(name);mintSlots.set(row.mint,Math.max(mintSlots.get(row.mint)||0,row.slot));
+  }
+  let targetCount=Object.keys(this.state.targets).length,dirty=false,checkpointAt=Date.now(),sinceCheckpoint=0;
+  const checkpoint=()=>{
+   if(!dirty)return;
+   // Each verified snapshot is already durable before advancing the saved cursor.
+   this.save();dirty=false;sinceCheckpoint=0;checkpointAt=Date.now();
+  };
+  try{for(let i=0;i<Math.min(mints,this.state.registry.length);i++){
+   signal?.throwIfAborted();dirty=true;sinceCheckpoint++;
    const prioritized=(this.state.scanTurn||0)%2===0&&this.state.pendingNames?.length;
    const record=prioritized?this.state.registry.find(r=>r.name===this.state.pendingNames[0]):this.state.registry[this.state.cursor];
    this.state.scanTurn=(this.state.scanTurn||0)+1;
@@ -108,10 +120,11 @@ export class TargetCatalog {
     }
     const antProgram=await observeAntProgram(this.rpc,this.endpoint,record.mint,{slot:bindingSlot,signal});
     const result=await this.rpc(this.endpoint,'getProgramAccounts',[antProgram.programId,{encoding:'base64',commitment:'finalized',withContext:true,minContextSlot:antProgram.slot,filters:[filter(ANT_RECORD_DISCRIMINATOR),{memcmp:{offset:8,bytes:record.mint,encoding:'base58'}}]}],{signal,timeout:15000});
-    const previousSlot=Math.max(this.state.slot,antProgram.slot,...Object.values(this.state.targets).filter(t=>t.mint===record.mint).map(t=>t.slot));
+    const previousSlot=Math.max(this.state.slot,antProgram.slot,mintSlots.get(record.mint)||0);
     if(!Number.isSafeInteger(result?.context?.slot)||result.context.slot<previousSlot||!Array.isArray(result.value)||result.value.length>10000)throw new Error('invalid_ant_scan');
     const targets={};
-    for(const row of result.value){
+    for(const [index,row] of result.value.entries()){
+     if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
      signal?.throwIfAborted();
      if(row.account.owner!==antProgram.programId)throw new Error('ant_owner_mismatch');
      const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
@@ -122,13 +135,22 @@ export class TargetCatalog {
      const name=ant.undername==='@'?record.name:ant.undername+'_'+record.name;
      targets[name]={baseName:record.name,mint:record.mint,antProgram:antProgram.programId,dataId:ant.transactionId,slot:result.context.slot,observedAt:Date.now(),ttlSeconds:ant.ttlSeconds,trust:'rpc-observation-not-inclusion-proof'};
     }
-    const retained=Object.fromEntries(Object.entries(this.state.targets).filter(([,r])=>r.baseName!==record.name));
-    if(Object.keys(retained).length+Object.keys(targets).length>this.maxTargets)throw new Error('catalog_target_limit');
-    this.state.targets={...retained,...targets};
-    if(this.snapshotStore)this.snapshotStore.putMany(Object.entries(targets).map(([name,row])=>({schema:'arns-mesh-name-snapshot/v1',name,txId:row.dataId,antId:row.mint,slot:Math.min(bindingSlot,row.slot),observedAt:new Date(row.observedAt).toISOString(),ttlSeconds:row.ttlSeconds})),{kind:'local-rpc'});
+    const oldNames=byBase.get(record.name)||new Set(),newNames=Object.keys(targets);
+    if(targetCount-oldNames.size+newNames.length>this.maxTargets)throw new Error('catalog_target_limit');
+    for(const name of oldNames)delete this.state.targets[name];
+    Object.assign(this.state.targets,targets);targetCount+=newNames.length-oldNames.size;byBase.set(record.name,new Set(newNames));
+    mintSlots.set(record.mint,Math.max(previousSlot,result.context.slot));
+    if(this.snapshotStore){
+     const snapshots=Object.entries(targets).map(([name,row])=>({schema:'arns-mesh-name-snapshot/v1',name,txId:row.dataId,antId:row.mint,slot:Math.min(bindingSlot,row.slot),observedAt:new Date(row.observedAt).toISOString(),ttlSeconds:row.ttlSeconds}));
+     this.snapshotStore.putMany(snapshots,{kind:'local-rpc'});
+    }
    }catch(e){this.state.errors.push({name:record.name,error:String(e.message).slice(0,240),at:Date.now()});this.state.errors=this.state.errors.slice(-32);if(signal?.aborted)throw e;}
-   finally{if(prioritized)this.state.pendingNames.shift();else this.state.cursor=(this.state.cursor+1)%this.state.registry.length;this.save();}
-  }
+   finally{if(prioritized)this.state.pendingNames.shift();else this.state.cursor=(this.state.cursor+1)%this.state.registry.length;}
+   if(sinceCheckpoint>=8||Date.now()-checkpointAt>=1000)checkpoint();
+   // Let requests and cancellation run even when every RPC answer is already buffered.
+   await new Promise(resolve=>setImmediate(resolve));
+  }}finally{checkpoint();}
+
   return this.status();
  }
  async refreshTargets({signal}={}){
@@ -140,7 +162,8 @@ export class TargetCatalog {
   if(!Number.isSafeInteger(response?.context?.slot)||response.context.slot<slot||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_ant_catalog_scan');
   const namesByMint=new Map(),targets=Object.fromEntries(Object.entries(this.state.targets).filter(([,r])=>r.antProgram&&r.antProgram!==MAINNET_PROGRAM_IDS.ant));let unregistered=0;
   for(const r of this.state.registry){if(!namesByMint.has(r.mint))namesByMint.set(r.mint,[]);namesByMint.get(r.mint).push(r.name);}
-  for(const row of response.value){
+  for(const [index,row] of response.value.entries()){
+   if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
    signal?.throwIfAborted();
    if(row.account.owner!==MAINNET_PROGRAM_IDS.ant)throw new Error('ant_owner_mismatch');
    const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');

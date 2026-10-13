@@ -4,7 +4,7 @@
 
 Destekçi; ArNS isim kayıtlarını ve doğrulanmış dosyaları kendi sunucusunda tutar, kaynaklara erişebildiğinde güncellemeleri toplar ve başka bir destekçi erişilemez olduğunda kullanıcılara hizmet verir. **Kullanıcıların bulunduğu aynı Mesh ağına katıl. Onlar için ayrı bir ağ kodu üretmen gerekmez.**
 
-Bağımsız keşif için hem destekçi hem okuyucu **0.6.1** kullanmalıdır. Eski 0.5.1 okuyucu önceden öğrendiği adresleri kullanabilir; yeni keşif mekanizması için güncelleme gerekir.
+Bağımsız keşif için hem destekçi hem okuyucu **0.6.2** kullanmalıdır. Eski 0.5.1 okuyucu önceden öğrendiği adresleri kullanabilir; yeni keşif mekanizması için güncelleme gerekir.
 
 ## Hazırlık
 
@@ -28,7 +28,7 @@ Normal destekçi hesabıyla çalıştır. `YOUR_PUBLIC_IP` yerine **kendi genel 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.6.1
+git checkout --detach v0.6.2
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
@@ -45,7 +45,7 @@ Mevcut kimlik, bağlantı dosyaları ve açıkça seçilmiş ayarlar korunur. Es
 
 Kod ortak ağı tanımlar; `--advertise` ise yeni sunucunun adresini belirtir. Mesh adresleri aynı ağ içinde duyurur ve keşfeder. İlk sunucu yokken de imzalı sayısal IP keşif ayarları üzerinden diğer destekçiler bulunabilir. Bir adresin öğrenilmesi, o sunucuya isim kayıtlarını değiştirme yetkisi vermez.
 
-0.6.1 okuyucuları aynı desteklenen ağ kodunu kullanır. İlk işletmecinin her geliştirici için yeni kod dağıtması gerekmez. Keşif yollarının ulaşılabilir olması gerekir; hiçbir iletişim yolu yoksa yeni adres öğrenilemez.
+0.6.2 okuyucuları aynı desteklenen ağ kodunu kullanır. İlk işletmecinin her geliştirici için yeni kod dağıtması gerekmez. Keşif yollarının ulaşılabilir olması gerekir; hiçbir iletişim yolu yoksa yeni adres öğrenilemez.
 
 Başka bir ağdan kontrol et:
 

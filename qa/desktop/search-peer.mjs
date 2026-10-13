@@ -22,7 +22,8 @@ const sign=record=>{const recordJson=JSON.stringify(record);return {ok:true,witn
 const publisher=new SearchPublisher({file:path.join(output,'publisher.json'),snapshots:new NameSnapshotStore(path.join(data,'name-snapshots.json')),contentStore:new VerifiedContentStore(path.join(data,'content')),sign});await publisher.pass();assert.equal(publisher.record.entries.length,1);
 const topicPublisher=new TopicSearchPublisher({file:path.join(output,'topics.json'),snapshots:new NameSnapshotStore(path.join(data,'name-snapshots.json')),documents:publisher,metadata:{get:()=>({title:'',description:'',keywords:['concert'],metadataAt:new Date().toISOString()})},sign});topicPublisher.pass();
 const providerData=path.join(output,'provider-a');
-const peer={identity:{},witnessPeerId,_envelope:sign,requestsServed:0,_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');assert.equal(Object.hasOwn(req,'query'),false);process.send?.({request:true,route:'a'});return req.version===2?topicPublisher.reply():publisher.reply();}};
+let releaseCatalogue;const catalogueReady=new Promise(resolve=>{releaseCatalogue=resolve;});
+const peer={identity:{},witnessPeerId,_envelope:sign,requestsServed:0,async _handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');assert.equal(Object.hasOwn(req,'query'),false);process.send?.({request:true,route:'a'});await catalogueReady;return req.version===2?topicPublisher.reply():publisher.reply();}};
 const discovery=new PeerDiscovery({dataDir:providerData,scope:()=>peerNetworkScope(providerData),peers:()=>[],identity:peer,listenPort:1});
 const server=await startDirectPeerServer(peer,{host:'127.0.0.1',port:0,discovery,networkAnnouncement:()=>readNetworkPublication(providerData),networkRecovery:()=>readNetworkRecovery(providerData)});discovery.listenPort=server.address.port;
 let late=null,seedStopped=false;
@@ -35,6 +36,7 @@ const publication=publishNetwork({dataDir:providerData,profile,name:'QA supporte
 const connection=new NetworkConnection({dataDir:data}),preview=await connection.inspect(publication.code);await connection.join(publication.code,{expectedId:networkId(preview.invitation.key),expectedRevision:preview.payload.revision,expectedHash:connectionRecordHash(preview.envelope,preview.recovery)});
 fs.writeFileSync(path.join(data,'preferences.json'),JSON.stringify({accessPolicy:'auto',trustedPeers:[],witnessQuorum:2}));
 process.on('message',async message=>{try{
+ if(message==='release-catalogue'){releaseCatalogue();process.send?.({catalogueReleased:true});}
  if(message==='late-supporter'){
   const k=crypto.generateKeyPairSync('ed25519'),pub=k.publicKey.export({format:'pem',type:'spki'}),priv=k.privateKey.export({format:'pem',type:'pkcs8'}),id=peerIdFromPublicKey(pub);
   const b={identity:{},witnessPeerId:id,requestsServed:0,_envelope(record){const recordJson=JSON.stringify(record);return {ok:true,witnessPeerId:id,witnessPublicKeyPem:pub,recordJson,signature:signRecord(recordJson,priv)};},_handleAsync(req){if(req.op==='snapshot'&&req.name==='')return {ok:false,error:'invalid_arns_name'};assert.equal(req.op,'catalog');process.send?.({request:true,route:'b'});return req.version===2?topicPublisher.reply():publisher.reply();}};

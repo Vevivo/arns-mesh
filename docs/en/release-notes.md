@@ -1,23 +1,23 @@
-# ArNS Mesh 0.6.1
+# ArNS Mesh 0.6.2
 
-Mesh now opens Arweave files uploaded with gzip or Brotli compression, including HTML, JavaScript, CSS and site manifests. The 0.6.0 reader could verify those files but passed their compressed bytes to the viewer or manifest parser.
+This update fixes supporter stalls during site preparation, restores compatibility with current R84 publications, and keeps the desktop's open search page up to date.
 
-## Use it
+## Update
 
-Update the Windows desktop and supporter to **0.6.1**. Keep your existing Mesh connection settings and verified files. No network code change or content re-upload is needed.
+Use **0.6.2 on the Windows desktop and supporter**. Keep your existing Mesh connection code, settings and verified content. Updating the desktop does not update a separately installed supporter.
 
-An older supporter can still send original signed compressed files to the updated reader. Updating the supporter also enables compressed manifest preparation, linked-file discovery and search indexing. Existing preparation records are rechecked gradually within the supporter's normal budgets; incomplete compressed copies are no longer advertised as ready once detected.
+[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.6.2/docs/en/user.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.6.2/docs/en/supporter.md)
 
-[Windows guide](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/en/user.md) · [Supporter setup](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/en/supporter.md)
+## Changes
 
-## Verification and limits
+- Preparing a large site with missing local files yields between files, honors cancellation, and batches progress writes. Requests and background name checks can continue while preparation runs.
+- Bulk and per-name scans yield while decoding large replies. Catalogue checkpoints and compact file statistics reduce repeated work and memory pressure without changing verification or retention rules.
+- Home reflects automatically downloaded search catalogues without erasing an unfinished query. A failed download keeps the last accepted catalogue and retries after about a minute; successful background updates keep the fifteen-minute cadence.
+- Large Parquet entries in a publisher's signed R84 document no longer block the root-transaction CDB index. Mesh still verifies the whole publication, downloads only its supported index format, and enforces CDB file, disk and bandwidth limits.
+- Original signed file verification, gzip/Brotli decoding limits, direct-IP access, name resolution and independent supporter discovery remain in place.
 
-- Original compressed bytes and their signed tags are verified before decoding. Storage, content hashes and Mesh transfers retain that original representation.
-- Viewing uses a separate decoded representation. Content length, byte ranges and HEAD refer to the bytes actually served; the viewer does not receive a second compression header.
-- Each decoded file is limited to **32 MiB**. Decoding has a **five-second deadline**, one active worker and a bounded queue. Malformed, ambiguous or unsupported encodings fail with an English error.
-- Source tests cover direct numeric-IP Arweave reads, prepared supporters, saved copies, gzip, Brotli, plain content, integrity failures and resource limits. The release gate also exercises the actual packaged Windows application.
-- Real compressed ArNS content and the exact scope of acceptance are documented in the [validation report](https://github.com/Vevivo/arns-mesh/blob/v0.6.1/docs/validation/compressed-content-2026-10-12.md).
+The search count reflects the current accepted catalogue; updated or removed listings can change it in either direction. A catalogue listing is not a promise that every site file is already retained.
 
-R84 lookup, direct-IP transport, name resolution and existing outage alternatives remain in place. This release concerns desktop/supporter compression compatibility; it does not add a separate web version or make external website APIs available offline.
+[Investigation, live checks and limits](https://github.com/Vevivo/arns-mesh/blob/v0.6.2/docs/validation/peer-responsiveness-2026-10-13.md) · [Compression behavior](https://github.com/Vevivo/arns-mesh/blob/v0.6.2/docs/validation/compressed-content-2026-10-12.md)
 
-The Windows build remains unsigned.
+The release gate runs Linux and Windows source tests and tests the packaged Windows application for search, supporter discovery, compressed content, saved copies and upstream outages. The exact acceptance run is recorded in the release's build.json. The Windows build remains unsigned.

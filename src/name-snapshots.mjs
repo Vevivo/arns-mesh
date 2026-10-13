@@ -24,7 +24,15 @@ export class NameSnapshotStore{
   if(!previous&&Object.keys(this.rows).length>=50000)throw new Error('snapshot_catalog_limit');
   const before=this.rows[row.name];this.rows[row.name]={...row,provenance};try{if(persist)this.save();}catch(e){if(before)this.rows[row.name]=before;else delete this.rows[row.name];throw e;}return this.get(row.name);
  }
- putMany(values,provenance){const before=this.rows;this.rows=Object.assign(Object.create(null),before);try{for(const value of values)this.put(value,provenance,{persist:false});this.save();}catch(error){this.rows=before;throw error;}}
+ putMany(values,provenance){
+  // Only changed names need rollback entries. Copying the entire catalogue for
+  // each small observation batch otherwise grows with every retained name.
+  const before=new Map();
+  try{
+   for(const value of values){if(!before.has(value.name))before.set(value.name,this.rows[value.name]);this.put(value,provenance,{persist:false});}
+   this.save();
+  }catch(error){for(const [name,row] of before){if(row===undefined)delete this.rows[name];else this.rows[name]=row;}throw error;}
+ }
  observe(evidence){
   const good=evidence?.observations?.filter(x=>x.ok)||[],checks=evidence?.checks;
   if(!good.length||!checks?.pdaDerivedLocally||!checks.accountOwnersMatchExpectedPrograms||!checks.accountBytesDecodedLocally||good.some(x=>x.ant?.txId!==evidence.txId||x.arns?.processId!==evidence.antId))throw new Error('snapshot_requires_local_observation');
