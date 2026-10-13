@@ -31,7 +31,7 @@ async function setup(t,{count=32,abortAt=0,badAt=0}={}){
  return {catalog,snapshots,controller,names,dir,counts:()=>({targetWrites,nameWrites,scans})};
 }
 test('bounded catalogue checkpoints reduce writes and persist every validated binding before returning',async t=>{
- const f=await setup(t);await f.catalog.step({mints:32});
+ const f=await setup(t),originalNow=Date.now,fixedNow=originalNow();Date.now=()=>fixedNow;t.after(()=>{Date.now=originalNow;});await f.catalog.step({mints:32});
  assert.equal(f.snapshots.names().length,32);assert.equal(f.counts().nameWrites,32);
  assert.ok(f.counts().targetWrites<=8,'32 buffered replies group target checkpoints while snapshots remain immediately durable');
  assert.ok(f.counts().targetWrites<f.counts().nameWrites);
