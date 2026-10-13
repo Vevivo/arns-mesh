@@ -123,7 +123,8 @@ export class TargetCatalog {
     const previousSlot=Math.max(this.state.slot,antProgram.slot,mintSlots.get(record.mint)||0);
     if(!Number.isSafeInteger(result?.context?.slot)||result.context.slot<previousSlot||!Array.isArray(result.value)||result.value.length>10000)throw new Error('invalid_ant_scan');
     const targets={};
-    for(const row of result.value){
+    for(const [index,row] of result.value.entries()){
+     if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
      signal?.throwIfAborted();
      if(row.account.owner!==antProgram.programId)throw new Error('ant_owner_mismatch');
      const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
@@ -161,7 +162,8 @@ export class TargetCatalog {
   if(!Number.isSafeInteger(response?.context?.slot)||response.context.slot<slot||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_ant_catalog_scan');
   const namesByMint=new Map(),targets=Object.fromEntries(Object.entries(this.state.targets).filter(([,r])=>r.antProgram&&r.antProgram!==MAINNET_PROGRAM_IDS.ant));let unregistered=0;
   for(const r of this.state.registry){if(!namesByMint.has(r.mint))namesByMint.set(r.mint,[]);namesByMint.get(r.mint).push(r.name);}
-  for(const row of response.value){
+  for(const [index,row] of response.value.entries()){
+   if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
    signal?.throwIfAborted();
    if(row.account.owner!==MAINNET_PROGRAM_IDS.ant)throw new Error('ant_owner_mismatch');
    const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');

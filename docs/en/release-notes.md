@@ -11,6 +11,7 @@ Use **0.6.2 on the Windows desktop and supporter**. Keep your existing Mesh conn
 ## Changes
 
 - Preparing a large site with missing local files yields between files, honors cancellation, and batches progress writes. Requests and background name checks can continue while preparation runs.
+- Bulk and per-name scans yield while decoding large replies. Catalogue checkpoints and compact file statistics reduce repeated work and memory pressure without changing verification or retention rules.
 - Home reflects automatically downloaded search catalogues without erasing an unfinished query. A failed download keeps the last accepted catalogue and retries after about a minute; successful background updates keep the fifteen-minute cadence.
 - Large Parquet entries in a publisher's signed R84 document no longer block the root-transaction CDB index. Mesh still verifies the whole publication, downloads only its supported index format, and enforces CDB file, disk and bandwidth limits.
 - Original signed file verification, gzip/Brotli decoding limits, direct-IP access, name resolution and independent supporter discovery remain in place.
