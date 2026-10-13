@@ -16,7 +16,7 @@ Destekçi kurulumu keşfi ve içerik hazırlığını birlikte açar. Bağımsı
 
 İlk sunucu kapandıktan sonra kurulan destekçi, kalan kaynak yollarından ve diğer destekçilerden güncel kayıtlarla dosyaları toplayabilir. Bütün kaynak yolları da kesilmişse erişebildiği destekçide önceden saklanmış kayıtlar ve doğrulanmış kopyalar gerekir. Ulaşılabilir hiçbir kaynakta bulunmayan dosyayı kod veya indeks yeniden oluşturamaz.
 
-Bu işleyiş için **okuyucuda ve destekçide 0.6.2 kullanın**. Eski uygulama yükseltilmeden yeni keşif özelliği kazanmaz.
+Bu işleyiş için **okuyucuda ve destekçide 0.6.2 kullanın**. Bağımsız keşif 0.6.1 ve sonrasında vardır; bundan eski okuyucular bu özellik için güncellenmelidir.
 
 ## Keşifte ne paylaşılır?
 

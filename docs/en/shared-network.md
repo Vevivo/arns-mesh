@@ -16,7 +16,7 @@ Discovery and content preparation are both part of the supporter setup. Independ
 
 A supporter installed after the first server disappeared can obtain current names and files from remaining configured upstream routes and other supporters. If all upstream routes are also unavailable, it needs previously retained records and verified copies from a reachable supporter. A code or index cannot reconstruct files that no reachable source holds.
 
-Use **0.6.2 on readers and supporters** for this lifecycle. Older installations gain the new discovery mechanism only after upgrading.
+Use **0.6.2 on readers and supporters** for this lifecycle. Independent discovery is available in 0.6.1 and later; readers older than 0.6.1 need upgrading for that mechanism.
 
 ## What discovery shares
 

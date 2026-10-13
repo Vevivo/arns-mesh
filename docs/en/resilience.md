@@ -8,7 +8,7 @@ The goal is for readers to keep using the same network when its first server is 
 
 A new developer can run the [standard setup](supporter.md) without contacting the original operator. The bundled community definition is signed by the same network authority as the existing public code. Other networks use a self-contained signed invitation. The developer supplies their own reachable numeric IP; Mesh discovers and advertises that supporter through the signed network's numeric-IP rendezvous paths.
 
-Readers need 0.6.2 for this independent discovery. Existing 0.5.1 installations only have their older seed/learned-route behavior until upgraded. The original code and the new durable invitation identify the same community network; there is no separate developer network for users to join.
+Independent discovery is available in 0.6.1 and later. Use 0.6.2 for the current responsiveness and search fixes. Existing 0.5.1 installations only have their older seed/learned-route behavior until upgraded. The original code and the new durable invitation identify the same community network; there is no separate developer network for users to join.
 
 While independent RPC and content sources remain reachable, the new supporter observes current names and prepares verified files. Loss of the first server does not turn those healthy paths off. If all upstream paths are also unavailable, the new supporter must obtain accepted name records and files from another surviving Mesh copy. It cannot reconstruct information that no reachable source holds.
 
