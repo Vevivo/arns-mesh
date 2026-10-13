@@ -70,7 +70,7 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    assert.equal((await https(new Request('https://arweave.net/'+'A'.repeat(43),{method:'POST',body:'not forwarded'}))).status,405);
    await call('close-tab',id);assert.equal(fake.views[2].webContents.isDestroyed(),true);
    await call('ready');const state=fake.messages.at(-1).data;assert.equal(state.tabs.length,1);assert.equal(state.url,'ar://unit-one/path?q=1');assert.equal(state.bookmarked,true);
-   assert.equal(content.options.webPreferences.sandbox,true);assert.equal(content.options.webPreferences.nodeIntegration,false);assert.equal(content.options.webPreferences.preload,undefined);
+   assert.equal(content.options.webPreferences.sandbox,true);assert.equal(content.options.webPreferences.nodeIntegration,false);assert.equal(content.options.webPreferences.contextIsolation,true);assert.equal(content.options.webPreferences.preload,fileURLToPath(new URL('../apps/browser/home-preload.cjs',import.meta.url)));
    assert.equal(state.peer.serving,false);assert.equal(state.discovery.enabled,false);assert.equal(state.network.requests,0);
  }finally{fake.app.quit();hook.deregister();fs.rmSync(dir,{recursive:true,force:true});}
 });
