@@ -4,7 +4,7 @@ This investigation concerns Mesh 0.6.1 (`6acd95fc275cb120822cf83334be17202a08b0e
 
 ## Observed symptoms
 
-The inspected Windows reader was configured for the operator's original supporter, `194.163.169.13:49740`, under the existing network identity. Its retained peer directory contained that supporter; no replacement developer's server was being used.
+The inspected Windows reader was configured for the operator's original supporter under the existing network identity. Its retained peer directory contained that supporter; no replacement developer's server was being used.
 
 In the inspected 13 October application log, all 23 Mesh request outcomes were timeouts. In the same log, 14 Solana RPC and 60 raw Arweave request outcomes were HTTP 200 responses. These counts describe the inspected log, not the entire network or a continuous availability measurement.
 
@@ -31,7 +31,7 @@ Four focused regression tests cover:
 
 The desktop stored a new catalogue after an automatic download but only repainted an already open Home view for a forced manual refresh. A failed attempt also consumed the same 15-minute cooldown as a successful download. The retained catalogue can therefore look unchanged even when a later background download succeeds, and recovery after a temporary failure is unnecessarily slow.
 
-The proposed desktop change refreshes the search results and status while preserving text being entered, selection, focus and scroll. Successful updates keep the 15-minute cadence. Failed updates preserve the last accepted catalogue and retry after one minute. Work already in progress is shared, and changing network scope cancels or resets the old work.
+The proposed desktop change refreshes the search results and status while preserving text being entered, selection, focus and scroll. Successful updates keep the 15-minute cadence. Failed updates preserve the last accepted catalogue and retry after about one minute. Work already in progress is shared, and changing network scope cancels or resets the old work.
 
 Eight focused scheduling and Home-update tests passed with controlled dependencies. Packaged Windows acceptance is a separate check; its result must be recorded from CI before claiming it passed.
 

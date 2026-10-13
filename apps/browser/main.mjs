@@ -408,7 +408,7 @@ async function start(){
     send();
     if(monitorVisible&&accessPolicy!=='saved'&&!connectionCheck&&(Date.now()-lastConnectionCheck>60000||checkProfile!==JSON.stringify(readProfile(runtime.dataDir))))void runConnectionChecks().catch(()=>{});
   },1000);send();
-  void syncSearch().catch(()=>{});searchTimer=setInterval(()=>void syncSearch().catch(()=>{}),60000);
+  void syncSearch().catch(()=>{});searchTimer=setInterval(()=>void syncSearch().catch(()=>{}),5000);
   if(accessPolicy!=='saved'){
     network.start();
     peerDiscovery.start();
