@@ -90,6 +90,22 @@ jobs:
         env:
           QA_OUTPUT: ${{ runner.temp }}/mesh-compressed-content
         run: node qa/desktop/compressed-content.cjs
+      - name: Render protected names and reject invalid certificates in real Windows Electron
+        timeout-minutes: 10
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/mesh-name-certificates
+        run: node qa/desktop/protected-name-acceptance.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: windows-name-certificates
+          path: |
+            ${{ runner.temp }}/mesh-name-certificates/results.json
+            ${{ runner.temp }}/mesh-name-certificates/requests.json
+            ${{ runner.temp }}/mesh-name-certificates/*.png
+            ${{ runner.temp }}/mesh-name-certificates/electron.log
+            ${{ runner.temp }}/mesh-name-certificates/chromium.log
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

@@ -9,12 +9,16 @@ import net from 'node:net';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {pathToFileURL} from 'node:url';
+import {pathToFileURL,fileURLToPath} from 'node:url';
 import {gzipSync,brotliCompressSync} from 'node:zlib';
 import {setTimeout as pause} from 'node:timers/promises';
 
 const executable=path.resolve(process.env.QA_EXE||''),output=path.resolve(process.env.QA_OUTPUT||'');
 assert(process.env.QA_EXE&&process.env.QA_OUTPUT,'Set QA_EXE and a fresh QA_OUTPUT');
+const sourceRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
+const expectedVersion=process.env.QA_EXPECTED_VERSION||JSON.parse(fs.readFileSync(path.join(sourceRoot,'package.json'),'utf8')).version;
+assert(typeof expectedVersion==='string'&&expectedVersion.length>0,'Expected application version missing');
+if(process.env.QA_READER_DIR)assert(path.isAbsolute(process.env.QA_READER_DIR),'QA_READER_DIR must be absolute');
 const appRoot=path.join(path.dirname(executable),'resources','app');
 const requireApp=createRequire(path.join(appRoot,'package.json'));
 const packaged=file=>import(pathToFileURL(path.join(appRoot,file)));
@@ -22,7 +26,10 @@ const report={schema:'arns-mesh-packaged-protected-acceptance/v1',startedAt:new 
 assert(fs.existsSync(executable),'Packaged executable missing');
 assert(!fs.existsSync(output),'Acceptance output must be fresh');
 fs.mkdirSync(output,{recursive:true});
-const reader=path.join(output,'reader'),provider=path.join(output,'supporter');
+const reader=process.env.QA_READER_DIR?path.resolve(process.env.QA_READER_DIR):path.join(output,'reader'),provider=path.join(output,'supporter');
+assert(!fs.existsSync(reader),'Acceptance reader directory must be fresh; existing user data is forbidden');
+assert(reader!==provider,'Acceptance reader and supporter directories must differ');
+report.readerDirectory=reader;report.expectedVersion=expectedVersion;
 fs.mkdirSync(provider);
 const save=()=>fs.writeFileSync(path.join(output,'results.json'),JSON.stringify(report,null,2));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -41,20 +48,22 @@ class Cdp {
  async screenshot(file){const {data}=await this.call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(output,file),Buffer.from(data,'base64'));}
  close(){this.socket.close();cdpSessions.delete(this);}
 }
-async function until(work,label,timeout=90000){const deadline=Date.now()+timeout;let last;while(Date.now()<deadline){try{const value=await work();if(value)return value;}catch(error){last=error;}await pause(100);}throw new Error(label+(last?': '+last.message:''));}
+async function until(work,label,timeout=90000){const started=Date.now(),deadline=started+timeout;let last,announced=started;while(Date.now()<deadline){try{const value=await work();if(value)return value;}catch(error){last=error;}if(Date.now()-announced>=15000){console.log(JSON.stringify({waiting:label,elapsedMs:Date.now()-started,lastError:last?.message}));announced=Date.now();}await pause(100);}throw new Error(label+(last?': '+last.message:''));}
 async function freePort(){const server=net.createServer();await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});const port=server.address().port;await new Promise(resolve=>server.close(resolve));return port;}
-async function cdpTargets(){return (await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json();}
+async function cdpTargets(){return new Promise((resolve,reject)=>{const request=http.get({host:'127.0.0.1',port:debugPort,path:'/json/list',timeout:2000},response=>{const chunks=[];let bytes=0;response.on('data',chunk=>{bytes+=chunk.length;if(bytes>1024*1024){request.destroy(new Error('CDP target list too large'));return;}chunks.push(chunk);});response.on('end',()=>{try{resolve(JSON.parse(Buffer.concat(chunks).toString()));}catch(error){reject(error);}});response.on('error',reject);});request.on('error',reject);request.on('timeout',()=>request.destroy(new Error('CDP discovery timeout')));});}
 async function launch(){
  debugPort=await freePort();const log=fs.openSync(path.join(output,'electron.log'),'a');
  const env={...process.env,ARNS_MESH_USER_DATA:reader,ARNS_MESH_DIRECT_ONLY:'1'};
  delete env.ELECTRON_RUN_AS_NODE;delete env.NODE_OPTIONS;
- app=cp.spawn(executable,['--remote-debugging-address=127.0.0.1','--remote-debugging-port='+debugPort],{env,stdio:['ignore',log,log],windowsHide:true});fs.closeSync(log);
+ app=cp.spawn(executable,['--remote-debugging-address=127.0.0.1','--remote-debugging-port='+debugPort,'--enable-logging','--log-file='+path.join(output,'chromium.log')],{env,stdio:['ignore',log,log],windowsHide:true});fs.closeSync(log);
+ report.launches??=[];report.launches.push({pid:app.pid,debugPort,startedAt:new Date().toISOString()});save();console.log(JSON.stringify({launched:app.pid,debugPort,output}));
  app.on('error',error=>report.errors.push('launch: '+error.message));
- const toolbarTarget=await until(async()=>{if(app.exitCode!==null)throw new Error('Electron exited: '+app.exitCode);return (await cdpTargets()).find(t=>t.url==='arnsui://app/index.html');},'Actual toolbar did not launch',120000);
+ const startupTimeout=Number(process.env.QA_STARTUP_TIMEOUT||300000);assert(Number.isSafeInteger(startupTimeout)&&startupTimeout>=1000&&startupTimeout<=600000,'Invalid QA_STARTUP_TIMEOUT');
+ const toolbarTarget=await until(async()=>{if(app.exitCode!==null)throw new Error('Electron exited: '+app.exitCode);return (await cdpTargets()).find(t=>t.url==='arnsui://app/index.html');},'Actual toolbar did not launch',startupTimeout);
  ui=await Cdp.connect(toolbarTarget.webSocketDebuggerUrl);await ui.call('Runtime.enable');await ui.call('Page.enable');
  await until(()=>ui.evaluate('Boolean(globalThis.arnsMesh&&document.querySelector("#address"))'),'Toolbar preload');
  await ui.evaluate('globalThis.__acceptanceState=null;arnsMesh.onState(s=>globalThis.__acceptanceState=s);arnsMesh.ready()');
- const settings=await ui.evaluate('arnsMesh.getSettings()');assert.equal(settings.version,'0.6.3-preview.2');assert.equal(path.resolve(settings.executable),executable);
+ const settings=await ui.evaluate('arnsMesh.getSettings()');assert.equal(settings.version,expectedVersion);assert.equal(path.resolve(settings.executable),executable);
  report.version=settings.version;report.settingsPolicyId=settings.connectionProfile.nameWitnessPolicy?namePolicyId(settings.connectionProfile.nameWitnessPolicy):null;
  await until(async()=>{const home=(await cdpTargets()).find(t=>t.url.startsWith('arnsui://app/welcome.html'));if(!home)return false;page=await Cdp.connect(home.webSocketDebuggerUrl);await page.call('Runtime.enable');await page.call('Page.enable');return true;},'Actual content webContents');
 }
@@ -205,9 +214,10 @@ async function fixture(){
 }
 
 try{
+ console.log(JSON.stringify({stage:'preparing controlled original signed fixtures',output}));
  await fixture();await launch();assert.equal(report.settingsPolicyId,namePolicyId(policy));
  await mode('live');
- for(const site of sites){await navigate(site.name);await rendered(site,'01-current');await saveSite(site);}
+ for(const site of sites){console.log(JSON.stringify({stage:'current renderer',name:site.name}));await navigate(site.name);await rendered(site,'01-current');await saveSite(site);}
  report.checks.push('Actual EXE renders protected gzip/Brotli/plain HTML, executes JavaScript and applies CSS from prepared original signed files; decoded GET/HEAD/Range semantics verified.');
  // A bad fast domain does not veto three authentic agreeing domains.
  await navigate('protected-resilient');const resilient=await rendered({...sites[1],name:'protected-resilient'},'02-one-bad');
