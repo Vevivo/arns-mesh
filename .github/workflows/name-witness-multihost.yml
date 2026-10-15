@@ -1,0 +1,126 @@
+name: Name witness separate Linux VMs
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/name-certificate*.mjs'
+      - 'src/name-certificates.mjs'
+      - 'src/sharded-name-state.mjs'
+      - 'qa/linux/multi-host-name-witness.mjs'
+      - '.github/workflows/name-witness-multihost.yml'
+      - 'package*.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: name-witness-multihost-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  witness:
+    name: Linux witness ${{ matrix.count }} / ${{ matrix.index }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 14
+      matrix:
+        include:
+          - {count: 4, index: 0}
+          - {count: 4, index: 1}
+          - {count: 4, index: 2}
+          - {count: 4, index: 3}
+          - {count: 10, index: 0}
+          - {count: 10, index: 1}
+          - {count: 10, index: 2}
+          - {count: 10, index: 3}
+          - {count: 10, index: 4}
+          - {count: 10, index: 5}
+          - {count: 10, index: 6}
+          - {count: 10, index: 7}
+          - {count: 10, index: 8}
+          - {count: 10, index: 9}
+    env:
+      WITNESS_COUNT: ${{ matrix.count }}
+      WITNESS_INDEX: ${{ matrix.index }}
+      WITNESS_PUBLIC: ${{ github.workspace }}/multihost-public
+      WITNESS_ROSTER: ${{ github.workspace }}/multihost-roster
+      WITNESS_PROOFS: ${{ github.workspace }}/multihost-proofs
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Create this VM's private key and public enrollment record
+        run: node qa/linux/multi-host-name-witness.mjs keygen
+      - name: Publish only the public key
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: name-witness-public-${{ github.run_attempt }}-${{ matrix.count }}-${{ matrix.index }}
+          path: multihost-public/public-${{ matrix.count }}-${{ matrix.index }}.json
+          if-no-files-found: error
+          retention-days: 3
+      - name: Wait at most six minutes for this group's public roster
+        run: node qa/linux/multi-host-name-witness.mjs wait-roster
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: name-witness-public-${{ github.run_attempt }}-${{ matrix.count }}-*
+          path: multihost-roster
+          merge-multiple: true
+      - name: Persist, sign and reopen this VM's original observations
+        run: node qa/linux/multi-host-name-witness.mjs sign
+      - name: Publish only public signed observations
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: name-witness-proof-${{ github.run_attempt }}-${{ matrix.count }}-${{ matrix.index }}
+          path: multihost-proofs/proof-${{ matrix.count }}-${{ matrix.index }}.json
+          if-no-files-found: error
+          retention-days: 3
+
+  verify:
+    name: Verify ${{ matrix.count }} separate VM proofs
+    needs: witness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        count: [4, 10]
+    env:
+      WITNESS_COUNT: ${{ matrix.count }}
+      WITNESS_ROSTER: ${{ github.workspace }}/multihost-roster
+      WITNESS_PROOFS: ${{ github.workspace }}/multihost-proofs
+      WITNESS_RESULTS: ${{ github.workspace }}/multihost-results
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: name-witness-public-${{ github.run_attempt }}-${{ matrix.count }}-*
+          path: multihost-roster
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: name-witness-proof-${{ github.run_attempt }}-${{ matrix.count }}-*
+          path: multihost-proofs
+          merge-multiple: true
+      - name: Verify original signatures, quorum, equivocation and dated history
+        run: node qa/linux/multi-host-name-witness.mjs aggregate
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: name-witness-multihost-result-${{ github.run_attempt }}-${{ matrix.count }}
+          path: multihost-results/result-${{ matrix.count }}.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: State the evidence boundary
+        run: echo 'Separate hosted Linux jobs under one repository administrator. Public artifacts carry synthetic signed observations. This is not a Mesh HTTP test or proof of independent operator control.'
