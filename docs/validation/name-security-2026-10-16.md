@@ -67,11 +67,11 @@ For both roster sizes, the expected quorum survived the configured number of con
 
 These fixtures declared 60-second rounds, a ten-minute lease for workflow scheduling/artifact transfer and a five-second future-skew allowance. Those are explicit test-policy parameters, not a silent change to an operator's policy or a claim of instantaneous freshness. Actual Mesh HTTP transport is covered by the separate HTTP and Windows-to-VPS runs above; this cloud matrix validates signing and aggregation across separate runner machines through artifact exchange.
 
-## Final release evidence to complete
+## Release evidence and reproducibility
 
-| Item | Status at this report's writing |
+| Item | Evidence |
 | --- | --- |
-| Product-source revision and full source suites | Published head `6943be25c006a7926b5d0d4955dd19403874e26e`; Linux 577/577 and Windows 572/577 with 5 Linux-only skips, tested at the PR merge checkout stated above |
+| Product-source revision and full source suites | Latest scheduling source `8e3402a2ca0e608a6b3b3853f48294f394a332b5`: local Windows 636/641, zero failures, five native Linux skips, 63.076 seconds. The preceding `cbe10071` passed Linux 620/620 and Windows 615/620. The final release gate reruns both full suites; its exact checkout is recorded in external `build.json`. |
 | Fresh four- and ten-witness cross-host result | Passed as described above; same-administrator fixtures, not real operator enrollment |
 | 14-host GitHub Actions matrix | Completed: all 16 jobs passed; separate cloud VMs still do not establish independent administration |
 | Clean rebuilt Windows ZIP | 0.6.3 built from the frozen product source and official dependencies; size and SHA-256 recorded in external `build.json` / `SHA256SUMS.txt` sidecars, not inside the ZIP |
@@ -95,7 +95,7 @@ The original supporter retained the same connection identity and data directorie
 
 The subsequent one-minute timing session restored all instrumentation and left the service running. It observed a 6.5-second maximum event-loop pause under variable load. Host inspection also found concurrent legacy bundle-indexing workers consuming CPU. Giving the current Mesh service higher CPU/I/O scheduling weight, while keeping its existing two-core quota, memory limit, upstream routes and all other services running, was followed by **90/90** successful actual desktop checks: median 191 ms, maximum 3,470 ms, unchanged four-second deadline. This is one bounded reachability sample; it does not guarantee uptime or prove that every preceding failure had one cause.
 
-Search candidate scans, topic catalogue construction/validation and the existing registry/ANT decoding loops now also yield by elapsed work (about 8 ms between checkpoints) and record count. The synchronous topic API remains compatible; background publication uses an asynchronous single-flight path. The previous signed catalogue remains visible until validated atomic publication; cancellation before commit cannot replace it. Original account/PDA/owner/name-hash/mint/slot checks remain intact. Thirty focused catalogue tests and 48 search/startup/policy tests passed, including actual HTTP progress. A single indivisible operation may exceed the batch target; it is not an end-to-end latency promise.
+Search candidate scans, topic catalogue construction/validation and the existing registry/ANT decoding loops now also yield by elapsed work (about 8 ms between checkpoints) and record count. The synchronous topic API remains compatible; background publication uses an asynchronous single-flight path. The previous signed catalogue remains visible until validated atomic publication; cancellation before commit cannot replace it. Original account/PDA/owner/name-hash/mint/slot checks remain intact. Thirty focused catalogue tests and 48 search/startup/policy tests passed, including actual HTTP progress. The combined latest source suite passed 636/641 Windows tests with zero failures and five native Linux skips in 63.076 seconds; the CI release gate repeats the full Linux and Windows suites. A single indivisible operation may exceed the batch target; it is not an end-to-end latency promise.
 
 The failed public-site outage capture was retried explicitly. [Run 38821963908](https://github.com/Vevivo/arns-mesh/actions/runs/38821963908) then passed every packaged-Windows stage, including authentic public compressed assets, protected names and real public sites while upstream access was blocked. The final release rebuild repeats these gates on its exact source/archive.
 
