@@ -1,0 +1,160 @@
+{
+  "schema": "arns-mesh-ci-multihost-result/v1",
+  "passed": true,
+  "scope": "Separate GitHub-hosted Linux runner VMs, same repository administrator; synthetic observations; public-artifact exchange, not Mesh networking or independent production operators",
+  "runId": "38817643462",
+  "attempt": "1",
+  "sourceSha": "b7c36a12fe02573ab675ee92fd39f9a389fcf6af",
+  "count": 10,
+  "threshold": 7,
+  "maxFaults": 3,
+  "policyId": "2384f80a2acd1f6e02573b0a03c217b76d1ebc320ce698f6aff663090f890843",
+  "policy": {
+    "schema": "arns-mesh-name-policy/v1",
+    "networkId": "gha-38817643462-1-10",
+    "chainId": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+    "registryProgramId": "11111111111111111111111111111111",
+    "threshold": 7,
+    "maxFaults": 3,
+    "roundMs": 60000,
+    "leaseMs": 600000,
+    "maxFutureSkewMs": 5000,
+    "validFrom": 1792099904338,
+    "validUntil": 1792107109585,
+    "witnesses": [
+      {
+        "domain": "ci-vm-10-0",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAXWvMHUmxjHDHFMbGoVhGx1+E5k7HUTqvFp1AWN9PiiQ=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-1",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAK7w+Y3cgL2AShwN3EW/y1QrV3E8f9JL5xb3Y2NpOEfM=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-2",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAeFs4g5sURZXitlkZtB4mXKB+siTO8od6MsYs9gKZLn0=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-3",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnUfDpVVUU35M912auqi8j+OdMlqNVK1VxhB3S79Ai08=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-4",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAAEWZIJXJzIsOH+bOFXBfFyA7VUWtKovsa7HBOD3ZSjc=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-5",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA7n9m3eeyn1cmifjPr3dHLNvY9a3aToa0VXywAHjtiQI=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-6",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAumo4zD0YTqVU1FB3lSY9KCR83edxOotGs801F0QGJPs=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-7",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASVKS84yT5XV0/4s20cKrsf3nt2tQTUME44Q3JMTzfEQ=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-8",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA89VhF6l51IMW7lG3kNlrdmqeflvMiQAmE/rU5z9UOvA=\n-----END PUBLIC KEY-----\n"
+      },
+      {
+        "domain": "ci-vm-10-9",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAH0nI95wua33shDVyeT5zsgdnKaruxgu7/F8YXJr8AlA=\n-----END PUBLIC KEY-----\n"
+      }
+    ]
+  },
+  "actualVerificationTime": 1792103609411,
+  "round": 29868393,
+  "distinctRunnerBoots": 10,
+  "runnerHosts": [
+    {
+      "index": 0,
+      "host": "runnervm8k3b6",
+      "machineId": "5a54d7e545cb9401e52d0edc66f8d729b6d5574a1c0270fcade8680ff32545df"
+    },
+    {
+      "index": 1,
+      "host": "runnervm8k3b6",
+      "machineId": "3f870357708fd43e6302ce1ed173283d54a845319b5c9bd3dbaa02efd4918715"
+    },
+    {
+      "index": 2,
+      "host": "runnervm8k3b6",
+      "machineId": "f0152742ce9a1d311fc332f83032e9e481d3c527cb887fc110ab8ee161490737"
+    },
+    {
+      "index": 3,
+      "host": "runnervm8k3b6",
+      "machineId": "59b418dd817dfa58ae5c562a401ca55dc1bb7f1db6e8f6cabf68f58d4e58a826"
+    },
+    {
+      "index": 4,
+      "host": "runnervm8k3b6",
+      "machineId": "7f1775016178e4eb8fe08179f584bd8e6108efa1bd05d30e6c964c5439dc0f4d"
+    },
+    {
+      "index": 5,
+      "host": "runnervm8k3b6",
+      "machineId": "6324006f7ca1b5ad37e390612aa608637e0ea3682349c62f658722e1ea541d7c"
+    },
+    {
+      "index": 6,
+      "host": "runnervm8k3b6",
+      "machineId": "504a081331db64f5b35ad2ca293402e6b39c1168b9d618949ff0a2df8891fded"
+    },
+    {
+      "index": 7,
+      "host": "runnervm8k3b6",
+      "machineId": "32368671251feedc1906610da2612b900fc6ffe9bd581a3576d078ea49455c4a"
+    },
+    {
+      "index": 8,
+      "host": "runnervm8k3b6",
+      "machineId": "48ecbd3cdcbfd6193182011dc3e973121eae6e840bb07ab0439214d03eb87aad"
+    },
+    {
+      "index": 9,
+      "host": "runnervm8k3b6",
+      "machineId": "c88d3d63f269628cbe30a76de8b95c2396d81733fad1df025fea1e0a21a8554d"
+    }
+  ],
+  "cases": [
+    {
+      "case": "q correct votes survive f conflicting votes",
+      "acceptedDomains": 7,
+      "wrongDomains": 3
+    },
+    {
+      "case": "q minus one authentic correct votes",
+      "rejected": "name_certificate_quorum_unmet"
+    },
+    {
+      "case": "f authentic wrong-target votes",
+      "rejected": "name_certificate_quorum_unmet"
+    },
+    {
+      "case": "repeating one original signature cannot form quorum",
+      "rejected": "name_certificate_quorum_unmet"
+    },
+    {
+      "case": "altered binding without a new original signature",
+      "rejected": "name_certificate_signature_invalid"
+    },
+    {
+      "case": "f equivocating keys excluded",
+      "acceptedDomains": 7,
+      "discardedDomains": 3
+    },
+    {
+      "case": "expired previous mapping cannot be current",
+      "rejected": "name_certificate_expired"
+    },
+    {
+      "case": "dated previous full quorum remains history without lowering current floor",
+      "domains": 7,
+      "originalObservedAt": 1792102382000,
+      "originalExpiresAt": 1792103040000
+    }
+  ]
+}

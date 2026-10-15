@@ -2,7 +2,9 @@
 
 This report covers **0.6.3**, reviewed in [PR #18](https://github.com/Vevivo/arns-mesh/pull/18). Earlier candidate runs used version 0.6.3-preview.2. The date is the operator's local date; machine timestamps in evidence files are UTC.
 
-The feature is implemented and has run in the actual Windows application, on native Linux and over real HTTP. The final release artifact must still be matched to its own acceptance result. This report does not claim that a public independent witness committee has been recruited or activated.
+The initial fully packaged product-source head tested was [`6943be25c006a7926b5d0d4955dd19403874e26e`](https://github.com/Vevivo/arns-mesh/commit/6943be25c006a7926b5d0d4955dd19403874e26e). GitHub's pull-request jobs actually checked out merge commit [`b7c36a12fe02573ab675ee92fd39f9a389fcf6af`](https://github.com/Vevivo/arns-mesh/commit/b7c36a12fe02573ab675ee92fd39f9a389fcf6af); their results are attributed to that checkout, not mislabeled as a direct head checkout. The later readiness-report follow-up is recorded separately below and is included in the final release rebuild.
+
+The feature has passed the complete Linux and Windows source suites, isolated VPS checks, separate cloud-VM signature tests and actual Windows application checks from the clean rebuilt **0.6.3 ZIP**. Publication and the release pipeline's own final rebuild are tracked separately. This report does not claim that a public independent witness committee has been recruited or activated.
 
 ## What the change guarantees
 
@@ -21,11 +23,12 @@ Runs below overlap; their test counts must not be added as a count of unique tes
 | Environment and run | Observed result | Scope and limits |
 | --- | --- | --- |
 | Windows full source suite with official installed dependencies, after the final runtime fixes | 577 tests: 572 passed, 0 failed, 5 native Linux checks skipped; 69.4 seconds | Includes real loopback execution, supporter responsiveness regressions, legacy name-binding refusals and direct-courier completion. Supersedes the earlier 544-test/539-pass Windows snapshot; the two totals must not be added. |
-| Linux VPS isolated acceptance | 40 passed, 0 failed | Native filesystem/enrollment, actual HTTP and selected content/compression integration. Test directories and processes were separate from the running production supporter. |
+| Linux VPS final isolated acceptance, 14 test files with official dependencies | 96 passed, 0 failed, 0 skipped; 106.105 seconds | Native filesystem/enrollment, actual HTTP, legacy name-binding refusal, supporter responsiveness and selected content/compression integration. Test directories and processes were separate from the running production supporter. Supersedes the earlier selected 40-pass VPS run. |
 | GitHub Actions native Linux pilot | Passed; 127 portable checks and 39 native/HTTP checks, no failures or skips in those batches | [Run 38813543986](https://github.com/Vevivo/arns-mesh/actions/runs/38813543986), candidate commit `4d830e895a01de87a71c2744796c326b144d7422`. Includes ten actual HTTP endpoints, original-signature quorum and native signer-state checks. This proves execution under one CI administration, not independent operators. |
-| GitHub Actions Linux and Windows source jobs | Passed on an earlier candidate head | Final release revision and complete release workflow result still need to be linked below. A prior green job does not certify later edits or a new ZIP. |
-| Actual Windows executable, protected acceptance run 07 | Passed: 20 renderer cases, 7 grouped checks; 16 original signed files verified and unchanged | Real Electron renderer and localhost HTTP, controlled names and signed files, not a public compressed ArNS website. The extracted application's tested source had received fixes; this is not yet acceptance of a newly rebuilt final ZIP. |
-| Actual saved-mode process restart in run 07 | gzip, Brotli and plain sites rendered; 0 application HTTP requests after all four couriers stopped | Instrumented HTTP/RPC and blocked Chromium-request coverage. This is not an independent full packet capture or a claim about unrelated system traffic. |
+| GitHub Actions complete Linux and Windows source jobs | Linux: 577 passed, 0 failed, 0 skipped. Windows: 572 passed, 0 failed, 5 Linux-only skips | [Run 38817643517](https://github.com/Vevivo/arns-mesh/actions/runs/38817643517), actual checkout `b7c36a12fe02573ab675ee92fd39f9a389fcf6af` for product head `6943be25c006a7926b5d0d4955dd19403874e26e`. Source-job success does not establish acceptance of a new ZIP or success of every other workflow job. |
+| GitHub-hosted four- and ten-witness VM matrix | All 16 jobs succeeded: 14 witness VMs and 2 aggregators; each aggregator passed 8 cases | [Run 38817643462](https://github.com/Vevivo/arns-mesh/actions/runs/38817643462). Reports record 4 and 10 distinct runner boots. Public-artifact transfer between jobs, synthetic observations and one repository administrator; this is not Mesh network transport or independent production administration. [Four-VM result](name-security-2026-10-16-multihost-4.json) · [Ten-VM result](name-security-2026-10-16-multihost-10.json). |
+| Clean rebuilt 0.6.3 ZIP, extracted and launched for protected Windows acceptance | Passed: 20 renderer cases, 7 grouped checks, 0 errors; 16 original signed files verified and unchanged | Actual Electron executable and renderer with real localhost HTTP. Uses controlled names and signed files, not a public compressed ArNS website. The package's 138 application-source files matched the frozen source; official dependencies were used. Supersedes the earlier run 07 against a patched extracted candidate. |
+| Actual saved-mode process restart from the clean 0.6.3 package | gzip, Brotli and plain sites rendered; 0 application HTTP requests after all four couriers stopped | Instrumented HTTP/RPC and blocked Chromium-request coverage. This is not an independent full packet capture or a claim about unrelated system traffic. |
 | Windows client to public Linux VPS, four-witness fixture | Passed: 4 raw-proof cases and 5 integrated checks | Three matching original domains accepted despite one wrong target; two honest votes or the single wrong vote refused; expired full proof refused as current and accepted as dated history. One courier endpoint, four controlled keys, synthetic observations. |
 | Windows client to public Linux VPS, ten-witness fixture | Passed: 4 raw-proof cases and 5 integrated checks | All ten original signatures checked; seven matching domains won over three wrong targets. Six matching votes and three wrong votes could not meet quorum. Expired seven-signature proof remained historical only. One courier endpoint, ten controlled keys, synthetic observations. |
 | Direct-only certificate collection regression | Transport and probe batches passed | Exhausted direct couriers no longer consume the whole request deadline. Pending honest requests, semantic failures, original cancellation reasons and DHT discovery remain intact. Actual HTTP reruns are recorded separately. |
@@ -42,7 +45,9 @@ One wrong-target domain could not redirect the reader when three other domains a
 
 A previously unopened name opened as dated history from one courier carrying all three original signatures and the prepared files. Repeated navigation reused verified content. After a real process restart with every test courier stopped, saved plain/gzip/Brotli sites rendered locally. Revoking the pinned policy refused an otherwise cached saved page in the actual application.
 
-The renderer test exposed and led to fixes in Windows application startup and cached-policy error presentation. Those fixes must be present in the final artifact, not only in an extracted development directory.
+The renderer test exposed and led to fixes in Windows application startup and cached-policy error presentation. They were then verified in a clean package, rather than only in a patched development directory. That final local acceptance ran from **2026-10-15 22:37:36 to 22:38:33 UTC**, reported version **0.6.3**, and finished with no errors.
+
+The local ZIP contains the documentation snapshot available when it was built. This later evidence update does not rewrite that tested archive or claim to be inside it. The release pipeline rebuilds the package from the final source and documentation and runs its own acceptance before publication. Archive checksums belong in the external release sidecars; embedding the archive's own SHA-256 inside it would change the archive.
 
 ## Cross-host checks and clock handling
 
@@ -54,17 +59,33 @@ The ten-key evidence was recorded at 2026-10-15 22:22 UTC. Its policy ID is `383
 
 All these test identities are controlled by the same administrator. Multiple endpoints or machines do not demonstrate the independence required by a production roster. A public committee still requires separately controlled operators, keys and reviewed observation sources.
 
+## Separate cloud-VM signing checks
+
+The GitHub matrix used separate hosted Linux runner VMs for four-key and ten-key rosters: fourteen distinct runner boots across the two groups. Each generated its own test key and original observations. The aggregators consumed the public artifacts and verified their signatures under the declared test policy. Both result files retain the original eight case summaries, policy, actual checkout SHA and runner-boot provenance. They contain public test keys only and must not be installed as a production policy.
+
+For both roster sizes, the expected quorum survived the configured number of conflicting votes. One vote below quorum, the faulty votes alone, repeated copies of a single signature and altered signed bindings were refused. Equivocating keys were excluded while the honest quorum remained usable. Expired proof could not become current; the full old proof remained dated history without lowering the stored current floor.
+
+These fixtures declared 60-second rounds, a ten-minute lease for workflow scheduling/artifact transfer and a five-second future-skew allowance. Those are explicit test-policy parameters, not a silent change to an operator's policy or a claim of instantaneous freshness. Actual Mesh HTTP transport is covered by the separate HTTP and Windows-to-VPS runs above; this cloud matrix validates signing and aggregation across separate runner machines through artifact exchange.
+
 ## Final release evidence to complete
 
 | Item | Status at this report's writing |
 | --- | --- |
-| Final source commit and full source-suite result after the last fixes | Source suite passed, 572/577 with only 5 Linux-only skips on Windows; final commit identifier pending publication |
+| Product-source revision and full source suites | Published head `6943be25c006a7926b5d0d4955dd19403874e26e`; Linux 577/577 and Windows 572/577 with 5 Linux-only skips, tested at the PR merge checkout stated above |
 | Fresh four- and ten-witness cross-host result | Passed as described above; same-administrator fixtures, not real operator enrollment |
-| Planned 14-host GitHub Actions matrix | Pending execution; separate cloud VMs still do not establish independent administration |
-| Clean rebuilt Windows ZIP: version, byte size and SHA-256 | Pending final artifact |
-| Acceptance from that exact extracted ZIP, including protected renderer and saved restart | Pending final package run |
-| Final release workflow and published asset link | Pending; no nonexistent tag or asset is presented as downloadable |
+| 14-host GitHub Actions matrix | Completed: all 16 jobs passed; separate cloud VMs still do not establish independent administration |
+| Clean rebuilt Windows ZIP | 0.6.3 built from the frozen product source and official dependencies; size and SHA-256 recorded in external `build.json` / `SHA256SUMS.txt` sidecars, not inside the ZIP |
+| Acceptance from that exact extracted ZIP, including protected renderer and saved restart | Passed: 20 renderer cases, 7 grouped checks, 16 unchanged original signed files, 0 HTTP requests during saved restart |
+| Release workflow | [Run 38817643517](https://github.com/Vevivo/arns-mesh/actions/runs/38817643517) passed every source and packaged-Windows stage, including real public sites with upstream routes blocked. The main-branch release job rebuilds and rechecks the final archive before publishing; its run, source commit, suites and archive SHA-256 are recorded in the release's external `build.json`. |
 | Public independent witness committee | Not recruited or activated; separate from software release readiness |
+
+## Live responsiveness follow-up
+
+After deploying the initial tested source to the original supporter, 27 of 30 actual desktop connection checks replied within their four-second deadline. This result was retained as a failure to achieve consistent responsiveness. It exposed synchronous policy-file reads repeated for every missing, partial or complete preparation entry during status reporting.
+
+Missing and partial rows now return false before reading policy files. One synchronous display report uses one newly read policy context through a private helper. Public readiness, saved lookup and content authorization still perform their own fresh checks; protected rows still verify the original certificate and current policy. No global or timed authorization cache was added.
+
+A controlled 13,000-partial-row reproduction fell from 39,000 file reads and 2,961 ms to 3 reads and 4.99 ms. These are local measurements, not a server latency guarantee. Four new regressions cover large summaries, fresh subsequent reports, immediate revocation and refusal of caller-injected contexts. The complete follow-up Windows source run passed **576 of 581 tests**, with 0 failures and only 5 native Linux checks skipped, in 65.442 seconds. Final main-branch Linux and packaged-Windows checks run on the release revision before publication.
 
 ## Remaining boundaries
 

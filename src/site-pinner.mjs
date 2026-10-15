@@ -11,6 +11,8 @@ import {validateSnapshot} from './name-snapshots.mjs';
 import {discoverArweaveReferences} from './arweave-references.mjs';
 import {getProtectedNameContext} from './name-security-runtime.mjs';
 
+const completedRow=row=>Boolean(row&&['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)&&row.saved===row.total&&!row.failed);
+
 export class SitePinner{
  constructor({file,snapshots,contentStore,fetchContent=fetchMeshContent,createClient=createSwarmMeshClient,maxFiles=1024,pinNamespace='site',getNameContext=getProtectedNameContext}){
   if(!Number.isSafeInteger(maxFiles)||maxFiles<1||maxFiles>32768)throw new Error('invalid_site_file_limit');this.maxFiles=maxFiles;
@@ -20,8 +22,14 @@ export class SitePinner{
   for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
  }
  isReady(row){
+  // Missing/partial rows cannot authorize anything. Avoid policy file reads for
+  // every absent catalogue entry in the synchronous operator status report.
+  if(!completedRow(row))return false;
   let context;try{context=this.getNameContext();}catch{return false;}
-  if(!row||!['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)||row.saved!==row.total||row.failed)return false;
+  return this.#readyWithContext(row,context);
+ }
+ #readyWithContext(row,context){
+  if(!completedRow(row))return false;
   // Older releases did not embed the dated binding in saved-site metadata.
   // A later observation of the same target cannot reconstruct the old date.
   const binding=context?row.snapshot:row.snapshot||this.snapshots.get(row.name);
@@ -35,7 +43,14 @@ export class SitePinner{
  needsDecodingAudit(row){return Boolean(row&&row.contentDecodingVersion!==1);}
  readySnapshot(name,{trustedPeers=[]}={}){if(!this.isReady(this.rows[name]))return null;return this.snapshotStore({trustedPeers}).get(name);}
  preparedStore({trustedPeers=[]}={}){return {get:name=>this.readySnapshot(name,{trustedPeers})};}
- status({contentStats}={}){return {sites:Object.values(this.rows),storage:this.store.pinStats({contentStats}),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}
+ status({contentStats}={}){
+  const sites=Object.values(this.rows),storage=this.store.pinStats({contentStats});let ready=0;
+  // Reuse only this synchronous display report's freshly read context. Public
+  // readiness and saved-content entrypoints always perform their own checks;
+  // protected rows still verify their original proof and current policy.
+  try{const context=this.getNameContext();ready=sites.filter(row=>this.#readyWithContext(row,context)).length;}catch{}
+  return {sites,storage,ready};
+ }
  save(){fs.writeFileSync(this.file+'.tmp',JSON.stringify(this.rows),{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  // A pinned version must retain its own dated name binding. Later live
  // observations must not silently redirect a saved entry to unpinned bytes.

@@ -4,13 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import {EventEmitter} from 'node:events';
+import {randomUUID} from 'node:crypto';
+import os from 'node:os';
+import {SitePinner} from '../src/site-pinner.mjs';
 const source=relative=>fs.readFileSync(new URL(relative,import.meta.url),'utf8');
-const content=source('../src/content-store.mjs'),pinner=source('../src/site-pinner.mjs'),peer=source('../apps/peer/embedded-peer.mjs'),main=source('../apps/peer/main.mjs');
+const content=source('../src/content-store.mjs'),peer=source('../apps/peer/embedded-peer.mjs'),main=source('../apps/peer/main.mjs');
 const contentClass=content.slice(content.indexOf('export class VerifiedContentStore')).replace('export class ','class ')+'; VerifiedContentStore;';
-const pinnerStart=pinner.indexOf('\n status('),pinnerStatus=pinner.slice(pinnerStart,pinner.indexOf('\n',pinnerStart+1)).trim();
 const peerStart=peer.indexOf('\n  status('),peerStatus=peer.slice(peerStart,peer.indexOf('\n  async stop(',peerStart)).trim();
 const reportStart=main.indexOf('const publishStatus=()=>{')+'const publishStatus=()=>{'.length,reportEnd=main.indexOf(' const replicationStatus=',reportStart),report=main.slice(reportStart,reportEnd);
-assert.ok(pinnerStart>=0&&peerStart>=0&&reportEnd>reportStart,'exercise production status methods and report wiring');
+assert.ok(peerStart>=0&&reportEnd>reportStart,'exercise production status methods and report wiring');
 const id=letter=>letter.repeat(43);
 function fixture(directory='/content'){
  const files=new Map(),verified=[];let scans=0;
@@ -20,9 +22,10 @@ function fixture(directory='/content'){
  const Store=vm.runInNewContext(contentClass,{fs:fakeFs,path,EventEmitter,verifyStoredContent,MAX_ITEM_BYTES:32*1024*1024,MAX_CONTENT_BYTES:32*1024*1024,Buffer});
  const store=new Store(directory,{maxBytes:Infinity,maxPinnedBytes:Infinity}),scan=store.stats.bind(store);store.stats=()=>{scans++;return scan();};
  const peerStatusMethod=vm.runInNewContext('({'+peerStatus+'}).status',{getSharedIndex:()=>null});
- const pinnerStatusMethod=vm.runInNewContext('({'+pinnerStatus+'}).status');
  const peer={contentStore:store,cache:{records:{},locations:{}},discoveries:new Map(),locationIndex:{size:0},status:peerStatusMethod};
- const makePinner=()=>({store,rows:{},isReady:()=>false,status:pinnerStatusMethod});
+ // Use the actual class, including its private readiness helper. No fixture
+ // file is created and no authorization implementation is copied into the test.
+ const makePinner=()=>new SitePinner({file:path.join(os.tmpdir(),randomUUID(),'sites.json'),snapshots:{get:()=>null},contentStore:store,getNameContext:()=>null});
  return {store,peer,pinner:makePinner(),replicationPinner:makePinner(),verified,add:(dataId,size)=>files.set(store.file(dataId),Buffer.alloc(size)),scans:()=>scans};
 }
 function runReport(f,replicationPinner=f.replicationPinner){return vm.runInNewContext('(()=>{'+report+';return {peerStatus,savedStatus,replicatedStatus};})()',{peer:f.peer,pinner:f.pinner,replicationPinner,peerDiscovery:{status:()=>({})}});}

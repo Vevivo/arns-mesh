@@ -1,6 +1,6 @@
 # Certified ArNS name bindings
 
-**Mesh 0.6.3** includes this opt-in feature. It has passed controlled native Linux, HTTP and actual Windows application checks. A public committee of independent operators has not yet been enrolled. Installations without an explicitly accepted witness policy retain their existing trust model. Volunteers can follow the [pilot installation and acceptance guide](name-witness-pilot.md); exact tested revisions and remaining release checks are recorded [here](../validation/name-security-2026-10-16.md).
+**Mesh 0.6.3** includes this opt-in feature. It has passed controlled native Linux, HTTP and actual Windows application checks. A public committee of independent operators has not yet been enrolled. Installations without an explicitly accepted witness policy retain their existing trust model. Volunteers can follow the [pilot installation and acceptance guide](name-witness-pilot.md); exact tested revisions and package evidence are recorded [here](../validation/name-security-2026-10-16.md).
 
 ## What changes for a reader
 
@@ -55,6 +55,6 @@ No test policy is enabled or bundled as a production committee. The existing pro
 
 ## Validation
 
-See the [16 October validation record](../validation/name-security-2026-10-16.md) for native Linux, actual HTTP and packaged Windows results. The [initial record](../validation/name-binding-security-2026-10-15.md) preserves the earlier blocked-environment results; those are historical, not the current overall test status. The [pilot checklist](../validation/name-witness-pilot-checklist-2026-10-15.md) remains useful for each operator's own acceptance.
+See the [16 October validation record](../validation/name-security-2026-10-16.md) for passing complete Linux/Windows source suites, native VPS checks, actual HTTP and clean rebuilt-ZIP Windows acceptance: 20 renderer cases and 7 grouped checks passed. The four- and ten-witness cloud matrices also passed on 14 separate runner VMs, using public-artifact exchange rather than Mesh transport. Release-pipeline publication is tracked separately. The [initial record](../validation/name-binding-security-2026-10-15.md) preserves the earlier blocked-environment results; those are historical, not the current overall test status. The [pilot checklist](../validation/name-witness-pilot-checklist-2026-10-15.md) remains useful for each operator's own acceptance.
 
 Protocol tests use real Ed25519 signatures; content tests use original signed ANS-104 files. The actual Windows executable renders controlled gzip/Brotli/plain pages and reopens saved pages after restart. These are controlled tests under one administrator, even when they use different hosts. They do not establish a live independent committee or certify every public ArNS site.
