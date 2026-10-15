@@ -7,6 +7,7 @@ import {withByteBudget} from './byte-budget.mjs';
 import {manifestTargetIds} from './manifest-path.mjs';
 import {createSwarmMeshClient} from './swarm-client.mjs';
 import {discoverArweaveReferences} from './arweave-references.mjs';
+import {getProtectedNameContext} from './name-security-runtime.mjs';
 
 export function catalogDailyBudget(env=process.env){
  const mib=env.ARNS_CATALOG_DAILY_MIB===undefined?64:Number(env.ARNS_CATALOG_DAILY_MIB);
@@ -24,7 +25,8 @@ export function nameDailyBudget(env=process.env){
 // curated list. Discovery failures must not starve work already in the queue.
 export class CatalogWorker {
  constructor({dataDir,peer,endpoint,client,dailyBytes=catalogDailyBudget(),nameDailyBytes=nameDailyBudget(),intervalMs=60000,mintsPerPass=16,bulkScan=false,independentNames=false,namesIntervalMs=5000,registryIntervalMs=15*60000,bulkIntervalMs=6*3600000,
-  passTimeoutMs=60000,catalogTimeoutMs=30000,maxPassBytes=8*1024*1024,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32}){
+  passTimeoutMs=60000,catalogTimeoutMs=30000,maxPassBytes=8*1024*1024,fetchContent=fetchMeshContent,maxJobs=32768,snapshotStore=null,jobsPerPass=1,pinner=null,maxPreparedSites=32,getNameContext=getProtectedNameContext}){
+  this.getNameContext=getNameContext;
   if(!Number.isSafeInteger(dailyBytes)||dailyBytes<1||!Number.isSafeInteger(passTimeoutMs)||passTimeoutMs<2||!Number.isSafeInteger(catalogTimeoutMs)||catalogTimeoutMs<1)throw new Error('invalid_catalog_budget');
   if(!Number.isSafeInteger(maxJobs)||maxJobs<4||maxJobs>32768)throw new Error('invalid_catalog_queue_budget');
   if(!Number.isSafeInteger(jobsPerPass)||jobsPerPass<1||jobsPerPass>16||!Number.isSafeInteger(maxPreparedSites)||maxPreparedSites<0||maxPreparedSites>20000)throw new Error('invalid_preparation_budget');
@@ -218,21 +220,33 @@ export class CatalogWorker {
   return this.status();
  }
  async prepareOne(signal){
+  const context=this.getNameContext();
   const names=this.snapshotStore?.names()||[];if(!names.length||!this.maxPreparedSites)return;
   let cursor=(this.state.prepareCursor||0)%names.length;
+  let protectedAttempt=false;
   for(let checked=0;checked<names.length;checked++){
+   // Skipping ready sites must still allow peer replies and deadlines.
+   if(checked%32===0){await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();}
    const name=names[cursor];cursor=(cursor+1)%names.length;this.state.prepareCursor=cursor;
-   const snapshot=this.snapshotStore.get(name),row=this.pinner.rows[name];
+   let snapshot=this.snapshotStore.get(name);const row=this.pinner.rows[name];
+   if(context){
+    if(protectedAttempt)return;protectedAttempt=true;
+    context.assertCurrent();
+    // Registry/catalog entries select work; they never authorize its target.
+    // At most one fresh quorum request per preparation pass.
+    snapshot=await context.authorizeName(name,{mode:'current',signal});context.assertCurrent();
+    if(!this.peer.contentStore.has?.(snapshot.txId)){this.state.preparationError='certified_content_not_cached';return;}
+   }
    if(!this.peer.contentStore.has?.(snapshot.txId))continue;
-   if(row&&this.pinner.isReady(row)&&row.rootDataId===snapshot.txId&&!this.pinner.needsDecodingAudit?.(row))continue;
+   if(row&&this.pinner.isReady(row)&&row.rootDataId===snapshot.txId&&(!context||row.snapshot?.antId===snapshot.antId)&&!this.pinner.needsDecodingAudit?.(row))continue;
    if(!row&&Object.keys(this.pinner.rows).length>=this.maxPreparedSites){
     const stale=Object.values(this.pinner.rows).find(r=>r.managedBy==='catalog'&&!this.pinner.isReady(r)&&!this.pinner.jobs.has(r.name)&&Date.now()-Date.parse(r.updatedAt||0)>=5*60000);
     if(stale)this.pinner.remove(stale.name);else{this.state.preparationError='prepared_site_limit';continue;}
    }
    const pending=row?.update||row;
-   if(pending?.rootDataId===snapshot.txId&&Date.now()-Date.parse(pending.updatedAt||0)<5*60000)continue;
+   if(pending?.rootDataId===snapshot.txId&&(!context||pending.snapshot?.antId===snapshot.antId)&&Date.now()-Date.parse(pending.updatedAt||0)<5*60000)continue;
    // Pin verified cached content; the durable download queue fills any gaps.
-   const result=await this.pinner.start(name,{signal,managedBy:'catalog',contentSources:'local-only'});
+   const result=await this.pinner.start(name,{signal,managedBy:'catalog',contentSources:'local-only',...(context?{snapshot}: {})});
    this.state.preparationError=this.pinner.isReady(result)?null:result.errors?.[0]?.error||'preparation_incomplete';
    this.state.lastPreparation={name,target:snapshot.txId,status:result.status,at:new Date().toISOString()};return;
   }

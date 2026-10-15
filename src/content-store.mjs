@@ -23,6 +23,30 @@ export class VerifiedContentStore extends EventEmitter{
   get(id,{maxBytes=Infinity}={}){for(const kind of ['ans104','l1']){const f=this.file(id,kind);try{const size=fs.statSync(f).size;if(size>Math.min(maxBytes,kind==='l1'?MAX_CONTENT_BYTES:MAX_ITEM_BYTES))continue;return fs.readFileSync(f);}catch(error){if(error.code!=='ENOENT')throw error;}}return null;}
   async put(id,raw){const verified=await verifyStoredContent(raw,id);const f=this.file(id,verified.storageKind);fs.writeFileSync(f+'.tmp',raw,{mode:0o600});fs.renameSync(f+'.tmp',f);this.prune();this.emit('stored',id);}
   stats(){const files=[];let bytes=0;for(const name of fs.readdirSync(this.directory)){if(!/^[A-Za-z0-9_-]{43}\.(ans104|l1)$/.test(name))continue;const file=path.join(this.directory,name),{size,mtimeMs}=fs.statSync(file);files.push({file,dataId:name.slice(0,43),storageKind:name.slice(44),size,mtimeMs});bytes+=size;}return {files,bytes};}
+  async statsAsync({signal}={}){
+    signal?.throwIfAborted();
+    const names=await fs.promises.readdir(this.directory),files=[];let bytes=0;
+    signal?.throwIfAborted();
+    for(let offset=0;offset<names.length;offset+=16){
+      signal?.throwIfAborted();
+      const rows=await Promise.all(names.slice(offset,offset+16).map(async name=>{
+        if(!/^[A-Za-z0-9_-]{43}\.(ans104|l1)$/.test(name))return null;
+        signal?.throwIfAborted();
+        const file=path.join(this.directory,name);
+        try{
+          const {size,mtimeMs}=await fs.promises.stat(file);
+          return {file,dataId:name.slice(0,43),storageKind:name.slice(44),size,mtimeMs};
+        }catch(error){if(error.code==='ENOENT')return null;throw error;}
+      }));
+      signal?.throwIfAborted();
+      for(const row of rows)if(row){files.push(row);bytes+=row.size;}
+      // Status scans share the process with HTTP and preparation workers.
+      // Yield even when cached filesystem metadata completes immediately.
+      if(offset+16<names.length)await new Promise(resolve=>setImmediate(resolve));
+    }
+    signal?.throwIfAborted();
+    return {files,bytes};
+  }
   pinnedIds(){return new Set(Object.values(this.pins).flat());}
   savePins(){fs.writeFileSync(this.pinsFile+'.tmp',JSON.stringify(this.pins),{mode:0o600});fs.renameSync(this.pinsFile+'.tmp',this.pinsFile);}
   async pin(id,group){
@@ -34,7 +58,7 @@ export class VerifiedContentStore extends EventEmitter{
     try{this.savePins();}catch(e){if(previous)this.pins[group]=previous;else delete this.pins[group];throw e;}
   }
   unpin(group){const previous=this.pins[group];delete this.pins[group];try{this.savePins();}catch(e){if(previous)this.pins[group]=previous;throw e;}this.prune();}
-  pinStats(){const pinned=this.pinnedIds(),s=this.stats();return {groups:Object.keys(this.pins),files:pinned.size,bytes:s.files.filter(f=>pinned.has(f.dataId)).reduce((n,f)=>n+f.size,0),maxBytes:this.maxPinnedBytes};}
+  pinStats({contentStats}={}){const pinned=this.pinnedIds(),s=contentStats??this.stats();return {groups:Object.keys(this.pins),files:pinned.size,bytes:s.files.filter(f=>pinned.has(f.dataId)).reduce((n,f)=>n+f.size,0),maxBytes:this.maxPinnedBytes};}
   prune(){const s=this.stats(),pinned=this.pinnedIds(),automatic=s.files.filter(f=>!pinned.has(f.dataId));let count=automatic.length,bytes=automatic.reduce((n,f)=>n+f.size,0);for(const f of automatic.sort((a,b)=>a.mtimeMs-b.mtimeMs)){if(bytes<=this.maxBytes&&count<=this.maxFiles)break;fs.unlinkSync(f.file);bytes-=f.size;count--;}}
   chunk(id,offset){if(!Number.isSafeInteger(offset)||offset<0||offset%524288!==0)throw new Error('invalid_chunk_offset');const raw=this.get(id);if(!raw)throw new Error('content_not_cached');if(offset>=raw.length)throw new Error('invalid_chunk_offset');return {kind:'content-chunk',dataId:id,offset,total:raw.length,sha256:sha256(raw),data:raw.subarray(offset,offset+524288).toString('base64')};}
 }

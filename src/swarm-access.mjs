@@ -15,6 +15,8 @@ import {withNetworkAudit,networkAuditSnapshot} from './network-audit.mjs';
 import {shareQuery} from './query-work.mjs';
 import {resolveWithRecovery} from './resilient-access.mjs';
 import {resolvePreparedName,validateSnapshot} from './name-snapshots.mjs';
+import {getProtectedNameContext} from './name-security-runtime.mjs';
+import {resolveCertifiedNameContent} from './certified-name-resolution.mjs';
 
 export function parseInput(raw){
   const value=String(raw||'').trim();
@@ -69,7 +71,9 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
     },signal);
     ({witness,witnessError,stateEvidence}=snapshot);
     if(!stateEvidence)throw new Error('current_name_state_unavailable: '+stateEvidenceError);
-    let snapshotSaveError=null;try{snapshotStore?.observe(stateEvidence);}catch(e){snapshotSaveError=String(e.message);}
+    // Recheck even memoized evidence against the reader's current watermark.
+    // A rejected name binding must never reach the content-fetching path.
+    let snapshotSaveError=null;try{snapshotStore?.observe(stateEvidence);}catch(e){if(e.code!=='SNAPSHOT_PERSISTENCE_FAILED')throw e;snapshotSaveError=String(e.message);}
     resolvedState={nameResolved:true,name,rootDataId:stateEvidence.txId,rpcSources:stateEvidence.observations.filter(x=>x.ok).length,rpcTrustRequired:true,accountInclusionProof:false};
     onProgress({phase:'resolving',stage:'name',status:'done',message:'Name record received through RPC; locating content…',nameResolution:resolvedState});
     progress({stage:'peers',status:'active',message:'Checking Mesh peers and available evidence…'});
@@ -295,6 +299,13 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
 }
 
 export function resolveAndFetchSwarm(raw,options={}){return withNetworkAudit(String(raw),async()=>{
+ const context=getProtectedNameContext();
+ if(context){
+  if(['CHAIN_PROOF_REQUIRED','ANT_UPDATE_PROOF_REQUIRED','TRANSITION_JOURNAL_REQUIRED'].some(key=>process.env[key]==='1'))throw new Error('name_witness_policy_does_not_satisfy_required_chain_proof');
+  const {name,requestedPath}=parseInput(raw),client=createSwarmMeshClient({quorum:options.quorum});client.setName(name);
+  try{return await resolveCertifiedNameContent({...options,name,requestedPath,context,fetchById:dataId=>fetchMeshContent(dataId,{client,contentStore:options.contentStore,contentSources:options.contentSources||'all',onProgress:options.onProgress,signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000)})});}
+  finally{await client.stop();}
+ }
  if(options.accessPolicy!=='auto'||options.fixedSnapshot)return resolveAndFetchSwarmInner(raw,options);
  // Explicit strong-proof requirements never silently become historical access.
  if(['CHAIN_PROOF_REQUIRED','ANT_UPDATE_PROOF_REQUIRED','TRANSITION_JOURNAL_REQUIRED'].some(k=>process.env[k]==='1'))return resolveAndFetchSwarmInner(raw,{...options,accessPolicy:'live'});

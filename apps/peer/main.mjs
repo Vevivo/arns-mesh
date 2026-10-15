@@ -15,13 +15,16 @@ import {startDirectPeerServer,parsePeerAddresses,loadConfiguredPeers,loadDirectP
 import {PeerDiscovery} from '../../src/peer-discovery.mjs';
 import {SnapshotRelay,snapshotPage} from '../../src/snapshot-relay.mjs';
 import {SupporterReplication} from '../../src/supporter-replication.mjs';
-import {supporterReadiness} from '../../src/supporter-readiness.mjs';
+import {supporterReadinessAsync} from '../../src/supporter-readiness.mjs';
+import {collectOperatorStatus,captureOperatorReportContext} from '../../src/operator-status-report.mjs';
 import {peerAddress} from '../../src/peer-directory.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
 import {writeOperatorStatus,startOperatorDashboard} from '../../src/operator-status.mjs';
 import {locationCacheStatus} from '../../src/discovery-store.mjs';
 import {transferBudgetStatus} from '../../src/resource-budget.mjs';
 import {validArName} from '../../src/swarm-common.mjs';
+import {getProtectedNameContext,closeNameSecurityRuntime} from '../../src/name-security-runtime.mjs';
+import {NameCertificateWorker} from '../../src/name-certificate-worker.mjs';
 import {NetworkConnection} from '../helper/network-connection.mjs';
 import {readNetworkPublication,readNetworkRecovery,renewNetworkPublication,mirrorAcceptedMembership,peerNetworkScope} from '../helper/network-publication.mjs';
 process.chdir(coreRoot);
@@ -51,13 +54,17 @@ const acceptedPublishers=()=>[...new Set([...(network.state?[]:trustedPeers),...
 if(names.some(name=>!validArName(name)))throw new Error('Invalid --name argument');
 let refreshing=false,stopping=false;
 async function refresh(){if(refreshing||stopping)return;refreshing=true;try{for(const name of names){try{const r=await resolveArUrl('ar://'+name,{contentStore:peer.contentStore,snapshotStore:runtime.snapshots,accessPolicy,trustedPeers:acceptedPublishers()});if(r.peerPayload)await peer.ingest(r.peerPayload);
-if(pinned.includes(name)){const old=pinner.rows[name],snapshot=runtime.snapshots.get(name);if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
+if(pinned.includes(name)){const old=pinner.rows[name],snapshot=r.meta.accessSnapshot||runtime.snapshots.get(name);if(!snapshot)throw new Error('name_binding_unavailable');if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{snapshot,signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
+const startingNameContext=getProtectedNameContext();
+if(startingNameContext&&Date.now()>=startingNameContext.policy.validFrom&&Date.now()<startingNameContext.policy.validUntil)await startingNameContext.service.ready().catch(error=>console.error(JSON.stringify({event:'name-witness-not-ready',error:String(error.message).slice(0,160)})));
 try{await peer.start();}catch(e){console.error(JSON.stringify({event:'dht-unavailable',error:String(e.message)}));}
 const listenArg=process.argv.indexOf('--listen'),listen=listenArg>=0?parsePeerAddresses(process.argv[listenArg+1])[0]:{host:'0.0.0.0',port:49740};
 let catalog=null,retainedSearchTargets=null;
 const targetFile=path.join(dataDir,'target-catalog.json');
 try{if(fs.statSync(targetFile).size<=16*1024*1024)retainedSearchTargets=JSON.parse(fs.readFileSync(targetFile)).targets||null;}catch{}
 const searchTargets=()=>catalog?.catalog.state.targets||retainedSearchTargets||{};
+const certificateWorker=new NameCertificateWorker({getContext:getProtectedNameContext,names:()=>[...names,...Object.keys(searchTargets()),...runtime.snapshots.names()],onError:(error,name)=>console.error(JSON.stringify({event:'name-certificate-refresh-failed',name,error:String(error.message).slice(0,160)}))});
+certificateWorker.start();
 const searchMetadata=new SearchMetadataWorker({file:path.join(dataDir,'search-metadata.json'),endpoint:()=>catalog?.catalog.endpoint,targets:searchTargets});
 const search=new SearchPublisher({file:path.join(dataDir,'search-published.json'),snapshots:runtime.snapshots,contentStore:peer.contentStore,pinner,sign:record=>peer._envelope(record)});
 const topicSearch=new TopicSearchPublisher({file:path.join(dataDir,'search-topics-published.json'),snapshots:runtime.snapshots,documents:search,metadata:searchMetadata,current:(name,snapshot)=>!catalog&&!retainedSearchTargets||searchTargets()[name]?.dataId===snapshot.txId&&searchTargets()[name]?.mint===snapshot.antId,sign:record=>peer._envelope(record)});
@@ -68,7 +75,8 @@ peer.searchReply=req=>{
  if(req.witnessPeerId&&req.witnessPeerId!==peer.witnessPeerId)return (req.version===2?searchMirrors:legacySearchMirrors).mirror(searchTrust(),req.witnessPeerId,req.version===2?2:1)||{ok:false,error:'search_catalog_unavailable'};
  return req.version===2?topicSearch.reply():search.reply();
 };
-const searchPass=()=>search.pass().then(()=>topicSearch.pass()).catch(error=>{search.lastError=String(error.message).slice(0,160);});
+const searchController=new AbortController();
+const searchPass=()=>search.pass({signal:searchController.signal}).then(()=>topicSearch.passAsync({signal:searchController.signal})).catch(error=>{if(!searchController.signal.aborted)search.lastError=String(error.message).slice(0,160);});
 void searchPass();const searchTimer=setInterval(()=>void searchPass(),60000);
 const mirrorSearch=()=>Promise.allSettled([searchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000)}),legacySearchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000),version:1})]);
 if(upstream)void mirrorSearch();const searchMirrorTimer=setInterval(()=>{if(upstream)void mirrorSearch();},15*60000);
@@ -104,8 +112,12 @@ const networkRenewalTimer=setInterval(renewNetwork,6*3600000);networkRenewalTime
 if(upstream)runtime.discovery.start();
 if(upstream)void refresh();const timer=setInterval(()=>{if(upstream)void refresh();},60000);
 const version=JSON.parse(fs.readFileSync(path.join(coreRoot,'package.json'))).version;
+const statusController=new AbortController();let statusRun=null;
 const publishStatus=()=>{
- const peerStatus=peer.status(),discoveryStatus=peerDiscovery.status(),savedStatus=pinner.status(),replicatedStatus=replicationPinner.status();
+ if(stopping||statusRun)return statusRun;
+ statusRun=(async()=>{
+ const signal=statusController.signal,assertReportContext=captureOperatorReportContext();
+ const {peerStatus,discoveryStatus,savedStatus,replicatedStatus}=await collectOperatorStatus({peer,pinner,replicationPinner,peerDiscovery,signal});
  const replicationStatus=replication.status({completeSites:replicatedStatus.ready});
  // Keep the dashboard's site summaries, not every nested binding and failed
  // file detail. Those remain in the private persistent preparation records.
@@ -116,13 +128,17 @@ const publishStatus=()=>{
   const {groups,...storage}=status.storage;
   return {...status,sites:status.sites.map(summarize),storage:{...storage,groupsCount:groups.length}};
  };
- const readiness=supporterReadiness({snapshots:runtime.snapshots,relay:snapshotRelay,pinners:[pinner,replicationPinner],contentStore:peer.contentStore,trustedPeerIds:acceptedPublishers(),ownPeerId:peer.witnessPeerId,index:peerStatus.sharedIndex,discovery:discoveryStatus,replication:replicationStatus});
+ const readiness=await supporterReadinessAsync({snapshots:runtime.snapshots,relay:snapshotRelay,pinners:[pinner,replicationPinner],contentStore:peer.contentStore,trustedPeerIds:acceptedPublishers(),ownPeerId:peer.witnessPeerId,index:peerStatus.sharedIndex,discovery:discoveryStatus,replication:replicationStatus},{signal});
+ signal.throwIfAborted();assertReportContext();
  const value={version,...peerStatus,onlinePreparation:onlinePreparation.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),peerDiscovery:discoveryStatus,snapshotRelay:snapshotRelay.status(),catalog:catalog?.status()||null,search:{...topicSearch.status(),documents:search.status(),metadata:searchMetadata.status()},network:network.status(),savedSites:summarizeSites(savedStatus),replicatedSites:summarizeSites(replicatedStatus),replication:replicationStatus,readiness};
- writeOperatorStatus(dataDir,value);
+ assertReportContext();writeOperatorStatus(dataDir,value);
  console.log(JSON.stringify({event:'peer-status',version,online:value.online,memory:value.memory,retainedNames:value.retainedNames,savedReady:savedStatus.ready,replicatedReady:replicatedStatus.ready,replication:replicationStatus,readiness:{locallyPrepared:readiness.locallyPrepared,names:readiness.names,files:readiness.files},snapshotRelay:value.snapshotRelay}));
+ })().catch(error=>{if(!statusController.signal.aborted)console.error(JSON.stringify({event:'operator-status-failed',error:String(error.message).slice(0,160)}));}).finally(()=>{statusRun=null;});
+ return statusRun;
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
-process.on('SIGINT',stop);process.on('SIGTERM',stop);
+async function stop(){if(stopping)return;stopping=true;statusController.abort();searchController.abort();certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running,statusRun,search.running,topicSearch.running]);closeNameSecurityRuntime();process.exit(0);}
+process.on('SIGINT',()=>{certificateWorker.stop();void stop();});process.on('SIGTERM',()=>{certificateWorker.stop();void stop();});
+await statusRun; // The startup event retains its initial-status-file contract.
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));

@@ -29,6 +29,11 @@ export function isAllowedRendererUrl(raw,{resourceType}={}){
 }
 export function plainError(error){
   const value=String(error.message||error);
+  if(/name_certificate_unavailable/.test(value))return 'Independent name confirmations are unavailable. A certified retained version may still be available in Automatic or Saved mode.';
+  if(/name_policy_inactive|name_certificate_expired/.test(value))return 'The name confirmation has expired. Mesh cannot present it as current. A previously accepted retained version may still be available.';
+  if(/name_policy_revoked|name_policy_migration_required|name_witness_policy_required|name_security_context_changed/.test(value))return 'The accepted name policy is unavailable, changed or revoked. Review the Mesh connection before opening this name.';
+  if(/name_witness_policy_does_not_satisfy_required_chain_proof/.test(value))return 'This connection uses witness confirmations, which do not satisfy the separately required chain proof.';
+  if(/name_certificate_|name_observation_/.test(value))return 'The name record could not be authenticated. Mesh did not open its content.';
   if(/content_decoded_size_limit/.test(value))return 'This file expands beyond the 32 MiB viewing limit.';
   if(/content_decode_timeout/.test(value))return 'This compressed file took too long to open. The decoding task was stopped.';
   if(/content_encoding_unsupported|content_encoding_ambiguous/.test(value))return 'This file uses an unsupported or ambiguous Content-Encoding. Mesh supports gzip and Brotli.';

@@ -2,13 +2,13 @@
 
 **Open ArNS sites without domains or DNS.**
 
-[Download Mesh 0.6.2 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.2/ArNS-Mesh-Browser-Windows-x64-0.6.2.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+[Windows downloads](https://github.com/Vevivo/arns-mesh/releases/latest) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
 Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
 ## Start using Mesh
 
-1. Download the Windows ZIP above and extract the whole folder.
+1. Download the Windows ZIP from the release page above and extract the whole folder.
 2. Open `Mesh-Browser.exe`.
 3. Enter your complete Mesh connection code under **Settings → Mesh connection code → Check code → Join this network**.
 4. Enter `ar://vevivo` or the ArNS name you want to open in the address bar.
@@ -33,7 +33,13 @@ This scenario concerns interrupted **access routes to external services**. On 6 
 
 ## Compressed sites
 
-Mesh 0.6.2 opens gzip and Brotli content after verifying the original signed file. Use the updated desktop and supporter; existing connection settings and verified copies remain usable. [Compatibility checks and limits](docs/validation/compressed-content-2026-10-12.md).
+The updated desktop and supporter open gzip and Brotli content after verifying the original signed file. Existing connection settings and verified copies remain usable. [Compatibility checks and limits](docs/validation/compressed-content-2026-10-12.md) · [Actual Windows checks](docs/validation/name-security-2026-10-16.md).
+
+## Protecting a name's destination
+
+**Mesh 0.6.3** supports an optional protected network profile: a name's destination must carry matching signatures from configured independent witnesses. Examples are **3 of 4 operators** or **7 of 10**. One supporter can relay the complete proof and site files during an outage; an old proof stays visibly dated.
+
+This requires an explicitly accepted witness policy and real independent operators. Updating the app alone does not activate it on the existing community network. [Join the pilot](docs/en/name-witness-pilot.md) · [Trust model](docs/en/name-security.md) · [Executed tests and remaining release checks](docs/validation/name-security-2026-10-16.md).
 
 ## How Mesh works
 
@@ -47,13 +53,13 @@ Large indexes stay on supporter servers. The Windows reader keeps bounded local 
 
 Install a supporter on a VPS or Raspberry Pi using the [complete setup](docs/en/supporter.md). It starts name/content preparation, accepted-record replication and the R84 index updater with a capacity profile. The community network definition is public; you do not need to contact the original operator for permission or a private key.
 
-Mesh 0.6.2 can discover a new supporter even after the original starting server becomes unreachable. The public signed network definition keeps the same network identity, and independent rendezvous nodes help readers learn new supporter addresses. Existing community codes remain usable after upgrading. Website files still need time and available sources to be prepared; the setup reports preparation and supports a separate reader check before claiming takeover.
+Compatible readers can discover a new supporter even after the original starting server becomes unreachable. The public signed network definition keeps the same network identity, and rendezvous nodes help readers learn new supporter addresses. Existing community codes remain usable after upgrading. Website files still need time and available sources to be prepared; the setup reports preparation and supports a separate reader check before claiming takeover.
 
 **[VPS setup](docs/en/vps.md)** · **[Raspberry Pi setup](docs/en/raspberry-pi.md)** · [R84 index setup](docs/shared-index.md) · [Prepare another server for takeover](docs/en/resilience.md)
 
 ## Developers
 
-The desktop and supporter share the **0.6.2** source tree. `main` contains the current implementation; use tag `v0.6.2` to reproduce the release.
+The desktop and supporter share the **0.6.3** source tree. Use the matching release and its checksum when installing or reproducing a build. [Current test evidence](docs/validation/name-security-2026-10-16.md).
 
 [Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 

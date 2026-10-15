@@ -10,6 +10,12 @@ export function validateSnapshot(value,expectedName){
  return {schema:value.schema,name:value.name,txId:value.txId,antId:value.antId,observedAt:value.observedAt,slot:value.slot,ttlSeconds:Number(value.ttlSeconds)||60};
 }
 
+// Only failures at the local persistence boundary may leave a live RPC read
+// usable without saving it. Validation and rollback errors must stay fatal.
+function persistSnapshots(store){
+ try{store.save();}catch(cause){throw Object.assign(new Error('snapshot_persistence_failed: '+String(cause?.message||cause),{cause}),{code:'SNAPSHOT_PERSISTENCE_FAILED'});}
+}
+
 // These are explicitly dated observations, not proofs of current chain state.
 export class NameSnapshotStore{
  constructor(file){this.file=file;this.rows=Object.create(null);try{const saved=JSON.parse(fs.readFileSync(file));if(saved.schema==='arns-mesh-name-snapshots/v1')this.rows=Object.assign(Object.create(null),saved.rows||{});}catch{}}
@@ -19,10 +25,13 @@ export class NameSnapshotStore{
   const row=validateSnapshot(value,value.name),previous=this.get(row.name);
   // A remote observation cannot replace a locally accepted RPC binding.
   if(provenance?.kind!=='local-rpc'&&previous?.provenance?.kind==='local-rpc')return previous;
-  if(previous&&row.slot<previous.slot)throw new Error('snapshot_rollback_rejected');
-  if(previous&&row.slot===previous.slot&&(row.txId!==previous.txId||row.antId!==previous.antId))throw new Error('snapshot_conflict');
-  if(!previous&&Object.keys(this.rows).length>=50000)throw new Error('snapshot_catalog_limit');
-  const before=this.rows[row.name];this.rows[row.name]={...row,provenance};try{if(persist)this.save();}catch(e){if(before)this.rows[row.name]=before;else delete this.rows[row.name];throw e;}return this.get(row.name);
+  // A publisher's claimed slot is not a local RPC watermark. It must not
+  // prevent recovery to a directly decoded RPC observation at a lower slot.
+  const comparable=previous&&!(provenance?.kind==='local-rpc'&&previous.provenance?.kind!=='local-rpc');
+  if(comparable&&row.slot<previous.slot)throw new Error('snapshot_rollback_rejected');
+  if(comparable&&row.slot===previous.slot&&(row.txId!==previous.txId||row.antId!==previous.antId))throw new Error('snapshot_conflict');
+  if(!previous&&Object.keys(this.rows).length>=50000)throw Object.assign(new Error('snapshot_catalog_limit'),{code:'SNAPSHOT_PERSISTENCE_FAILED'});
+  const before=this.rows[row.name];this.rows[row.name]={...row,provenance};try{if(persist)persistSnapshots(this);}catch(e){if(before)this.rows[row.name]=before;else delete this.rows[row.name];throw e;}return this.get(row.name);
  }
  putMany(values,provenance){
   // Only changed names need rollback entries. Copying the entire catalogue for
@@ -30,7 +39,7 @@ export class NameSnapshotStore{
   const before=new Map();
   try{
    for(const value of values){if(!before.has(value.name))before.set(value.name,this.rows[value.name]);this.put(value,provenance,{persist:false});}
-   this.save();
+   persistSnapshots(this);
   }catch(error){for(const [name,row] of before){if(row===undefined)delete this.rows[name];else this.rows[name]=row;}throw error;}
  }
  observe(evidence){

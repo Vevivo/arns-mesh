@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     strategy:
@@ -90,6 +93,22 @@ jobs:
         env:
           QA_OUTPUT: ${{ runner.temp }}/mesh-compressed-content
         run: node qa/desktop/compressed-content.cjs
+      - name: Render protected names and reject invalid certificates in real Windows Electron
+        timeout-minutes: 10
+        env:
+          QA_OUTPUT: ${{ runner.temp }}/mesh-name-certificates
+        run: node qa/desktop/protected-name-acceptance.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: windows-name-certificates
+          path: |
+            ${{ runner.temp }}/mesh-name-certificates/results.json
+            ${{ runner.temp }}/mesh-name-certificates/requests.json
+            ${{ runner.temp }}/mesh-name-certificates/*.png
+            ${{ runner.temp }}/mesh-name-certificates/electron.log
+            ${{ runner.temp }}/mesh-name-certificates/chromium.log
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -137,6 +156,24 @@ jobs:
             ${{ runner.temp }}/mesh-search-ui/results.json
             ${{ runner.temp }}/mesh-search-ui/electron.log
           retention-days: 14
+      - name: Record acceptance for the exact release archive
+        shell: pwsh
+        run: |
+          $build = Get-Content dist/build.json -Raw | ConvertFrom-Json
+          $checks = @{}
+          foreach ($suite in @('mesh-search-ui', 'mesh-independent-supporter', 'mesh-compressed-content', 'mesh-name-certificates', 'mesh-upstream-outage')) {
+            $result = Get-Content "$env:RUNNER_TEMP/$suite/results.json" -Raw | ConvertFrom-Json
+            if ($result.passed -ne $true) { throw "Acceptance failed: $suite" }
+            $checks[$suite] = @{ passed = $true; checks = @($result.checks).Count; cases = @($result.cases).Count }
+          }
+          $archive = Get-Item "dist/$($build.file)"
+          $actual = (Get-FileHash -LiteralPath $archive.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $build.sha256) { throw 'Tested release archive checksum changed.' }
+          $build.windowsAcceptance = 'passed'
+          $build | Add-Member -NotePropertyName sourceCommit -NotePropertyValue $env:GITHUB_SHA
+          $build | Add-Member -NotePropertyName acceptanceRun -NotePropertyValue "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          $build | Add-Member -NotePropertyName acceptanceSuites -NotePropertyValue $checks
+          $build | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath dist/build.json -Encoding utf8NoBOM
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: windows-release

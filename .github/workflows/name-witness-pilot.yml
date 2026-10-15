@@ -1,0 +1,42 @@
+name: Name witness pilot checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'apps/helper/**'
+      - 'apps/peer/**'
+      - 'scripts/*name-witness*'
+      - 'scripts/profile.mjs'
+      - 'tests/*name*'
+      - 'tests/*certified*'
+      - 'tests/sharded-*'
+      - 'tests/helpers/**'
+      - 'package*.json'
+      - '.github/workflows/name-witness-pilot.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  linux-native-and-http:
+    name: Linux signing state and controlled HTTP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+      - run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Verify sources and portable policy tests
+        run: |
+          node scripts/check-public.mjs
+          node --test --test-concurrency=2 tests/name-certificates.test.mjs tests/name-certificate-collector.test.mjs tests/name-certificate-state.test.mjs tests/name-witness-policy.test.mjs tests/name-witness-profile-cli.test.mjs tests/name-witness-probe.test.mjs tests/name-witness-cli.test.mjs tests/name-security-runtime.test.mjs tests/name-signer-rpc-configuration.test.mjs tests/name-witness-pilot-policy.test.mjs
+      - name: Run native Linux filesystem and actual loopback HTTP tests
+        run: |
+          node --test --test-concurrency=2 tests/sharded-name-state.test.mjs tests/sharded-name-state-native.test.mjs tests/name-witness-cli-native.test.mjs tests/name-certificate-http.test.mjs
+      - name: State scope
+        run: echo 'Controlled CI and loopback tests do not establish operator independence or a multi-server pilot result.'

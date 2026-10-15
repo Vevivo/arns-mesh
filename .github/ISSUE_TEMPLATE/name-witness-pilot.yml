@@ -1,0 +1,59 @@
+name: Join the name-witness pilot
+description: Volunteer as an independently operated name witness or content supporter.
+title: "Name-witness pilot volunteer"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for volunteering. Start with docs/en/name-witness-pilot.md.
+        This is a development pilot; joining does not establish production readiness.
+        Content supporters serve files. Selected name witnesses also sign name observations.
+        Only post public keys and service endpoints you intend to publish.
+        Never post private keys, runtime-env.json, enrollment state or private diagnostics.
+        A volunteer report is not automatic admission to the authenticated witness roster.
+  - type: dropdown
+    id: role
+    attributes:
+      label: Proposed role
+      options:
+        - Independently operated name witness
+        - Content supporter
+        - Reader and outage-test participant
+    validations:
+      required: true
+  - type: input
+    id: operator
+    attributes:
+      label: Public operator label
+      description: Identify your operator domain. This is an operator label, not a DNS requirement.
+    validations:
+      required: true
+  - type: textarea
+    id: independence
+    attributes:
+      label: Independent operation
+      description: Describe who controls this host and key and whether other proposed witnesses share your administration or RPC provider. Do not include credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: public_key
+    attributes:
+      label: Public witness key and key ID, if applying as a witness
+      description: Use the pilot key-generation command. Share public-key.pem only; never private-key.pem.
+      render: text
+  - type: input
+    id: endpoint
+    attributes:
+      label: Public numeric IP and TCP port, if ready
+      placeholder: "192.0.2.20:49741 (replace with your actual reachable endpoint)"
+  - type: input
+    id: candidate
+    attributes:
+      label: Candidate version and source archive SHA-256
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Linux, architecture and test readiness
+      description: State your Linux distribution/architecture and whether you can run the native filesystem and actual-network pilot checks.

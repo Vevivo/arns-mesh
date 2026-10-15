@@ -15,10 +15,12 @@ function harness({children=64,missing=true,oldReady=false,tickMs=0}={}){
  const store={pins:{},has:id=>id===root||id===oldRoot||(!missing&&childIds.includes(id)),async pin(id,group){store.pins[group]=[...new Set([...(store.pins[group]||[]),id])];},unpin(group){events.push('unpin:'+group);delete store.pins[group];}};
  const fs={readFileSync(){throw new Error('ENOENT');},writeFileSync(file,value){writes.push(JSON.parse(value));events.push('write');},renameSync(){}};
  const context={fs,crypto,verifyStoredContent:async()=>{throw new Error('unexpected verification');},decodeVerifiedPayload:async direct=>({body:direct.payload}),createSwarmMeshClient:()=>({setName(){},async stop(){}}),fetchMeshContent:null,validArName:()=>true,validDataId:id=>/^[A-Za-z0-9_-]{43}$/.test(id),manifestTargetIds:m=>Object.values(m.paths).map(x=>x.id),validateSnapshot:s=>s,discoverArweaveReferences:()=>({ids:[],truncated:false}),yieldToEventLoop,Date:class extends Date{static now(){return clock;}}};
- const C=vm.runInNewContext(source.slice(source.indexOf('export class SitePinner')).replace('export class SitePinner','class SitePinner')+'\nSitePinner',context);
+ const C=vm.runInNewContext(source.slice(source.indexOf('const completedRow=')).replace('export class SitePinner','class SitePinner')+'\nSitePinner',context);
  const snapshot={name:'test',txId:root,observedAt:'2026-10-13T00:00:00.000Z',provenance:{kind:'local-rpc'}};
  const fetchContent=async id=>{fetched.push(id);clock+=tickMs;if(id===root)return {direct:{tags:[{name:'Content-Type',value:'application/x.arweave-manifest'}],payload:Buffer.from(JSON.stringify({manifest:'arweave/paths',paths:Object.fromEntries(childIds.map(id=>[id,{id}]))}))}};if(missing)throw new Error('content_not_saved');return {direct:{tags:[],payload:Buffer.from('plain')}};};
- const pinner=new C({file:'memory-only',snapshots,contentStore:store,fetchContent});
+ // This isolated VM harness exercises the legacy preparation scheduler. It
+ // strips module imports; protected-profile enforcement has integration tests.
+ const pinner=new C({file:'memory-only',snapshots,contentStore:store,fetchContent,getNameContext:()=>null});
  if(oldReady){const oldSnapshot={...snapshot,txId:oldRoot};store.pins.test=[oldRoot];pinner.rows.test={name:'test',rootDataId:oldRoot,observedAt:oldSnapshot.observedAt,snapshot:oldSnapshot,pinGroup:'test',contentDecodingVersion:1,status:'document-saved',total:1,saved:1,failed:0};}
  return {pinner,snapshot,store,writes,events,fetched,root,childIds};
 }

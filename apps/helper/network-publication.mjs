@@ -7,9 +7,9 @@ import {validateProfile} from './network-profile.mjs';
 function readJson(file,max=MAX_NETWORK_BYTES){if(fs.statSync(file).size>max)throw new Error('Network file is too large.');return JSON.parse(fs.readFileSync(file,'utf8'));}
 function writeJson(file,value){const tmp=file+'.tmp';fs.writeFileSync(tmp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});try{fs.renameSync(tmp,file);}finally{fs.rmSync(tmp,{force:true});}}
 export function peerNetworkScope(dataDir,connection){
- if(connection?.state)return invitationScope(withNetworkContinuity(connection.state.invitation));
+ if(connection?.state)return invitationScope(withNetworkContinuity(connection.state.invitation,{allowInactiveNamePolicy:true}),{allowInactiveNamePolicy:true});
  // A provider may publish a network without being a joined reader itself.
- try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);verifyNetwork(record.envelope,record.invitation,{allowExpired:true});return invitationScope(withNetworkContinuity(record.invitation));}catch{return null;}
+ try{const record=readJson(path.join(dataDir,'network-announcement.json'),MAX_NETWORK_BYTES*3);verifyNetwork(record.envelope,record.invitation,{allowExpired:true});return invitationScope(withNetworkContinuity(record.invitation,{allowInactiveNamePolicy:true}),{allowInactiveNamePolicy:true});}catch{return null;}
 }
 export function readNetworkPublication(dataDir){
  try{

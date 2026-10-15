@@ -1,8 +1,10 @@
-# Mesh 0.6.2 status
+# Mesh status
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-**0.6.2** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
+**Mesh 0.6.3** adds optional quorum-verified name bindings. Controlled native Linux, real HTTP and actual Windows application checks have passed; the [16 October validation record](../validation/name-security-2026-10-16.md) separates these results from final-package checks and operator enrollment. The existing production network does not gain independent witnesses merely by installing new software. [Pilot setup](name-witness-pilot.md).
+
+The complete Linux source suite passed **577/577**; Windows passed **572**, with only the five Linux-specific checks skipped. The clean rebuilt Windows ZIP passed **20 renderer cases and 7 grouped checks**, including saved restart with zero application HTTP requests. Four- and ten-witness signature checks passed across **14 separate cloud runner VMs**. Those VMs share one repository administrator and exchange public artifacts; they are not a production committee or a substitute for the separately executed HTTP tests. Final release-pipeline publication is recorded separately.
 
 ## Continuous preparation
 
