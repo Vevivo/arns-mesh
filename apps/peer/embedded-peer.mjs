@@ -299,7 +299,7 @@ export class MeshPeer {
     if(this.swarm)this._announce(name).catch(()=>{});
     return this.status();
   }
-  status(){
+  status({contentStats}={}){
     return {
       online:Boolean(this.swarm||this.directAddress),
       directAddress:this.directAddress||null,
@@ -316,7 +316,7 @@ export class MeshPeer {
       cachedLocations:Object.keys(this.cache.locations||{}).length,
       indexLocations:this.locationIndex.size,
       sharedIndex:getSharedIndex()?.status()||null,
-      cachedContent:this.contentStore.stats().files.length,
+      cachedContent:(contentStats??this.contentStore.stats()).files.length,
       connections:this.connections,
       requestsServed:this.requestsServed,
       contentChunksServed:this.contentChunksServed,

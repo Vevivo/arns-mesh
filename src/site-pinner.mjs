@@ -35,7 +35,7 @@ export class SitePinner{
  needsDecodingAudit(row){return Boolean(row&&row.contentDecodingVersion!==1);}
  readySnapshot(name,{trustedPeers=[]}={}){if(!this.isReady(this.rows[name]))return null;return this.snapshotStore({trustedPeers}).get(name);}
  preparedStore({trustedPeers=[]}={}){return {get:name=>this.readySnapshot(name,{trustedPeers})};}
- status(){return {sites:Object.values(this.rows),storage:this.store.pinStats(),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}
+ status({contentStats}={}){return {sites:Object.values(this.rows),storage:this.store.pinStats({contentStats}),ready:Object.values(this.rows).filter(r=>this.isReady(r)).length};}
  save(){fs.writeFileSync(this.file+'.tmp',JSON.stringify(this.rows),{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  // A pinned version must retain its own dated name binding. Later live
  // observations must not silently redirect a saved entry to unpinned bytes.

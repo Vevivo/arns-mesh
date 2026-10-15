@@ -225,6 +225,8 @@ export class CatalogWorker {
   let cursor=(this.state.prepareCursor||0)%names.length;
   let protectedAttempt=false;
   for(let checked=0;checked<names.length;checked++){
+   // Skipping ready sites must still allow peer replies and deadlines.
+   if(checked%32===0){await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();}
    const name=names[cursor];cursor=(cursor+1)%names.length;this.state.prepareCursor=cursor;
    let snapshot=this.snapshotStore.get(name);const row=this.pinner.rows[name];
    if(context){

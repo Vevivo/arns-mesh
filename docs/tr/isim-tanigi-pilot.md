@@ -4,7 +4,7 @@
 
 **Mesh'in çalışması için önce dört gönüllü bulunması gerekmiyor.** Normal destekçi, doğrulanmış site dosyalarını saklar ve kullanıcılara ulaştırır. İsteğe bağlı isim tanığı pilotu ise ayrı bir koruma ekler: tek bir destekçi, bir ArNS isminin hangi içerik kimliğine gideceğine tek başına karar veremez.
 
-Bu rehber **0.6.3-preview.2 geliştirme adayını** anlatır. Rehber hazırlanırken herkese açık yayımlanmış sürüm **0.6.1**, herkese açık main kaynağının sürümü **0.6.2**, bu aday ise yerel geliştirme çalışmasıdır. Yayımlanmış v0.6.2 etiketi yoktur. Pilot canlı üretim ağına etkinleştirilmiş değildir. Aşağıdaki aday komutları için geliştiricinin incelemeye sunduğu kesin kaynak commit'ini veya paketi kullanın; yayımlanmış bir aday etiketi varmış gibi davranmayın.
+Bu rehber, **0.6.3** içindeki isteğe bağlı tanık özelliğini anlatır. Gerçek Linux, HTTP ve Windows uygulaması kontrolleri çalıştırılmıştır; [tarihli doğrulama kaydı](../validation/name-security-2026-10-16.md), test edilen sürümleri ve kalan sürüm kontrollerini ayırır. Bağımsız işletmecilerden oluşan canlı bir kurul henüz oluşturulmamış ve üretim ağına etkinleştirilmemiştir. Eşleşen sürüm kaynağını; yayın öncesi testte ise incelenmiş kesin aday commit'ini kullanın.
 
 ## Nasıl destek olabilirsiniz?
 
@@ -15,8 +15,6 @@ Bu rehber **0.6.3-preview.2 geliştirme adayını** anlatır. Rehber hazırlanı
 | İkisi birlikte | Aynı sunucuda içerik hizmeti ve kayıtlı isim tanığı | Sunucu sayısından bağımsız olarak bir işletmecinin oyu. |
 
 Bugün erişime katkı vermek için [normal destekçi kurulumunu](destekci.md) izleyebilirsiniz; o kurulum için gerçekten incelenmiş kaynak/sürümü kullanın. Mevcut depolama, R84 ve hazırlama akışı değişmez. Tanık olmak veya dört kişiyi beklemek gerekmez.
-
-Normal kaynak kurulumu için kayda alınan 0.6.2 kaynak noktası [2520b305c85983f4b7c2f76306715e2396a049a5](https://github.com/Vevivo/arns-mesh/tree/2520b305c85983f4b7c2f76306715e2396a049a5) commit'idir. Bu kaynağı yeniden üretirken var olmayan v0.6.2 etiketi yerine bu kesin commit kullanılabilir. Bu eski kaynak noktası yeni isim tanığı adayını içermez.
 
 Pilotun başlangıç düzeni **dört bağımsız işletmeci, üç uyuşan imza ve en fazla bir hatalı işletmeci** varsayımıdır. On gönüllü de katkı verebilir; hepsi içerik sunabilir. Onunun da bağımsız isim tanığı olması isteniyorsa listeyi **etkinleştirmeden önce** buna göre oluşturun: on işletmecili politika **yedi uyuşan imza isteyip en fazla üç hatalı işletmeciyi** tolere edebilir. Eşik, çevrimiçi sunucu sayısından otomatik hesaplanmaz.
 
@@ -78,13 +76,13 @@ node scripts/name-witness-policy.mjs create \
   --genesis-hash VERIFIED_SOLANA_GENESIS_HASH \
   --registry-program-id VERIFIED_REGISTRY_PROGRAM_ID \
   --max-faults 1 --threshold 3 \
-  --round-ms 60000 --lease-ms 0 --max-future-skew-ms 1000 \
+  --round-ms 60000 --lease-ms 0 --max-future-skew-ms 5000 \
   --valid-from AGREED_START_ISO_UTC \
   --valid-until AGREED_END_ISO_UTC \
   --output name-witness-policy.json
 ~~~
 
-Tarih yer tutucuları yerine pilot için anlaşılan gerçek UTC tarihleri yazılır. Buradaki 60 saniyelik tur ve sıfır ek süre, kanıtın tur sınırında bitmesi anlamına gelir. Bu bir pilot ayarıdır; anlık küresel güncellik iddiası değildir. Saat doğruluğunu ve imza toplama gecikmesini göz önünde bulundurun.
+Tarih yer tutucuları yerine pilot için anlaşılan gerçek UTC tarihleri yazılır. Buradaki 60 saniyelik tur ve sıfır ek süre, kanıtın tur sınırında bitmesi anlamına gelir. İleri saat farkına beş saniyelik sınır açıkça konmuştur: makineler arası testte yaklaşık 2,3 saniye fark ölçüldü ve bir saniyelik test toleransı reddedildi. Saatleri eşitleyin ve bu payı işletmecilerle inceleyin. Bu sınır, süresi dolmuş kanıtı uzatmaz veya anlık küresel güncellik kanıtlamaz; imza toplama gecikmesini de göz önünde bulundurun.
 
 Her işletmeci, **politika kimliğini güvenilir kimlik doğrulaması yapılan bir kanaldan** alır ve dosyayı kontrol eder:
 
@@ -163,7 +161,7 @@ node apps/peer/main.mjs --listen 0.0.0.0:49751 --name AGREED_TEST_ARNS_NAME
 
 Bu ayarlar normal dış kaynak içerik indirmesini, kataloğu, hazırlama işçilerini ve içerik kopyalamayı kapatır. Kayıtlı tanığın ARNS_NAME_SIGNER_RPC_SEEDS kullanan açık RPC gözlemcisini kapatmaz. --pin yerine --name kullanılır: bu tarif site dosyalarını hazırlamaz ve bunları sunmayı vaat etmez. Kimlik, imzalama geçmişi ve sertifika bilgileri yine kalıcı alan gerektirir. Gerçek bir isim ve kullanılmayan port seçip gerekli TCP/keşif yollarını açın.
 
-Tarif kaynak ayarlarıyla karşılaştırılmıştır; gerçek Linux başlangıcı, ağ ve bağımsız işletmeci kabulü hâlâ sınanmalıdır. Daha önce başarılı biçimde yapılmış bir dağıtım olarak sunulmuyor. Kontroller geçene kadar ön plan sürecini gözetimli çalıştırın; sonrasında aynı ortam ve dizinlerle ayrı pilot servisi oluşturun.
+Gerçek Linux durum/kayıt ve HTTP kontrolleri, kontrollü ortamlarda geçti. Bu sonuçlar sizin sunucunuzu yapılandırmaz veya işletmeci bağımsızlığını kanıtlamaz. Ayrı pilot servisi oluşturmadan önce kendi kurulumunuzun imzalı yanıtlarını, erişimini, saatini ve yeniden başlatma davranışını doğrulayın.
 
 ### İçerik destekçisi veya iki rol birlikte
 
@@ -238,5 +236,5 @@ Eksik dosyaları ve başarısızlıkları kaydedin. Sonrasında yalnızca test o
 
 İncelenen listeyi ve politika kimliğini, gerçek işletmeci teyitlerini, aday kaynak commit'ini, Linux/ağ/Windows test sonuçlarını ve sınanan site kapsamını yayımlayın. Açık anahtar ve işletmeci adresleri sahiplerinin onayıyla paylaşılabilir; özel imza verileri paylaşılmaz.
 
-Bu çözüm **yapılandırılmış bağımsız tanıklara dayalıdır**. Solana'nın yerel konsensüs kanıtı veya daha yeni hiçbir güncelleme olmadığı garantisi değildir. Üretime geçiş, pilot kabulünden sonraki ayrı ve incelenmiş uygulamadır. Şimdiye kadar gerçekten yapılan kontroller ve bekleyenler [doğrulama kaydındadır](../validation/name-binding-security-2026-10-15.md).
+Bu çözüm **yapılandırılmış bağımsız tanıklara dayalıdır**. Solana'nın yerel konsensüs kanıtı veya daha yeni hiçbir güncelleme olmadığı garantisi değildir. Yazılım sürümü, genel bir kurul oluşmadan da bu isteğe bağlı özelliği sunabilir. Kurulun etkinleşmesi, gerçek işletmecilerin kaydı ve ayrıca incelenmiş bir geçiş gerektirir. Yapılan kontroller ve bekleyenler [güncel doğrulama kaydındadır](../validation/name-security-2026-10-16.md).
 

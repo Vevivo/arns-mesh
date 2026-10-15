@@ -2,15 +2,13 @@
 
 **Domain ve DNS olmadan ArNS sitelerini açın.**
 
-Bu çalışma kopyası **0.6.3-preview.2 gönüllü pilot adayıdır**. [Pilota katılma rehberi](docs/tr/isim-tanigi-pilot.md), içerik destekçisi, bağımsız isim tanığı ve test okuyucusu rollerini anlatır. Kurulum ve kontrol araçları hazırdır; gerçek bağımsız ağ ve üretim kabulü henüz doğrulanmamıştır. [Güven modeli](docs/en/name-security.md).
-
-[Yayımlanmış Windows sürümü: 0.6.1](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
+[Windows indirme sayfası](https://github.com/Vevivo/arns-mesh/releases/latest) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
 
 Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyaları doğrular ve siteyi açar. Siteye ulaşmak için bir gateway domaini veya DNS çözümü kullanmaz.
 
 ## Hemen kullanın
 
-1. Yukarıdaki Windows ZIP'ini indirin ve tamamını bir klasöre çıkarın.
+1. Yukarıdaki sürüm sayfasından Windows ZIP'ini indirin ve tamamını bir klasöre çıkarın.
 2. `Mesh-Browser.exe` dosyasını açın.
 3. Mesh bağlantı kodunuzu **Settings → Mesh connection code → Check code → Join this network** bölümüne girin.
 4. Adres çubuğuna `ar://vevivo` veya açmak istediğiniz ArNS ismini yazın.
@@ -35,7 +33,13 @@ Burada anlatılan durum, **dış hizmetlere giden erişim yollarının kesilmesi
 
 ## Sıkıştırılmış siteler
 
-Mesh 0.6.2, gzip ve Brotli içerikleri özgün dosyanın imzasını doğruladıktan sonra açar. Masaüstünü ve destekçiyi güncelleyin; mevcut bağlantı ayarları ve doğrulanmış kopyalar kullanılmaya devam eder. [Uyumluluk kontrolleri ve sınırlar](docs/validation/compressed-content-2026-10-12.md).
+Güncellenmiş masaüstü ve destekçi, gzip ve Brotli içerikleri özgün dosyanın imzasını doğruladıktan sonra açar. Mevcut bağlantı ayarları ve doğrulanmış kopyalar kullanılmaya devam eder. [Uyumluluk kontrolleri ve sınırlar](docs/validation/compressed-content-2026-10-12.md) · [Gerçek Windows kontrolleri](docs/validation/name-security-2026-10-16.md).
+
+## İsmin doğru içeriğe yönelmesi
+
+**Mesh 0.6.3**, isteğe bağlı korumalı ağ profilini destekler: ismin içerik adresi, yapılandırılmış bağımsız tanıkların eşleşen imzalarını taşımalıdır. Örneğin **4 işletmeciden 3'ü** veya **10 işletmeciden 7'si** gerekir. Kesintide tek bir destekçi, tam imza kanıtını ve site dosyalarını iletebilir; eski kanıtın tarihi yenilenmez.
+
+Bunun için açıkça kabul edilmiş bir tanık politikası ve gerçekten bağımsız işletmeciler gerekir. Uygulamayı güncellemek, mevcut topluluk ağında bu korumayı kendiliğinden açmaz. [Pilota katılın](docs/tr/isim-tanigi-pilot.md) · [Güven modeli](docs/en/name-security.md) · [Yapılan testler ve kalan sürüm kontrolleri](docs/validation/name-security-2026-10-16.md).
 
 ## Mesh nasıl çalışır?
 
@@ -49,13 +53,13 @@ Büyük indeksler destekçi sunucularda tutulur. Windows okuyucusu sınırlı ye
 
 VPS veya Raspberry Pi üzerinde [tam destekçi kurulumunu](docs/tr/destekci.md) izleyin. Kurulum, kapasite seçiminize göre isim/dosya hazırlığını, kabul edilen kayıtların kopyalanmasını ve R84 güncelleyicisini başlatır. Topluluk ağının tanımı herkese açıktır; ilk işletmeciden kişisel izin veya özel anahtar almanız gerekmez.
 
-Mesh 0.6.2, ilk başlangıç sunucusu erişilemez olduktan sonra katılan yeni destekçiyi de bulabilir. Açık, imzalı ağ tanımı aynı ağ kimliğini korur; bağımsız buluşma noktaları yeni destekçilerin adreslerini öğrenmeye yardım eder. Mevcut topluluk kodu, uygulama güncellendikten sonra kullanılmaya devam eder. Site dosyalarının hazırlanması zaman ve ulaşılabilir kaynak gerektirir; kurulum hazırlık durumunu gösterir ve devralma için ayrı okuyucuyla kontrol sağlar.
+Uyumlu okuyucular, ilk başlangıç sunucusu erişilemez olduktan sonra katılan yeni destekçiyi de bulabilir. Açık, imzalı ağ tanımı aynı ağ kimliğini korur; buluşma noktaları yeni destekçilerin adreslerini öğrenmeye yardım eder. Mevcut topluluk kodu, uygulama güncellendikten sonra kullanılmaya devam eder. Site dosyalarının hazırlanması zaman ve ulaşılabilir kaynak gerektirir; kurulum hazırlık durumunu gösterir ve devralma için ayrı okuyucuyla kontrol sağlar.
 
 **[VPS kurulumu](docs/tr/vps.md)** · **[Raspberry Pi kurulumu](docs/tr/raspberry-pi.md)** · [R84 indeks kurulumu](docs/tr/paylasilan-indeks.md) · [Başka sunucunun devralmasına hazırlık](docs/tr/dayaniklilik.md)
 
 ## Geliştiriciler
 
-Bu adayın masaüstü ve destekçisi aynı **0.6.3-preview.2** kaynak ağacındadır. Yukarıda bağlantısı verilen yayımlanmış Windows **0.6.1** paketi bu pilotun isim tanığı denetimlerini içermez. Bunları denemek için incelenmiş pilot kaynağını/paketini ve dosya doğrulama bilgisini kullanın. Önceki 0.6.2 kaynak temeli `2520b305c85983f4b7c2f76306715e2396a049a5` commit'idir; indirilebilecek bir `v0.6.2` etiketi yoktur.
+Masaüstü ve destekçi aynı **0.6.3** kaynak ağacını kullanır. Kurulumda veya yeniden derlemede eşleşen sürümü ve dosya doğrulama bilgisini kullanın. [Güncel test kanıtları](docs/validation/name-security-2026-10-16.md).
 
 [Geliştirme ve testler](docs/tr/gelistirici.md) · [Mimari](docs/en/architecture.md) · [Sürüm notları](docs/en/release-notes.md) · [Durum](docs/tr/durum.md) · [Gizlilik](docs/tr/gizlilik.md) · [Lisans](LICENSE)
 

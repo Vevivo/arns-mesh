@@ -34,7 +34,7 @@ export class VerifiedContentStore extends EventEmitter{
     try{this.savePins();}catch(e){if(previous)this.pins[group]=previous;else delete this.pins[group];throw e;}
   }
   unpin(group){const previous=this.pins[group];delete this.pins[group];try{this.savePins();}catch(e){if(previous)this.pins[group]=previous;throw e;}this.prune();}
-  pinStats(){const pinned=this.pinnedIds(),s=this.stats();return {groups:Object.keys(this.pins),files:pinned.size,bytes:s.files.filter(f=>pinned.has(f.dataId)).reduce((n,f)=>n+f.size,0),maxBytes:this.maxPinnedBytes};}
+  pinStats({contentStats}={}){const pinned=this.pinnedIds(),s=contentStats??this.stats();return {groups:Object.keys(this.pins),files:pinned.size,bytes:s.files.filter(f=>pinned.has(f.dataId)).reduce((n,f)=>n+f.size,0),maxBytes:this.maxPinnedBytes};}
   prune(){const s=this.stats(),pinned=this.pinnedIds(),automatic=s.files.filter(f=>!pinned.has(f.dataId));let count=automatic.length,bytes=automatic.reduce((n,f)=>n+f.size,0);for(const f of automatic.sort((a,b)=>a.mtimeMs-b.mtimeMs)){if(bytes<=this.maxBytes&&count<=this.maxFiles)break;fs.unlinkSync(f.file);bytes-=f.size;count--;}}
   chunk(id,offset){if(!Number.isSafeInteger(offset)||offset<0||offset%524288!==0)throw new Error('invalid_chunk_offset');const raw=this.get(id);if(!raw)throw new Error('content_not_cached');if(offset>=raw.length)throw new Error('invalid_chunk_offset');return {kind:'content-chunk',dataId:id,offset,total:raw.length,sha256:sha256(raw),data:raw.subarray(offset,offset+524288).toString('base64')};}
 }

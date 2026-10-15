@@ -2,19 +2,31 @@
 
 [English](../en/developer.md) · [Ana sayfa](../../README.tr.md)
 
-Masaüstü, destekçi, R84 okuyucusu ve testler aynı **0.6.2** kaynak ağacındadır.
+Masaüstü, destekçi, R84 okuyucusu ve testler aynı **0.6.3** kaynak ağacındadır. [Doğrulama kaydı](../validation/name-security-2026-10-16.md), gerçekten çalıştırılan kontrolleri ve sürüm kanıtlarını belirtir.
 
 ## Kaynağı alın
 
+Yayımlanmış sürüm etiketini kullanın. Yayın öncesi incelemede `v0.6.3` henüz yayımlanmamışsa incelenen aday commit'ini kullanın; aşağıdaki aday inceleme komutları etiketi gerektirmez.
+
 ```bash
-git clone --branch v0.6.2 --depth 1 https://github.com/Vevivo/arns-mesh.git
+git clone --branch v0.6.3 https://github.com/Vevivo/arns-mesh.git
 cd arns-mesh
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 npm run check:public
 npm test
 ```
 
-Geliştirme için güncel `main` dalını kullanın. Kaynak Node.js 22.12 ve üzerini kabul eder; CI Node.js 24.19.0 kullanır. [Node kurulumu](../en/node-setup.md).
+İsim güvenliği adayını yayımlanmadan önce incelemek için `--branch` olmadan normal klonlama yapın, ardından:
+
+```bash
+git fetch origin pull/18/head
+git switch --detach FETCH_HEAD
+git rev-parse HEAD
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+npm test
+```
+
+Test sonuçlarıyla birlikte kesin commit'i kaydedin. Kaynak Node.js 22.12 ve üzerini kabul eder; CI Node 24 kullanır. [Node kurulumu](../en/node-setup.md).
 
 ## Kodun yerleşimi
 
@@ -24,6 +36,7 @@ Geliştirme için güncel `main` dalını kullanın. Kaynak Node.js 22.12 ve üz
 | Destekçi ve yerel durum ekranı | `apps/peer/`, `apps/operator/` |
 | İsim çözümü ve kesintide geri dönüş | `src/swarm-access.mjs`, `src/resilient-access.mjs` |
 | İmzalı isim kaydı aktarımı | `src/snapshot-relay.mjs` |
+| Korunan isim politikası, tanık kanıtları ve kalıcı kabul durumu | `src/name-certificates.mjs`, `src/name-security-runtime.mjs`, `src/sharded-name-state.mjs` |
 | Doğrulanmış içerik | `src/content-fetcher.mjs`, `src/content-store.mjs` |
 | R84 indeksleri | `src/shared-index.mjs`, `scripts/sync-shared-index.mjs` |
 | Testler | `tests/`, `qa/` |

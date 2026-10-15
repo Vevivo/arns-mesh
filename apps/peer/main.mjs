@@ -111,7 +111,12 @@ if(upstream)runtime.discovery.start();
 if(upstream)void refresh();const timer=setInterval(()=>{if(upstream)void refresh();},60000);
 const version=JSON.parse(fs.readFileSync(path.join(coreRoot,'package.json'))).version;
 const publishStatus=()=>{
- const peerStatus=peer.status(),discoveryStatus=peerDiscovery.status(),savedStatus=pinner.status(),replicatedStatus=replicationPinner.status();
+ // Share one fresh scan only within this synchronous report and per store identity.
+ const contentScans=new Map(),statsFor=store=>{
+  if(!contentScans.has(store))contentScans.set(store,store.stats());
+  return contentScans.get(store);
+ };
+ const peerStatus=peer.status({contentStats:statsFor(peer.contentStore)}),discoveryStatus=peerDiscovery.status(),savedStatus=pinner.status({contentStats:statsFor(pinner.store)}),replicatedStatus=replicationPinner.status({contentStats:statsFor(replicationPinner.store)});
  const replicationStatus=replication.status({completeSites:replicatedStatus.ready});
  // Keep the dashboard's site summaries, not every nested binding and failed
  // file detail. Those remain in the private persistent preparation records.

@@ -152,8 +152,27 @@ export function createSwarmMeshClient({
     },
     async snapshot(name,{trustedPeers=[],signal,prepared=false}={}){
       const n=String(name).toLowerCase();
-      const candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n,witnessPeerIds:trustedPeers.slice(0,16),...(prepared?{prepared:true}:{})},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
-        semanticKey:(record,env)=>{if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');if(prepared&&record.prepared!==true)throw new Error('prepared_snapshot_required');const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');}});
+      if(typeof prepared!=='boolean')throw new Error('invalid_snapshot_request');
+      let candidates,rejectedObservation=null;
+      try{candidates=await ask({mode:'topic',topics:[swarmTopic('name',n),locationIndexTopic()],peerKeys:knownPeers,request:{op:'snapshot',name:n,witnessPeerIds:trustedPeers.slice(0,16),...(prepared?{prepared:true}:{})},quorum:1,timeoutMs:Math.min(timeoutMs,8000),bootstrapFile,collect:true,signal,
+        semanticKey:(record,env)=>{
+          // groupResponse already authenticated this original signed envelope.
+          // Unknown signers cannot turn an ordinary outage into policy failure.
+          if(!trustedPeers.includes(env.witnessPeerId))throw new Error('untrusted_snapshot_peer');
+          try{
+            if(Object.hasOwn(record||{},'prepared')&&typeof record.prepared!=='boolean')throw new Error('invalid_snapshot_purpose');
+            if(prepared&&record?.prepared!==true)throw new Error('prepared_snapshot_required');
+            if(!prepared&&record?.prepared===true)throw new Error('unexpected_prepared_snapshot');
+            const r=validateSnapshot(record,n);return [r.name,r.txId,r.antId,r.slot].join('|');
+          }catch(error){rejectedObservation??=error;throw error;}
+        }});
+      }catch(error){
+        signal?.throwIfAborted();
+        // Do not relabel a selected publisher's signed policy violation as a
+        // transport outage and silently try its older prepared binding.
+        if(rejectedObservation)throw Object.assign(new Error('snapshot_policy_rejected: '+rejectedObservation.message,{cause:rejectedObservation}),{code:'SNAPSHOT_POLICY_REJECTED'});
+        throw error;
+      }
       candidates.sort((a,b)=>b.record.slot-a.record.slot);
       const winner=candidates[0];if(candidates.some(x=>x.record.slot===winner.record.slot&&(x.record.txId!==winner.record.txId||x.record.antId!==winner.record.antId)))throw new Error('snapshot_conflict');
       knownPeers=[...new Set([...knownPeers,...winner.providers.map(p=>p.noisePublicKey).filter(Boolean)])];return winner;

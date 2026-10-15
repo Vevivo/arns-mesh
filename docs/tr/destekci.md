@@ -4,7 +4,7 @@
 
 Destekçi; ArNS isim kayıtlarını ve doğrulanmış dosyaları kendi sunucusunda tutar, kaynaklara erişebildiğinde güncellemeleri toplar ve başka bir destekçi erişilemez olduğunda kullanıcılara hizmet verir. **Kullanıcıların bulunduğu aynı Mesh ağına katıl. Onlar için ayrı bir ağ kodu üretmen gerekmez.**
 
-Aşağıdaki kurulum, herkese açık `v0.6.2` etiketi ve Windows yayını bulunmadığı için incelenmiş **0.6.2 kaynak commit'ini** sabitler. Bağımsız keşif için uyumlu kaynak ve okuyucu derlemeleri gerekir. İsteğe bağlı **0.6.3-preview.2 isim tanığı adayı** için ayrı [gönüllü pilot rehberini](isim-tanigi-pilot.md) izle; normal destekçi kurulumu isim oylamasını etkinleştirmez.
+Destekçide ve okuyucuda **0.6.3** kullan. Aşağıdaki kurulum içerik destekçisi oluşturur. İsteğe bağlı tanık özelliğine kaydolmak için ayrı [gönüllü pilot rehberini](isim-tanigi-pilot.md) izle. Normal içerik destekçisi kendiliğinden isim tanığı olmaz.
 
 ## Hazırlık
 
@@ -25,10 +25,12 @@ Destekçi bellek sınırı VPS için 1 GiB, Pi için 768 MiB; ayrı R84 güncell
 
 Normal destekçi hesabıyla çalıştır. `YOUR_PUBLIC_IP` yerine **kendi genel IP adresini** yaz.
 
+Komutlar yayımlanmış `v0.6.3` etiketini hedefler. Yayın öncesi incelemede etiket henüz [sürüm sayfasında](https://github.com/Vevivo/arns-mesh/releases) yoksa onun yerine incelenmiş kesin aday commit'ini kullan; eski sürüme dönme.
+
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach 2520b305c85983f4b7c2f76306715e2396a049a5
+git checkout --detach v0.6.3
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```
@@ -45,7 +47,7 @@ Mevcut kimlik, bağlantı dosyaları ve açıkça seçilmiş ayarlar korunur. Es
 
 Kod ortak ağı tanımlar; `--advertise` ise yeni sunucunun adresini belirtir. Mesh adresleri aynı ağ içinde duyurur ve keşfeder. İlk sunucu yokken de imzalı sayısal IP keşif ayarları üzerinden diğer destekçiler bulunabilir. Bir adresin öğrenilmesi, o sunucuya isim kayıtlarını değiştirme yetkisi vermez.
 
-0.6.2 okuyucuları aynı desteklenen ağ kodunu kullanır. İlk işletmecinin her geliştirici için yeni kod dağıtması gerekmez. Keşif yollarının ulaşılabilir olması gerekir; hiçbir iletişim yolu yoksa yeni adres öğrenilemez.
+Uyumlu okuyucular aynı desteklenen ağ kodunu kullanır. İlk işletmecinin her içerik destekçisi için yeni kod dağıtması veya onay vermesi gerekmez. Tanık kaydı ise ayrıca ve açıkça kararlaştırılan politika gerektirir. Keşif yollarının ulaşılabilir olması gerekir; hiçbir iletişim yolu yoksa yeni adres öğrenilemez.
 
 Başka bir ağdan kontrol et:
 

@@ -1,8 +1,8 @@
-# Mesh 0.6.2 durumu
+# Mesh durumu
 
 [English](../en/status.md) · [Ana sayfa](../../README.tr.md)
 
-Masaüstü ve sunucu için güncel kaynak sürümü **0.6.2**'dır. İndirme ve kurulum rehberleri aynı sürümü kullanır.
+**Mesh 0.6.3**, birden fazla tanığın özgün imzalarıyla doğrulanan isteğe bağlı isim kayıtları ekler. Kontrollü gerçek Linux, HTTP ve Windows uygulaması kontrolleri geçti. [16 Ekim doğrulama kaydı](../validation/name-security-2026-10-16.md), bunları son paket kontrollerinden ve bağımsız işletmeci kaydından ayırır. Yazılım güncellemesi mevcut üretim ağına kendiliğinden bağımsız tanıklar eklemez. [Pilot kurulumu](isim-tanigi-pilot.md).
 
 ## Sürekli hazırlık
 

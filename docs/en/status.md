@@ -1,8 +1,8 @@
-# Mesh 0.6.2 status
+# Mesh status
 
 [Türkçe](../tr/durum.md) · [Home](../../README.md)
 
-**0.6.2** is the shared desktop/supporter source version. Download and setup instructions refer to this version.
+**Mesh 0.6.3** adds optional quorum-verified name bindings. Controlled native Linux, real HTTP and actual Windows application checks have passed; the [16 October validation record](../validation/name-security-2026-10-16.md) separates these results from final-package checks and operator enrollment. The existing production network does not gain independent witnesses merely by installing new software. [Pilot setup](name-witness-pilot.md).
 
 ## Continuous preparation
 

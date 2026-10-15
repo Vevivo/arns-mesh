@@ -4,7 +4,7 @@
 
 **Mesh does not need four volunteers just to keep working.** A normal supporter stores and serves verified site files. The optional name-witness pilot adds a separate protection: one supporter cannot choose a name's content ID alone.
 
-This guide describes the **0.6.3-preview.2 development candidate**. At the time of this guide, the public release is **0.6.1**, the public main source identifies itself as **0.6.2**, and this candidate is local development work. There is no published v0.6.2 tag. The pilot is not active on the production network. Obtain the reviewed candidate commit or package from the maintainer before following candidate commands; do not assume a released candidate tag exists.
+This guide covers the optional witness feature in **0.6.3**. Native Linux, real HTTP and actual Windows application checks have run; the [dated validation record](../validation/name-security-2026-10-16.md) identifies the tested revisions and outstanding release checks. A live committee of independent operators has not yet been recruited or activated on the existing production network. Use the matching release source, or the exact reviewed candidate commit when testing before publication.
 
 ## Choose how to help
 
@@ -15,8 +15,6 @@ This guide describes the **0.6.3-preview.2 development candidate**. At the time 
 | Both | Content service and an enrolled name witness on your server | One operator's vote, regardless of its server count. |
 
 To help availability today, follow the [normal supporter installation](supporter.md), using the source/release version actually reviewed for that installation. Its storage, R84 setup and preparation workflow remain unchanged. You do not need to become a witness or wait for a committee.
-
-For ordinary source setup, [2520b305c85983f4b7c2f76306715e2396a049a5](https://github.com/Vevivo/arns-mesh/tree/2520b305c85983f4b7c2f76306715e2396a049a5) is the recorded 0.6.2 source baseline; use that exact commit if reproducing this baseline, not a nonexistent v0.6.2 tag. It does not contain this name-witness candidate.
 
 For the protected pilot, the starting plan is **four independent operators, three matching votes, at most one faulty operator**. Ten volunteers are welcome: they can all serve content. If all ten will be independent witnesses, agree on that roster **before activation**; a ten-operator policy can require **seven matching votes and tolerate at most three faulty operators**. The threshold is an explicit policy choice, not a counter of online peers.
 
@@ -78,13 +76,13 @@ node scripts/name-witness-policy.mjs create \
   --genesis-hash VERIFIED_SOLANA_GENESIS_HASH \
   --registry-program-id VERIFIED_REGISTRY_PROGRAM_ID \
   --max-faults 1 --threshold 3 \
-  --round-ms 60000 --lease-ms 0 --max-future-skew-ms 1000 \
+  --round-ms 60000 --lease-ms 0 --max-future-skew-ms 5000 \
   --valid-from AGREED_START_ISO_UTC \
   --valid-until AGREED_END_ISO_UTC \
   --output name-witness-policy.json
 ~~~
 
-The time values must be real UTC dates agreed for this pilot, not the placeholder text. A 60-second round with no extra lease makes evidence expire at the round boundary. This example is a bounded pilot setting, not a promise of instantaneous freshness; review clock accuracy and collection latency before choosing the window.
+The time values must be real UTC dates agreed for this pilot, not the placeholder text. A 60-second round with no extra lease makes evidence expire at the round boundary. The five-second future-skew limit is explicit: cross-host testing measured about 2.3 seconds of clock difference and rejected a one-second fixture tolerance. Keep clocks synchronized and review this allowance with the operators. It does not extend an expired certificate or prove instantaneous freshness; review collection latency as well as clock accuracy before choosing the window.
 
 Every operator obtains the **policy ID through an authenticated channel** and checks the actual file:
 
@@ -163,7 +161,7 @@ node apps/peer/main.mjs --listen 0.0.0.0:49751 --name AGREED_TEST_ARNS_NAME
 
 These settings disable the normal upstream content fetcher, catalogue, preparation workers and content replication. They do not turn off the enrolled witness's explicit RPC observer, which uses ARNS_NAME_SIGNER_RPC_SEEDS. Use --name, not --pin: this recipe does not prepare or promise website files. Identity, signing history and certificate metadata still require durable storage. Use a real name and unused port, with the required TCP/discovery routes reachable.
 
-This recipe has been checked against the source configuration; actual Linux startup, networking and independent-operator acceptance are still required. It is not a previously demonstrated deployment. Keep the foreground process supervised until those checks pass. Only then create a separate pilot service with the same environment and paths.
+Native Linux state/enrollment and real HTTP checks have passed in controlled environments. Those results do not configure your server or establish operator independence. Verify this installation's own signed responses, reachability, clock and restart behavior before creating a separate pilot service with the same environment and paths.
 
 ### Content supporter, or both roles
 
@@ -238,5 +236,5 @@ Record missing resources and failures. Restore isolated test routes afterwards. 
 
 Publish the reviewed roster and policy ID, real operator confirmations, candidate commit, native/network/Windows test results and the exact supported test-site coverage. Public keys and operator endpoints may be published with their owners' agreement; private signing material stays private.
 
-The protocol is a **configured independent-witness trust model**, not a native Solana consensus proof or a guarantee that no newer update exists. Production activation is a separate, reviewed rollout after the pilot passes. The current [validation record](../validation/name-binding-security-2026-10-15.md) states what has actually run and what remains pending.
+The protocol is a **configured independent-witness trust model**, not a native Solana consensus proof or a guarantee that no newer update exists. A software release can make this opt-in feature available before a public committee exists. Activating that committee is a separate, reviewed rollout with real operator enrollment. The current [validation record](../validation/name-security-2026-10-16.md) states what has actually run and what remains pending.
 

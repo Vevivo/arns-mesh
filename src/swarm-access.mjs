@@ -71,7 +71,9 @@ async function resolveAndFetchSwarmInner(raw,{quorum=Number(process.env.MESH_QUO
     },signal);
     ({witness,witnessError,stateEvidence}=snapshot);
     if(!stateEvidence)throw new Error('current_name_state_unavailable: '+stateEvidenceError);
-    let snapshotSaveError=null;try{snapshotStore?.observe(stateEvidence);}catch(e){snapshotSaveError=String(e.message);}
+    // Recheck even memoized evidence against the reader's current watermark.
+    // A rejected name binding must never reach the content-fetching path.
+    let snapshotSaveError=null;try{snapshotStore?.observe(stateEvidence);}catch(e){if(e.code!=='SNAPSHOT_PERSISTENCE_FAILED')throw e;snapshotSaveError=String(e.message);}
     resolvedState={nameResolved:true,name,rootDataId:stateEvidence.txId,rpcSources:stateEvidence.observations.filter(x=>x.ok).length,rpcTrustRequired:true,accountInclusionProof:false};
     onProgress({phase:'resolving',stage:'name',status:'done',message:'Name record received through RPC; locating content…',nameResolution:resolvedState});
     progress({stage:'peers',status:'active',message:'Checking Mesh peers and available evidence…'});

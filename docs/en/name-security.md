@@ -1,6 +1,6 @@
 # Certified ArNS name bindings
 
-Status: integrated development candidate, version 0.6.3-preview.2. This is not a production deployment or a claim that the published Mesh network already has independent witnesses. Installations without an accepted witness policy retain the existing release's trust model. Volunteers can follow the [pilot installation and acceptance guide](name-witness-pilot.md).
+**Mesh 0.6.3** includes this opt-in feature. It has passed controlled native Linux, HTTP and actual Windows application checks. A public committee of independent operators has not yet been enrolled. Installations without an explicitly accepted witness policy retain their existing trust model. Volunteers can follow the [pilot installation and acceptance guide](name-witness-pilot.md); exact tested revisions and remaining release checks are recorded [here](../validation/name-security-2026-10-16.md).
 
 ## What changes for a reader
 
@@ -51,8 +51,10 @@ Reader acceptance state is small per-name metadata, separate from content and in
 5. Publish the protected profile through the existing authority-signed Mesh connection mechanism and upgrade readers. Older applications do not acquire these guarantees.
 6. Verify wrong-target, old-certificate, missing-witness, outage and recovery cases against the actual operators before calling this production-ready.
 
-No test policy is enabled or bundled as a production committee. The existing running supporter and published release were not changed by this local candidate.
+No test policy is enabled or bundled as a production committee. The existing production network keeps its current trust model until operators enroll and an authenticated protected policy is explicitly accepted. Installing the new code does not silently change that network's policy.
 
 ## Validation
 
-See the dated [initial validation record](../validation/name-binding-security-2026-10-15.md) and the [pilot checklist](../validation/name-witness-pilot-checklist-2026-10-15.md). Protocol tests use real Ed25519 signatures; content tests use original signed ANS-104 examples. Simulated operator identities, injected RPC/transport boundaries and Electron doubles are identified as such. They do not replace a live independent-operator or packaged Windows acceptance test.
+See the [16 October validation record](../validation/name-security-2026-10-16.md) for native Linux, actual HTTP and packaged Windows results. The [initial record](../validation/name-binding-security-2026-10-15.md) preserves the earlier blocked-environment results; those are historical, not the current overall test status. The [pilot checklist](../validation/name-witness-pilot-checklist-2026-10-15.md) remains useful for each operator's own acceptance.
+
+Protocol tests use real Ed25519 signatures; content tests use original signed ANS-104 files. The actual Windows executable renders controlled gzip/Brotli/plain pages and reopens saved pages after restart. These are controlled tests under one administrator, even when they use different hosts. They do not establish a live independent committee or certify every public ArNS site.
