@@ -4,7 +4,7 @@
 
 A supporter keeps ArNS name observations and verified files on its own server, follows updates while sources are reachable, and serves readers when another supporter is unavailable. **Join the same Mesh network; you do not create a separate code for its readers.**
 
-Use Mesh **0.6.2** on both supporters and readers for independent discovery. A 0.5.1 reader can use previously learned routes, but does not gain the new discovery mechanism without upgrading.
+The installation below pins the reviewed **0.6.2 source commit**, because a public `v0.6.2` tag and Windows release are not available. Independent discovery requires compatible source and reader builds. For the optional **0.6.3-preview.2 name-witness candidate**, follow the separate [volunteer pilot guide](name-witness-pilot.md); a normal supporter installation does not enable name voting.
 
 ## Before you start
 
@@ -28,7 +28,7 @@ Run as the ordinary supporter account. Replace the sample IP with **your own rea
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.6.2
+git checkout --detach 2520b305c85983f4b7c2f76306715e2396a049a5
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```

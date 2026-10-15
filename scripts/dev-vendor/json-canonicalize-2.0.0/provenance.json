@@ -1,0 +1,13 @@
+{
+  "name": "json-canonicalize",
+  "version": "2.0.0",
+  "upstream": "https://github.com/snowyu/json-canonicalize.ts/tree/v2.0.0",
+  "license": "MIT",
+  "files": {
+    "index.ts": "7f1735f9010bc7223b4a34bdaaecb1daca28beac0b90d634ee50d8eb2fd77b3a",
+    "canonicalize.ts": "09b4d0370989d18b6976428ab36e3e6ef44a04b5095740ef8b99009dcb1b4b8c",
+    "canonicalize-ex.ts": "9b27cbcfe678a17dc96318d70855f4de5fd67f8bbee78f4a5e343a580fc66558",
+    "serializer.ts": "775308b6531ba738d136e4cd49fa700914a08855f4bd53f5bf768bece33b67a9",
+    "LICENSE.md": "975bb5a2743ef419a6b3493186c1d05551db8bf8a1935c7c02a7d8b04b4f5dbe"
+  }
+}

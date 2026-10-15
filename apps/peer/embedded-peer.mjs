@@ -16,6 +16,8 @@ import {getHistoricalIndex} from '../../src/cdb64-index.mjs';
 import {fetchMeshContent} from '../../src/content-fetcher.mjs';
 import {createSwarmMeshClient} from '../../src/swarm-client.mjs';
 import {loadDirectPeers} from '../../src/direct-peer.mjs';
+import {getProtectedNameContext} from '../../src/name-security-runtime.mjs';
+import {verifyNameCertificate} from '../../src/name-certificates.mjs';
 
 function ensureDir(dir){fs.mkdirSync(dir,{recursive:true});}
 function readJson(file,fallback){try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch{return fallback;}}
@@ -89,6 +91,11 @@ export class MeshPeer {
     };
   }
   _handle(req){
+    const protectedNames=getProtectedNameContext();
+    if(protectedNames&&['resolve','snapshot','snapshots','ant-proof','chain-proof','proof'].includes(req.op)){
+      protectedNames.assertCurrent();
+      return {ok:false,error:'name_certificate_required'};
+    }
     if(req.op==='catalog')return this.searchReply?.(req)||{ok:false,error:'search_catalog_unavailable'};
     if(req.op==='hello') return {ok:true,noisePublicKey:this.swarm.keyPair.publicKey.toString('hex'),witnessPeerId:this.witnessPeerId,kind:'mesh-peer'};
     if(req.op==='content'){
@@ -134,6 +141,15 @@ export class MeshPeer {
     return {ok:false,error:'unknown_op'};
   }
   async _handleAsync(req){
+    if(req.op==='name-certificates'){
+      const protectedNames=getProtectedNameContext();
+      if(!protectedNames?.service)return {ok:false,error:'name_certificates_unavailable'};
+      protectedNames.assertCurrent();
+      const request={op:req.op,name:req.name,policyId:req.policyId,historical:req.historical};
+      const record=await protectedNames.service.reply(request,{signal:AbortSignal.timeout(7500)});
+      protectedNames.assertCurrent();
+      return this._envelope(record);
+    }
     // A disk index can answer immediately, including cache-only/offline requests.
     if(req.op==='location'&&validDataId(req.dataId)&&!this.locationIndex.get(req.dataId)){
       const hint=sharedLocation(await getSharedIndex()?.find(req.dataId));
@@ -163,6 +179,7 @@ export class MeshPeer {
     return {ok:false,error:finished?(req.op==='location'?'location_not_found':'content_not_cached'):(req.op==='location'?'location_lookup_pending':'content_lookup_pending')};
   }
   async _announce(name){
+    if(getProtectedNameContext())return this._announceTopic('index',locationIndexTopic());
     return this._announceTopic('name:'+name,swarmTopic('name',name));
   }
   async _announceTopic(key,topic){
@@ -221,7 +238,8 @@ export class MeshPeer {
         socket.end();
       });
     });
-    for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-this.maxTopics))this._announce(name).catch(()=>{});
+    if(getProtectedNameContext())this._announceTopic('index',locationIndexTopic()).catch(()=>{});
+    else for(const name of [...new Set([...Object.keys(this.cache.records),...(this.snapshotStore?.names()||[])])].slice(-this.maxTopics))this._announce(name).catch(()=>{});
     if(this.allowRemoteFetch)this._announceTopic('index',locationIndexTopic()).catch(()=>{});
     for(const item of this.contentStore.stats().files.slice(-this.maxTopics)){const id=item.dataId;this._announceTopic('content:'+id,contentTopic(id)).catch(()=>{});}
     this.startedAt=new Date().toISOString();
@@ -233,6 +251,23 @@ export class MeshPeer {
     if(!validArName(name)||bundle.record?.name!==name) throw new Error('peer_name_invalid');
     if(bundle.record?.txId!==bundle.content?.rootDataId) throw new Error('peer_record_content_mismatch');
     if(!validDataId(bundle.content?.dataId))throw new Error('peer_invalid_content_id');
+    if(!bundle.content?.signatureVerified)throw new Error('peer_content_signature_missing');
+    const protectedNames=getProtectedNameContext();
+    let record=bundle.record,nameCertificate=null;
+    if(protectedNames){
+      protectedNames.assertCurrent();
+      const certificate=bundle.accessSnapshot?.provenance?.certificate??bundle.nameCertificate;
+      if(!certificate)throw new Error('name_certificate_required');
+      const checked=verifyNameCertificate(certificate,protectedNames.policy,{name,mode:'current'});
+      if(checked.binding.name!==name||checked.binding.txId!==bundle.content.rootDataId||checked.binding.txId!==bundle.record.txId||checked.binding.antId!==bundle.record.antId)
+        throw new Error('peer_name_certificate_binding_mismatch');
+      if(bundle.accessSnapshot?.provenance?.certificate)protectedNames.verifySnapshot(bundle.accessSnapshot,{name,mode:'current'});
+      const accepted=await protectedNames.store.accept(certificate,{name,mode:'current'});
+      protectedNames.assertCurrent();
+      nameCertificate=accepted.certificate;
+      const verified=accepted.verification;
+      record={...bundle.record,...verified.binding,observedAt:new Date(verified.observedAt).toISOString(),expiresAt:new Date(verified.expiresAt).toISOString()};
+    }else{
     const state=bundle.stateEvidence;
     const good=state?.observations?.filter(x=>x.ok)||[];
     const age=Date.now()-Date.parse(state?.generatedAt);
@@ -241,7 +276,6 @@ export class MeshPeer {
     if(!state.checks?.pdaDerivedLocally||!state.checks?.accountOwnersMatchExpectedPrograms||!state.checks?.accountBytesDecodedLocally)
       throw new Error('peer_state_checks_missing');
     if(good.some(x=>x.ant?.txId!==bundle.record.txId||x.arns?.processId!==bundle.record.antId))throw new Error('peer_state_binding_mismatch');
-    if(!bundle.content?.signatureVerified)throw new Error('peer_content_signature_missing');
     const undername=name.includes('_')?name.split('_')[0]:'@';
     if(bundle.antUpdateProof)verifySavedAntUpdateProof(bundle.antUpdateProof,{name,undername,antId:bundle.record.antId,expectedTxId:bundle.record.txId});
     if(bundle.chainProof){
@@ -249,17 +283,17 @@ export class MeshPeer {
       if(checked.arnsRawSha256!==good[0].arns.rawSha256||checked.antRawSha256!==good[0].ant.rawSha256)throw new Error('peer_checkpoint_state_mismatch');
     }
     if(bundle.transitionJournal)verifyJournal(bundle.transitionJournal,{expectedName:name,expectedAntId:bundle.record.antId,expectedHeadTarget:bundle.record.txId});
+    }
     for(const item of bundle.items||[]){await this.contentStore.put(item.dataId,item.storedBytes||item.rawItem);this._announceTopic('content:'+item.dataId,contentTopic(item.dataId)).catch(()=>{});}
-    this.cache.records[name]=bundle.record;
+    protectedNames?.assertCurrent();
+    this.cache.records[name]=record;
     for(const loc of bundle.locations||[]){if(validDataId(loc.dataId))this.cache.locations[loc.dataId]=loc;}
-    if(bundle.location)this.cache.locations[bundle.record.txId]=bundle.location;
+    if(bundle.location)this.cache.locations[record.txId]=bundle.location;
     this.cache.proofs[name]={
       verifiedAt:bundle.verifiedAt,
       verification:bundle.verification,
       content:bundle.content,
-      antUpdateProof:bundle.antUpdateProof,
-      chainProof:bundle.chainProof,
-      transitionJournal:bundle.transitionJournal
+      ...(nameCertificate?{nameCertificate}:{antUpdateProof:bundle.antUpdateProof,chainProof:bundle.chainProof,transitionJournal:bundle.transitionJournal})
     };
     this._trimCache();atomicJson(this.cacheFile,this.cache,0o600);
     if(this.swarm)this._announce(name).catch(()=>{});

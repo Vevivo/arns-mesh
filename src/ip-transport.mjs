@@ -4,12 +4,12 @@ import net from 'node:net';
 import {recordNetwork} from './network-audit.mjs';
 import {validateIpRequest,approvedRpcTransport} from './network-lockdown.mjs';
 import {blockSummaryReader} from './block-summary.mjs';
-const rpcMethods=new Set(['getAccountInfo','getBlock','getBlockCommitment','getVersion','getAgGenesisCert','getSignaturesForAddress','getProgramAccounts']);
+const rpcMethods=new Set(['getAccountInfo','getMultipleAccounts','getGenesisHash','getBlock','getBlockCommitment','getVersion','getAgGenesisCert','getSignaturesForAddress','getProgramAccounts']);
 export function requestIpJson({host,port,path='/',method='GET',body=null,timeout=8000,maxBytes=4*1024*1024,signal,onBytes=()=>{},purpose='raw-arweave',summarizeBlock=false}){
  validateIpRequest({host,port,pathname:path,method});
  if(summarizeBlock&&(method!=='GET'||!/^\/block\/height\/\d+$/.test(path)))throw new Error('invalid_block_summary_request');
  if(method==='POST'){
-  const mesh=purpose==='mesh-peer'&&path==='/mesh/v1/query'&&['snapshot','snapshots','location','content','network','catalog','peers','peer-check'].includes(body?.op);
+  const mesh=purpose==='mesh-peer'&&path==='/mesh/v1/query'&&['snapshot','snapshots','name-certificates','location','content','network','catalog','peers','peer-check'].includes(body?.op);
   if(!mesh&&(purpose!=='solana-rpc'||!rpcMethods.has(body?.method)))throw new Error('rpc_method_not_allowed');
  }
  if(signal?.aborted)return Promise.reject(signal.reason||new Error('cancelled'));

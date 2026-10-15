@@ -2,7 +2,9 @@
 
 **Open ArNS sites without domains or DNS.**
 
-[Download Mesh 0.6.2 for Windows](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.2/ArNS-Mesh-Browser-Windows-x64-0.6.2.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
+This checkout is the **0.6.3-preview.2 volunteer pilot candidate**. [Join the name-witness pilot](docs/en/name-witness-pilot.md) as a content supporter, independent witness or test reader. The pilot includes setup tools and checks; it has not established a live independent committee or production acceptance. [Trust model](docs/en/name-security.md).
+
+[Published Windows release: 0.6.1](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip) · [User guide](docs/en/user.md) · [Run a supporter](docs/en/supporter.md) · [Türkçe](README.tr.md)
 
 Enter `ar://name` in Mesh. It finds the content named by the record, verifies the files and opens the site. The access path uses numeric addresses instead of a gateway domain or DNS resolution.
 
@@ -53,7 +55,7 @@ Mesh 0.6.2 can discover a new supporter even after the original starting server 
 
 ## Developers
 
-The desktop and supporter share the **0.6.2** source tree. `main` contains the current implementation; use tag `v0.6.2` to reproduce the release.
+This candidate's desktop and supporter share the **0.6.3-preview.2** source tree. The published Windows **0.6.1** package linked above does not contain this pilot's name-witness checks. Use the reviewed pilot source/package and its checksum for those checks. The earlier 0.6.2 source baseline is commit `2520b305c85983f4b7c2f76306715e2396a049a5`; there is no published `v0.6.2` tag to check out.
 
 [Development and checks](docs/en/developer.md) · [Architecture](docs/en/architecture.md) · [Release notes](docs/en/release-notes.md) · [Status](docs/en/status.md) · [Privacy](docs/en/privacy.md) · [License](LICENSE)
 

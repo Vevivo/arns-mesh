@@ -7,7 +7,7 @@ import {applyProfile,readProfile} from './network-profile.mjs';
 import {peerDirectory,peerAddress} from '../../src/peer-directory.mjs';
 
 export async function findNetwork(invitation,{signal,current=null,query=requestIpJson,now=Date.now(),alternatives=[]}={}){
- const invite=withNetworkContinuity(invitation);
+ const invite=withNetworkContinuity(invitation,{allowInactiveNamePolicy:true,now});
  const seeds=[...new Set([...alternatives,...(current?.profile.directPeers||[]),...invite.seeds])].slice(0,24);
  const results=[],errors=[];let cursor=0;
  const controller=new AbortController(),bounded=AbortSignal.any([controller.signal,AbortSignal.timeout(18000),...(signal?[signal]:[])]);
@@ -20,7 +20,7 @@ export async function findNetwork(invitation,{signal,current=null,query=requestI
    const payload=verifyNetwork(reply.network,invite,{now});
    const trustedPeers=verifyNetworkRecovery(reply.recovery,reply.network,invite,{now});
    if(current&&payload.revision<current.revision)throw new Error('Older network revision rejected.');
-   results.push({payload,envelope:reply.network,recovery:reply.recovery||null,profile:connectionProfile(payload,trustedPeers),endpoint});
+   results.push({payload,envelope:reply.network,recovery:reply.recovery||null,profile:connectionProfile(payload,trustedPeers,{now}),endpoint});
   }catch(error){errors.push(String(error.message).slice(0,180));}
  }}
  const work=await Promise.allSettled([worker(),worker()]);
@@ -43,30 +43,30 @@ export async function findNetwork(invitation,{signal,current=null,query=requestI
 
 export class NetworkConnection{
  constructor({dataDir,onChange=()=>{},query=requestIpJson,now=()=>Date.now(),continuityFile}){
-  this.upgradeInvitation=invitation=>withNetworkContinuity(invitation,{file:continuityFile});
+  this.upgradeInvitation=(invitation,options={})=>withNetworkContinuity(invitation,{file:continuityFile,...options});
   this.dataDir=dataDir;this.file=path.join(dataDir,'network-membership.json');this.onChange=onChange;this.query=query;this.now=now;this.state=null;this.running=null;this.controller=null;this.timer=null;this.error=null;this.lastChecked=null;this.epoch=0;
   try{
    if(fs.statSync(this.file).size>128*1024)throw new Error('Network membership is too large.');
    const state=JSON.parse(fs.readFileSync(this.file));
-   if(state?.invitation)state.invitation=this.upgradeInvitation(state.invitation);
+   if(state?.invitation)state.invitation=this.upgradeInvitation(state.invitation,{allowInactiveNamePolicy:true,now:this.now()});
    if(state?.schema==='arns-mesh-membership/v1'){
     const payload=verifyNetwork(state.envelope,state.invitation,{now:this.now(),allowExpired:true});
-    const profile=connectionProfile(payload,verifyNetworkRecovery(state.recovery,state.envelope,state.invitation,{now:this.now(),allowExpired:true}));
-    if(state.recordHash!==connectionRecordHash(state.envelope,state.recovery)||state.profileHash!==profileHash(profile))throw new Error('Invalid saved network membership.');
+    const profile=connectionProfile(payload,verifyNetworkRecovery(state.recovery,state.envelope,state.invitation,{now:this.now(),allowExpired:true}),{allowInactiveNamePolicy:true,now:this.now()});
+    if(state.recordHash!==connectionRecordHash(state.envelope,state.recovery)||state.profileHash!==profileHash(profile,{allowInactiveNamePolicy:true,now:this.now()}))throw new Error('Invalid saved network membership.');
     this.state={...state,payload};
-    if(profileHash(readProfile(dataDir))!==state.profileHash){this.state=null;this.error='Connections were changed manually. Automatic network updates are paused.';}
+    if(profileHash(readProfile(dataDir),{allowInactiveNamePolicy:true,now:this.now()})!==state.profileHash){this.state=null;this.error='Connections were changed manually. Automatic network updates are paused.';}
    }
   }catch(error){if(error.code!=='ENOENT')this.error=String(error.message).slice(0,240);}
  }
  status(){const p=this.state?.payload;return {joined:Boolean(p),name:p?.name||null,id:this.state?networkId(this.state.invitation.key):null,local:this.state?.invitation.local||false,revision:p?.revision??null,expiresAt:p?.expiresAt||null,expired:Boolean(p?.expiresAt&&p.expiresAt<=this.now()),continuity:p?.schema==='arns-mesh-network-continuity/v1',refreshing:Boolean(this.running),lastChecked:this.lastChecked,error:this.error};}
  async inspect(code,{signal}={}){
-  const invitation=this.upgradeInvitation(decodeInvitation(code)),current=this.state?.invitation.key===invitation.key?{...this.state.payload,recordHash:this.state.recordHash}:null;
+  const invitation=this.upgradeInvitation(decodeInvitation(code,{allowInactiveNamePolicy:true,now:this.now()}),{allowInactiveNamePolicy:true,now:this.now()}),current=this.state?.invitation.key===invitation.key?{...this.state.payload,recordHash:this.state.recordHash}:null;
   const found=await findNetwork(invitation,{signal,current,query:this.query,now:this.now()});
   return {invitation,...found};
  }
  async join(code,{expectedId,expectedRevision,expectedHash,signal}={}){
   if(this.running)throw new Error('A network connection is already being checked.');
-  const invitation=this.upgradeInvitation(decodeInvitation(code));
+  const invitation=this.upgradeInvitation(decodeInvitation(code,{allowInactiveNamePolicy:true,now:this.now()}),{allowInactiveNamePolicy:true,now:this.now()});
   if(expectedId!==networkId(invitation.key))throw new Error('Review this network before joining it.');
   const controller=this.controller=new AbortController(),epoch=++this.epoch;
   const bounded=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
@@ -84,15 +84,15 @@ export class NetworkConnection{
  commit(invitation,found){
   const {payload,envelope,recovery}=found;
   const profile=found.profile||payload.profile;
-  const state={schema:'arns-mesh-membership/v1',invitation,envelope,...(recovery?{recovery}:{}),recordHash:connectionRecordHash(envelope,recovery),profileHash:profileHash(profile)};
-  applyProfile(this.dataDir,profile,{networkState:state});
+  const state={schema:'arns-mesh-membership/v1',invitation,envelope,...(recovery?{recovery}:{}),recordHash:connectionRecordHash(envelope,recovery),profileHash:profileHash(profile,{now:this.now()})};
+  applyProfile(this.dataDir,profile,{networkState:state,now:this.now()});
   this.state={...state,payload};this.error=null;this.lastChecked=this.now();this.onChange(this.status());
  }
  async refresh({signal}={}){
   if(!this.state)return this.status();
   if(this.running)return this.running;
   // An explicit profile import/edit takes priority over a managed list.
-  if(profileHash(readProfile(this.dataDir))!==this.state.profileHash){this.detach();this.error='Connections were changed manually. Network updates stopped.';return this.status();}
+  if(profileHash(readProfile(this.dataDir),{allowInactiveNamePolicy:true,now:this.now()})!==this.state.profileHash){this.detach();this.error='Connections were changed manually. Network updates stopped.';return this.status();}
   const state=this.state,epoch=this.epoch,controller=this.controller=new AbortController();
   const bounded=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
   const work=(async()=>{

@@ -2,7 +2,9 @@
 
 **Domain ve DNS olmadan ArNS sitelerini açın.**
 
-[Windows için Mesh 0.6.2 indir](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.2/ArNS-Mesh-Browser-Windows-x64-0.6.2.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
+Bu çalışma kopyası **0.6.3-preview.2 gönüllü pilot adayıdır**. [Pilota katılma rehberi](docs/tr/isim-tanigi-pilot.md), içerik destekçisi, bağımsız isim tanığı ve test okuyucusu rollerini anlatır. Kurulum ve kontrol araçları hazırdır; gerçek bağımsız ağ ve üretim kabulü henüz doğrulanmamıştır. [Güven modeli](docs/en/name-security.md).
+
+[Yayımlanmış Windows sürümü: 0.6.1](https://github.com/Vevivo/arns-mesh/releases/download/v0.6.1/ArNS-Mesh-Browser-Windows-x64-0.6.1.zip) · [Kullanıcı rehberi](docs/tr/kullanici.md) · [Destekçi ol](docs/tr/destekci.md) · [English](README.md)
 
 Mesh'e `ar://isim` yazın. Uygulama ismin gösterdiği içeriği bulur, dosyaları doğrular ve siteyi açar. Siteye ulaşmak için bir gateway domaini veya DNS çözümü kullanmaz.
 
@@ -53,7 +55,7 @@ Mesh 0.6.2, ilk başlangıç sunucusu erişilemez olduktan sonra katılan yeni d
 
 ## Geliştiriciler
 
-Masaüstü ve destekçi aynı **0.6.2** kaynak ağacındadır. `main` güncel kodu içerir; sürümü yeniden üretmek için `v0.6.2` etiketini kullanın.
+Bu adayın masaüstü ve destekçisi aynı **0.6.3-preview.2** kaynak ağacındadır. Yukarıda bağlantısı verilen yayımlanmış Windows **0.6.1** paketi bu pilotun isim tanığı denetimlerini içermez. Bunları denemek için incelenmiş pilot kaynağını/paketini ve dosya doğrulama bilgisini kullanın. Önceki 0.6.2 kaynak temeli `2520b305c85983f4b7c2f76306715e2396a049a5` commit'idir; indirilebilecek bir `v0.6.2` etiketi yoktur.
 
 [Geliştirme ve testler](docs/tr/gelistirici.md) · [Mimari](docs/en/architecture.md) · [Sürüm notları](docs/en/release-notes.md) · [Durum](docs/tr/durum.md) · [Gizlilik](docs/tr/gizlilik.md) · [Lisans](LICENSE)
 

@@ -4,7 +4,7 @@
 
 Destekçi; ArNS isim kayıtlarını ve doğrulanmış dosyaları kendi sunucusunda tutar, kaynaklara erişebildiğinde güncellemeleri toplar ve başka bir destekçi erişilemez olduğunda kullanıcılara hizmet verir. **Kullanıcıların bulunduğu aynı Mesh ağına katıl. Onlar için ayrı bir ağ kodu üretmen gerekmez.**
 
-Bağımsız keşif için hem destekçi hem okuyucu **0.6.2** kullanmalıdır. Eski 0.5.1 okuyucu önceden öğrendiği adresleri kullanabilir; yeni keşif mekanizması için güncelleme gerekir.
+Aşağıdaki kurulum, herkese açık `v0.6.2` etiketi ve Windows yayını bulunmadığı için incelenmiş **0.6.2 kaynak commit'ini** sabitler. Bağımsız keşif için uyumlu kaynak ve okuyucu derlemeleri gerekir. İsteğe bağlı **0.6.3-preview.2 isim tanığı adayı** için ayrı [gönüllü pilot rehberini](isim-tanigi-pilot.md) izle; normal destekçi kurulumu isim oylamasını etkinleştirmez.
 
 ## Hazırlık
 
@@ -28,7 +28,7 @@ Normal destekçi hesabıyla çalıştır. `YOUR_PUBLIC_IP` yerine **kendi genel 
 ```bash
 git clone https://github.com/Vevivo/arns-mesh.git arns-mesh-supporter
 cd arns-mesh-supporter
-git checkout --detach v0.6.2
+git checkout --detach 2520b305c85983f4b7c2f76306715e2396a049a5
 npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 bash scripts/setup-supporter.sh --advertise YOUR_PUBLIC_IP:49741 --capacity vps
 ```

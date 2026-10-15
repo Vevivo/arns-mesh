@@ -25,6 +25,10 @@ export function configureRuntime(coreRoot,dataDir,{applyDefaultPeers=true,role='
     fs.writeFileSync(defaultsMarker,JSON.stringify({schema:defaults.schema}),{mode:0o600});
   }
   process.env.HYPER_PEER_CACHE=path.join(dataDir,'hyper-peer-cache.json');
+  // Read the installation's accepted policy on each protected lookup. Do not
+  // create an empty policy here: missing accepted policy must fail closed.
+  const nameWitnessPolicyFile=path.join(dataDir,'name-witness-policy.json');
+  process.env.ARNS_NAME_WITNESS_POLICY=nameWitnessPolicyFile;
   // Keep the existing cache filename for upgrades; the role is now client.
   // An index node retains its separate location shards.
   const locationsFile=path.join(dataDir,role==='client'?'desktop-locations.json':'locations.json');
@@ -40,7 +44,7 @@ export function configureRuntime(coreRoot,dataDir,{applyDefaultPeers=true,role='
   const discovery=configureRawDiscovery({dataDir,locationsFile,peersFile:process.env.ARWEAVE_PEERS,enabled:role==='index'});
   const historical=configureHistoricalIndex({locationsFile,peersFile:process.env.ARWEAVE_PEERS,retainBundleEntries:role==='index'});
   const snapshots=new NameSnapshotStore(path.join(dataDir,'name-snapshots.json'));
-  return {dataDir,role,rpcFile:process.env.SOLANA_RPC_SEEDS,discovery,historical,snapshots};
+  return {dataDir,role,rpcFile:process.env.SOLANA_RPC_SEEDS,nameWitnessPolicyFile,discovery,historical,snapshots};
 }
 export function saveRpcSources(file,lines){
   const entries=String(lines).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);

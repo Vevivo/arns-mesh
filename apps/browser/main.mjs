@@ -16,7 +16,9 @@ import {discoverArweaveReferences} from '../../src/arweave-references.mjs';
 import {RelatedResources} from '../helper/related-resources.mjs';
 import {configureRuntime,saveRpcSources,saveDirectPeers,parseTrustedPeers} from '../helper/runtime.mjs';
 import {VerifiedContentStore} from '../../src/content-store.mjs';
-import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles} from '../helper/network-profile.mjs';
+import {loadProfile,applyProfile,readProfile,validateProfile,mergeProfiles,assertNameWitnessPolicyUpdate} from '../helper/network-profile.mjs';
+import {getProtectedNameContext} from '../../src/name-security-runtime.mjs';
+import {assertCertifiedResponse,certifiedSnapshotKey,expiredNameLease} from '../../src/name-response-guard.mjs';
 import {checkConnections} from '../helper/connection-check.mjs';
 import {NetworkConnection} from '../helper/network-connection.mjs';
 import {bundledNetworks,peerNetworkScope} from '../helper/network-publication.mjs';
@@ -71,7 +73,7 @@ function send(extra={}){
     resourceBudget:{role:'client',pageCacheBytes:cache.bytes,pageCacheLimit:cache.maxBytes,pageRequests:requests.status(),transfers:transferBudgetStatus()},...extra,
   });
 }
-function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean(p.rpcSources.length&&(p.directPeers.length||p.arweavePeers.length));}
+function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean((p.nameWitnessPolicy||p.rpcSources.length)&&(p.directPeers.length||p.arweavePeers.length));}
 function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
   if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','ario-full-black.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
@@ -150,12 +152,14 @@ async function resourceHandler(tab,request){
 async function arHandler(tab,request){
   if(!['GET','HEAD'].includes(request.method))return new Response('ArNS content is read-only.',{status:405,headers:{allow:'GET, HEAD'}});
   const raw=normalizeAddress(request.url).split('#')[0],epoch=tab.epoch,signal=AbortSignal.any([tab.controller.signal,request.signal,AbortSignal.timeout(90000)]);
-  const top=raw===tab.url.split('#')[0],fixedSnapshot=!top&&tab.meta?.accessSnapshot?.name===new URL(raw).hostname?tab.meta.accessSnapshot:null,key=accessPolicy+'|'+raw+'|'+(fixedSnapshot?.txId||'');
+  const top=raw===tab.url.split('#')[0],fixedSnapshot=!top&&tab.meta?.accessSnapshot?.name===new URL(raw).hostname?tab.meta.accessSnapshot:null,key=accessPolicy+'|'+raw+'|'+certifiedSnapshotKey(fixedSnapshot);
   tab.resources.pending++;send();
   try{
     signal.throwIfAborted();
-    if(accessPolicy==='live'&&!JSON.parse(fs.readFileSync(runtime.rpcFile)).length)throw new Error('Connection setup needed. Open Settings and connect with a Mesh connection code or profile.');
+    const nameContext=getProtectedNameContext(),responseMode=fixedSnapshot?'historical':undefined;
+    if(!nameContext&&accessPolicy==='live'&&!JSON.parse(fs.readFileSync(runtime.rpcFile)).length)throw new Error('Connection setup needed. Open Settings and connect with a Mesh connection code or profile.');
     let result=cache.get(key);
+    if(result&&nameContext){try{assertCertifiedResponse(nameContext,result,{name:new URL(raw).hostname,mode:responseMode});}catch(error){if(!expiredNameLease(error))throw error;result=null;}}
     if(!result||Date.now()-result.at>3000){
       result=await shareQuery(inflight,tab.id+'|'+epoch+'|'+key,shared=>resolveForTab(tab,raw,{signal:shared,fixedSnapshot,onProgress:event=>{
         if(top&&tabs.isCurrent(tab,epoch)){tab.progress.event(event);if(event.nameResolution)tab.meta={...tab.meta,nameResolution:event.nameResolution};if(event.message)tab.message=event.message;send();}
@@ -163,6 +167,7 @@ async function arHandler(tab,request){
       signal.throwIfAborted();if(tabs.isCurrent(tab,epoch))cache.set(key,result);
     }
     // Fail closed even if an adapter accidentally returns unverified bytes.
+    assertCertifiedResponse(getProtectedNameContext(),result,{name:new URL(raw).hostname,mode:responseMode});
     const response=contentResponse(result,request);
     if(tabs.isCurrent(tab,epoch)){
       tab.resources.verified++;
@@ -329,6 +334,7 @@ handle('import-profile',async(mode='merge')=>{
   if(choice.canceled||choice.filePaths.length!==1)return {canceled:true};
   const incoming=loadProfile(choice.filePaths[0]);
   const profile=mode==='merge'?mergeProfiles(readProfile(runtime.dataDir),incoming):incoming;
+  assertNameWitnessPolicyUpdate(runtime.dataDir,profile);
   connectionCheck?.abort();
   for(const tab of tabs.rows.values())stop(tab);
   networkInspection?.abort();networkPreview=null;network.detach();peerDiscovery.stop();searchRefresh?.reset();applyProfile(runtime.dataDir,profile);cache.clear();void refreshHomes();void syncSearch().catch(()=>{});send();

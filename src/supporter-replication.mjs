@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {withByteBudget} from './byte-budget.mjs';
 import {validateSnapshot} from './name-snapshots.mjs';
+import {getProtectedNameContext} from './name-security-runtime.mjs';
 
 const bindingCache=new WeakMap();
 
@@ -29,11 +30,11 @@ export function acceptedReplicaBindings(relay){
 }
 
 export class SupporterReplication{
- constructor({file,relay,pinner,maxSites=20000,dailyBytes=8192*1024*1024,maxPassBytes=32*1024*1024,passTimeoutMs=45000,contentSources=()=> 'all',scanPerPass=128,enabled=true}){
+ constructor({file,relay,pinner,maxSites=20000,dailyBytes=8192*1024*1024,maxPassBytes=32*1024*1024,passTimeoutMs=45000,contentSources=()=> 'all',scanPerPass=128,enabled=true,getNameContext=getProtectedNameContext}){
   if(!Number.isSafeInteger(maxSites)||maxSites<1||maxSites>20000||!Number.isSafeInteger(dailyBytes)||dailyBytes<1||dailyBytes>65536*1024*1024||!Number.isSafeInteger(maxPassBytes)||maxPassBytes<1||maxPassBytes>128*1024*1024||!Number.isSafeInteger(passTimeoutMs)||passTimeoutMs<1)throw new Error('invalid_supporter_replication_capacity');
   if(!Number.isSafeInteger(scanPerPass)||scanPerPass<1||scanPerPass>2048)throw new Error('invalid_replication_scan_budget');
   if(typeof enabled!=='boolean')throw new Error('invalid_replication_enabled');
-  Object.assign(this,{file,relay,pinner,maxSites,dailyBytes,maxPassBytes,passTimeoutMs,contentSources,scanPerPass,enabled});
+  Object.assign(this,{file,relay,pinner,maxSites,dailyBytes,maxPassBytes,passTimeoutMs,contentSources,scanPerPass,enabled,getNameContext});
   this.state={day:'',bytes:0,cursor:0,retries:{},completed:0,last:null,lastError:null};this.running=null;this.timer=null;this.stopped=true;
   try{if(fs.statSync(file).size<=4*1024*1024)this.state={...this.state,...JSON.parse(fs.readFileSync(file))};}catch{}
  }
@@ -45,26 +46,38 @@ export class SupporterReplication{
  }
  async _pass(parentSignal){
   const day=new Date().toISOString().slice(0,10);if(this.state.day!==day){this.state.day=day;this.state.bytes=0;}
-  const {bindings,conflicts}=acceptedReplicaBindings(this.relay);this.state.conflicts=conflicts.length;this.state.acceptedNames=bindings.length;
+  const context=this.getNameContext();
+  // Relay rows contribute candidate names only under a protected policy. Their
+  // individual publisher signatures never authorize a target for replication.
+  const {bindings,conflicts}=context?{bindings:[...new Set([...(this.relay.entries?.()||[]).map(({row})=>row.name),...Object.keys(this.pinner.rows),...(context.store.names?.()||[])])].sort().map(name=>({name})),conflicts:[]}:acceptedReplicaBindings(this.relay);
+  this.state.conflicts=conflicts.length;this.state.acceptedNames=context?null:bindings.length;this.state.candidateNames=bindings.length;
   if(!bindings.length){this.state.lastError='accepted_name_bindings_unavailable';this.save();return this.status({verify:false});}
   if(this.state.bytes>=this.dailyBytes){this.state.lastError='replication_daily_budget_reached';this.save();return this.status({verify:false});}
   let candidate;const siteCount=Object.keys(this.pinner.rows).length;
   for(let i=0;i<Math.min(this.scanPerPass,bindings.length);i++){
    const row=bindings[this.state.cursor++%bindings.length],old=this.pinner.rows[row.name];
-   if(this.pinner.isReady(old)&&old.rootDataId===row.txId&&old.snapshot?.antId===row.antId&&!this.pinner.needsDecodingAudit?.(old))continue;
-   const retry=this.state.retries[row.name];if(retry?.target===row.txId&&retry.after>Date.now())continue;
+   if(!context&&this.pinner.isReady(old)&&old.rootDataId===row.txId&&old.snapshot?.antId===row.antId&&!this.pinner.needsDecodingAudit?.(old))continue;
+   const retry=this.state.retries[row.name];if(retry&&retry.after>Date.now()&&(context||retry.target===row.txId))continue;
    if(!old&&siteCount>=this.maxSites){this.state.lastError='replication_site_capacity_reached';continue;}
    candidate=row;break;
   }
   if(!candidate){this.save();return this.status({verify:false});}
   const controller=this.controller=new AbortController(),signal=parentSignal?AbortSignal.any([parentSignal,controller.signal]):controller.signal;
   const timer=setTimeout(()=>controller.abort(new Error('replication_pass_timeout')),this.passTimeoutMs);
-  let result;
+  let result,unchanged=false;
   try{
-   const value=await withByteBudget(Math.min(this.maxPassBytes,this.dailyBytes-this.state.bytes),controller,()=>this.pinner.start(candidate.name,{snapshot:{...validateSnapshot(candidate,candidate.name),provenance:candidate.provenance},trustedPeers:this.relay.trusted(),signal,contentSources:this.contentSources()}));
+   const value=await withByteBudget(Math.min(this.maxPassBytes,this.dailyBytes-this.state.bytes),controller,async()=>{
+    if(context){candidate=await context.authorizeName(candidate.name,{mode:'historical',signal});context.assertCurrent();}
+    const current=this.getNameContext();if((current?.policyId||null)!==(context?.policyId||null))throw new Error('name_security_context_changed');
+    const old=this.pinner.rows[candidate.name];
+    if(context&&old?.rootDataId===candidate.txId&&old.snapshot?.antId===candidate.antId&&this.pinner.isReady(old)&&!this.pinner.needsDecodingAudit?.(old)){unchanged=true;return old;}
+    const snapshot=context?candidate:{...validateSnapshot(candidate,candidate.name),provenance:candidate.provenance};
+    const saved=await this.pinner.start(candidate.name,{snapshot,accessPolicy:'saved',trustedPeers:this.relay.trusted(),signal,contentSources:this.contentSources()});
+    context?.assertCurrent();return saved;
+   });
    this.state.bytes+=value.bytes;result=value.value;
    if(!this.pinner.isReady(result))throw new Error(result.errors?.[0]?.error||'replication_incomplete');
-   delete this.state.retries[candidate.name];this.state.completed++;this.state.lastError=null;
+   delete this.state.retries[candidate.name];if(!unchanged)this.state.completed++;this.state.lastError=null;
   }catch(error){
    this.state.bytes+=error.receivedBytes||0;this.state.lastError=String(error.message).slice(0,240);
    const attempts=(this.state.retries[candidate.name]?.attempts||0)+1;
@@ -77,7 +90,7 @@ export class SupporterReplication{
  }
  status({verify=true,completeSites}={}){
   const rows=Object.values(this.pinner.rows),checked=completeSites!==undefined?completeSites:verify?rows.filter(row=>this.pinner.isReady(row)).length:null;
-  return {enabled:this.enabled,acceptedNames:this.state.acceptedNames||0,conflicts:this.state.conflicts||0,sites:rows.length,completeSites:checked,readinessChecked:checked!==null,scanPerPass:this.scanPerPass,maxSites:this.maxSites,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,maxPassResponseBytes:this.maxPassBytes,completed:this.state.completed,last:this.state.last,error:this.state.lastError,byteScope:'HTTP response bodies and Mesh response streams'};}
+  return {enabled:this.enabled,acceptedNames:this.state.acceptedNames??null,candidateNames:this.state.candidateNames||0,conflicts:this.state.conflicts||0,sites:rows.length,completeSites:checked,readinessChecked:checked!==null,scanPerPass:this.scanPerPass,maxSites:this.maxSites,dayResponseBytes:this.state.bytes,maxDailyResponseBytes:this.dailyBytes,maxPassResponseBytes:this.maxPassBytes,completed:this.state.completed,last:this.state.last,error:this.state.lastError,byteScope:'HTTP response bodies and Mesh response streams'};}
  start(intervalMs=5000){
   if(!Number.isSafeInteger(intervalMs)||intervalMs<1000)throw new Error('invalid_replication_interval');
   if(!this.enabled||!this.stopped)return;this.stopped=false;

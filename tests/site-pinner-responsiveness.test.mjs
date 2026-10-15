@@ -18,7 +18,9 @@ function harness({children=64,missing=true,oldReady=false,tickMs=0}={}){
  const C=vm.runInNewContext(source.slice(source.indexOf('export class SitePinner')).replace('export class SitePinner','class SitePinner')+'\nSitePinner',context);
  const snapshot={name:'test',txId:root,observedAt:'2026-10-13T00:00:00.000Z',provenance:{kind:'local-rpc'}};
  const fetchContent=async id=>{fetched.push(id);clock+=tickMs;if(id===root)return {direct:{tags:[{name:'Content-Type',value:'application/x.arweave-manifest'}],payload:Buffer.from(JSON.stringify({manifest:'arweave/paths',paths:Object.fromEntries(childIds.map(id=>[id,{id}]))}))}};if(missing)throw new Error('content_not_saved');return {direct:{tags:[],payload:Buffer.from('plain')}};};
- const pinner=new C({file:'memory-only',snapshots,contentStore:store,fetchContent});
+ // This isolated VM harness exercises the legacy preparation scheduler. It
+ // strips module imports; protected-profile enforcement has integration tests.
+ const pinner=new C({file:'memory-only',snapshots,contentStore:store,fetchContent,getNameContext:()=>null});
  if(oldReady){const oldSnapshot={...snapshot,txId:oldRoot};store.pins.test=[oldRoot];pinner.rows.test={name:'test',rootDataId:oldRoot,observedAt:oldSnapshot.observedAt,snapshot:oldSnapshot,pinGroup:'test',contentDecodingVersion:1,status:'document-saved',total:1,saved:1,failed:0};}
  return {pinner,snapshot,store,writes,events,fetched,root,childIds};
 }

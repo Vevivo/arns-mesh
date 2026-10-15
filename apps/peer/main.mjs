@@ -22,6 +22,8 @@ import {writeOperatorStatus,startOperatorDashboard} from '../../src/operator-sta
 import {locationCacheStatus} from '../../src/discovery-store.mjs';
 import {transferBudgetStatus} from '../../src/resource-budget.mjs';
 import {validArName} from '../../src/swarm-common.mjs';
+import {getProtectedNameContext,closeNameSecurityRuntime} from '../../src/name-security-runtime.mjs';
+import {NameCertificateWorker} from '../../src/name-certificate-worker.mjs';
 import {NetworkConnection} from '../helper/network-connection.mjs';
 import {readNetworkPublication,readNetworkRecovery,renewNetworkPublication,mirrorAcceptedMembership,peerNetworkScope} from '../helper/network-publication.mjs';
 process.chdir(coreRoot);
@@ -51,13 +53,17 @@ const acceptedPublishers=()=>[...new Set([...(network.state?[]:trustedPeers),...
 if(names.some(name=>!validArName(name)))throw new Error('Invalid --name argument');
 let refreshing=false,stopping=false;
 async function refresh(){if(refreshing||stopping)return;refreshing=true;try{for(const name of names){try{const r=await resolveArUrl('ar://'+name,{contentStore:peer.contentStore,snapshotStore:runtime.snapshots,accessPolicy,trustedPeers:acceptedPublishers()});if(r.peerPayload)await peer.ingest(r.peerPayload);
-if(pinned.includes(name)){const old=pinner.rows[name],snapshot=runtime.snapshots.get(name);if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
+if(pinned.includes(name)){const old=pinner.rows[name],snapshot=r.meta.accessSnapshot||runtime.snapshots.get(name);if(!snapshot)throw new Error('name_binding_unavailable');if(!old||old.rootDataId!==snapshot.txId||!pinner.isReady(old))void pinner.start(name,{snapshot,signal:AbortSignal.timeout(120000)}).catch(e=>console.error(JSON.stringify({event:'pin-failed',name,error:String(e.message)})));}console.log(JSON.stringify({event:'name-refreshed',name,dataId:r.meta.dataId,contentSignatureVerified:r.meta.contentSignatureVerified,accountInclusionProof:false}));}catch(e){console.error(JSON.stringify({event:'refresh-failed',name,error:String(e.message||e)}));}}}finally{refreshing=false;}}
+const startingNameContext=getProtectedNameContext();
+if(startingNameContext&&Date.now()>=startingNameContext.policy.validFrom&&Date.now()<startingNameContext.policy.validUntil)await startingNameContext.service.ready().catch(error=>console.error(JSON.stringify({event:'name-witness-not-ready',error:String(error.message).slice(0,160)})));
 try{await peer.start();}catch(e){console.error(JSON.stringify({event:'dht-unavailable',error:String(e.message)}));}
 const listenArg=process.argv.indexOf('--listen'),listen=listenArg>=0?parsePeerAddresses(process.argv[listenArg+1])[0]:{host:'0.0.0.0',port:49740};
 let catalog=null,retainedSearchTargets=null;
 const targetFile=path.join(dataDir,'target-catalog.json');
 try{if(fs.statSync(targetFile).size<=16*1024*1024)retainedSearchTargets=JSON.parse(fs.readFileSync(targetFile)).targets||null;}catch{}
 const searchTargets=()=>catalog?.catalog.state.targets||retainedSearchTargets||{};
+const certificateWorker=new NameCertificateWorker({getContext:getProtectedNameContext,names:()=>[...names,...Object.keys(searchTargets()),...runtime.snapshots.names()],onError:(error,name)=>console.error(JSON.stringify({event:'name-certificate-refresh-failed',name,error:String(error.message).slice(0,160)}))});
+certificateWorker.start();
 const searchMetadata=new SearchMetadataWorker({file:path.join(dataDir,'search-metadata.json'),endpoint:()=>catalog?.catalog.endpoint,targets:searchTargets});
 const search=new SearchPublisher({file:path.join(dataDir,'search-published.json'),snapshots:runtime.snapshots,contentStore:peer.contentStore,pinner,sign:record=>peer._envelope(record)});
 const topicSearch=new TopicSearchPublisher({file:path.join(dataDir,'search-topics-published.json'),snapshots:runtime.snapshots,documents:search,metadata:searchMetadata,current:(name,snapshot)=>!catalog&&!retainedSearchTargets||searchTargets()[name]?.dataId===snapshot.txId&&searchTargets()[name]?.mint===snapshot.antId,sign:record=>peer._envelope(record)});
@@ -123,6 +129,6 @@ const publishStatus=()=>{
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();process.exit(0);}
-process.on('SIGINT',stop);process.on('SIGTERM',stop);
+async function stop(){if(stopping)return;stopping=true;certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running]);closeNameSecurityRuntime();process.exit(0);}
+process.on('SIGINT',()=>{certificateWorker.stop();void stop();});process.on('SIGTERM',()=>{certificateWorker.stop();void stop();});
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));
