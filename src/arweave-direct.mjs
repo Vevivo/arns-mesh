@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {
   verifyDataItem,
   parseDataItem,
@@ -353,7 +355,7 @@ export async function fetchDataItemDirect({dataId,location,seedsFile=process.env
   throw new Error('direct_arweave_retrieval_failed '+JSON.stringify(errors.slice(0,12)));
 }
 
-if(import.meta.url===new URL('file://'+process.argv[1]).href){
+if(process.argv[1]&&!process.argv[1].startsWith('-')&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
   const record=JSON.parse(fs.readFileSync(process.argv[2]||'record.json','utf8'));
   const r=await fetchDataItemDirect({dataId:record.txId,location:record.arweaveLocation});
   console.log(JSON.stringify({...r,payload:undefined},null,2));

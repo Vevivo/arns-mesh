@@ -147,13 +147,13 @@ async function fixture(){
   const raw=Buffer.from(data.getRaw());await store.put(data.id,raw);const sent=Buffer.from(raw);if(tamper)sent[sent.length-1]^=1;
   corpus.set(data.id,{id:data.id,raw,sent,type,encoding,originalSha256:hash(raw),tamper});return data.id;
  }
- for(const encoding of [null,'gzip','br']){
-  const label=encoding||'plain',name='protected-'+label,script="document.getElementById('script-status').textContent='Verified "+label+" JavaScript ran';";
-  const css='body{background:#f6f4ef;color:#23232d;font:18px system-ui;margin:40px}h1{color:rgb(84,39,200)}';
+ for(const [label,encoding] of [['plain',null],['gzip','gzip'],['br','br'],['retained','br']]){
+  const name='protected-'+label,script="document.getElementById('script-status').textContent='Verified "+label+" JavaScript ran';";
+  const css='/* controlled site: '+label+' */body{background:#f6f4ef;color:#23232d;font:18px system-ui;margin:40px}h1{color:rgb(84,39,200)}';
   const html='<!doctype html><html lang="en"><meta charset="utf-8"><title>Protected '+label+'</title><link rel="stylesheet" href="style.css"><main><p>CONTROLLED SIGNED NAME CERTIFICATE TEST</p><h1 id="proof">'+label+' HTML decoded once</h1><p id="script-status">Script pending</p><p>Real packaged Windows renderer. Three original witness signatures.</p></main><script src="app.js"></script></html>';
   const paths={};for(const [file,text,type] of [['index.html',html,'text/html'],['style.css',css,'text/css'],['app.js',script,'text/javascript']])paths[file]={id:await item(text,type,encoding)};
   const root=await item(JSON.stringify({manifest:'arweave/paths',version:'0.2.0',index:{path:'index.html'},paths}),'application/x.arweave-manifest+json',encoding);
-  const site={name,label,encoding,script,html,css,root,ids:[root,...Object.values(paths).map(row=>row.id)],paths};sites.push(site);targets.set(name,site);
+  const site={name,label,encoding,script,html,css,root,ids:[root,...Object.values(paths).map(row=>row.id)],paths};if(label==='retained')site.scenario='retained';else sites.push(site);targets.set(name,site);
  }
  // Unique signed roots make no-content-fetch assertions independent of warm sites.
  for(const scenario of ['one','wrong','expired','forged']){
@@ -169,7 +169,6 @@ async function fixture(){
  ];
  for(const [scenario,text,encoding,options] of bad){const root=await item(text,'text/html',encoding,options);targets.set('protected-'+scenario,{root,ids:[root],scenario});negative.push({name:'protected-'+scenario,case:scenario,expected:/compress|encod|limit|large|size|signat|verified|reach|available/i});}
  targets.set('protected-resilient',{...sites[1],scenario:'one-bad'});
- targets.set('protected-retained',{...sites[2],name:'protected-retained',scenario:'retained'});
  for(let index=0;index<4;index++){
   const server=http.createServer((request,response)=>{
    let body='',size=0;request.on('data',chunk=>{size+=chunk.length;if(size>8192){request.destroy();return;}body+=chunk;});
@@ -228,13 +227,16 @@ try{
  const before=requests.length;await navigate(sites[0].name);await rendered(sites[0],'03-cache-repeat');
  const contentBefore=requests.slice(0,before).filter(r=>r.op==='content').length,contentAfter=requests.filter(r=>r.op==='content').length;assert.equal(contentAfter,contentBefore,'Verified content is reused from cache');
  report.checks.push('Repeated actual renderer navigation reuses verified content without fetching its original bytes again.');
- await ui.evaluate('arnsMesh.home()');await mode('auto');await navigate('protected-retained');
- const history=await rendered({...sites[2],name:'protected-retained'},'04-fresh-reader-retained');
+ await ui.evaluate('arnsMesh.home()');await mode('auto');
+ const retained=targets.get('protected-retained');for(const id of retained.ids)assert(!fs.existsSync(path.join(reader,'content',id+'.ans104')),'Retained fixture bytes must be new to this reader');
+ const historicalRequestStart=requests.length;await navigate('protected-retained');
+ const history=await rendered(retained,'04-fresh-reader-retained');
  assert(history.recovery);assert.equal(history.observedAt,report.prepared.find(r=>r.name==='protected-retained').observedAt);
  assert(requests.some(r=>r.name==='protected-retained'&&r.historical===true));
+ for(const id of retained.ids)assert(requests.slice(historicalRequestStart).some(row=>row.op==='content'&&row.dataId===id),'Unopened retained original bytes must be fetched from the supporter');
  report.checks.push('A previously unopened name opens as dated retained history from one courier carrying all three original signatures; no live certificate is fabricated.');
  const verified=[];
- for(const site of sites)for(const id of site.ids){const raw=fs.readFileSync(path.join(reader,'content',id+'.ans104'));await verifyStoredContent(raw,id);assert.equal(hash(raw),corpus.get(id).originalSha256);verified.push(id);}
+ for(const site of [...sites,retained])for(const id of site.ids){const raw=fs.readFileSync(path.join(reader,'content',id+'.ans104'));await verifyStoredContent(raw,id);assert.equal(hash(raw),corpus.get(id).originalSha256);verified.push(id);}
  assert(!fs.existsSync(path.join(reader,'content',targets.get('protected-signature').root+'.ans104')));report.originals={verified:verified.length,exactEncodedSignedBytesPreserved:true,tamperedNotCached:true};
  await ui.evaluate('arnsMesh.home()');await mode('saved');await stopApp();await stopFixture();
  await launch();
