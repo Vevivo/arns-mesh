@@ -246,6 +246,10 @@ try{
  // Revocation must defeat even the warm saved response cache.
  fs.writeFileSync(path.join(reader,'name-witness-policy.json'),JSON.stringify({...policy,revoked:true}));
  await failure(sites.at(-1).name,'revoked-policy-cache',{expected:/policy|revoked|trusted|reach/i});
+ const revokedSettings=await ui.evaluate('arnsMesh.getSettings()'),revokedState=await state();
+ assert.equal(revokedSettings.connectionProfile,null);assert.match(revokedSettings.connectionError,/policy|revoked/i);
+ assert.equal(revokedState.connectionConfigured,false);assert.equal(revokedState.savedSites.ready,0);
+ report.revokedPolicy={settingsAccessible:true,profileUnavailable:true,readySites:revokedState.savedSites.ready,visibleError:revokedSettings.connectionError};
  report.checks.push('Revoked pinned policy blocks an otherwise cached saved page in the actual app.');
  report.passed=true;
 }catch(error){report.error=error.stack;console.error(error.stack);process.exitCode=1;}

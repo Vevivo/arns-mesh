@@ -61,19 +61,28 @@ app.commandLine.appendSwitch('disable-features','DnsOverHttps,MediaRouter');
 function send(extra={}){
   if(!toolbar||toolbar.webContents.isDestroyed())return;
   const tab=tabs.active,wc=tab?.view?.webContents,audit=networkAuditSnapshot();
-  if(runtime)monitor.configure({...readProfile(runtime.dataDir),directPeers:loadDirectPeers().map(p=>(p.host.includes(':')?'['+p.host+']':p.host)+':'+p.port).sort()});
+  const displayed=connectionDisplay();
+  if(runtime)monitor.configure(displayed.profile?{...displayed.profile,directPeers:loadDirectPeers().map(p=>(p.host.includes(':')?'['+p.host+']':p.host)+':'+p.port).sort()}:{directPeers:[],rpcSources:[],arweavePeers:[]});
   toolbar.webContents.send('state',{
     version:app.getVersion(),url:tab?.url||'',title:tab?.title||'',tabs:tabs.snapshot(),tabLimit:tabs.limit,
     loading:wc?.isLoading()||false,canGoBack:wc?.navigationHistory.canGoBack()||false,canGoForward:wc?.navigationHistory.canGoForward()||false,
     canBookmark:Boolean(tab?.url),bookmarked:library?.has(tab?.url)||false,zoom:Math.round((wc?.getZoomFactor()||1)*100),
     phase:tab?.phase||'ready',message:tab?.message||'Enter an ArNS address.',meta:tab?.meta||null,progress:tab?.progress.snapshot(),resources:tab?.resources,
-    mode:'p2p',accessPolicy,networkConnection:network?.status(),networkJoining,connectionConfigured:runtime?connectionConfigured():false,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
+    mode:'p2p',accessPolicy,networkConnection:network?.status(),networkJoining,connectionConfigured:connectionConfigured(displayed.profile),connectionError:displayed.error,peer:{role:'reader',online:false,serving:false,indexing:false},savedSites:pinner?.status(),
     connectionMonitor:monitor.snapshot({saved:accessPolicy==='saved'}),peerDiscovery:peerDiscovery?.status(),
     discovery:runtime?.discovery.status(),network:{...audit,events:audit.events.slice(-8)},
     resourceBudget:{role:'client',pageCacheBytes:cache.bytes,pageCacheLimit:cache.maxBytes,pageRequests:requests.status(),transfers:transferBudgetStatus()},...extra,
   });
 }
-function connectionConfigured(){const p=readProfile(runtime.dataDir);return Boolean((p.nameWitnessPolicy||p.rpcSources.length)&&(p.directPeers.length||p.arweavePeers.length));}
+// Presentation must survive a revoked/corrupt policy so the authenticated
+// request handler can replace old content with its refusal page. This result
+// is never used to authorize names, merge profiles or fetch site files.
+function connectionDisplay(){
+  if(!runtime)return {profile:null,error:null};
+  try{return {profile:readProfile(runtime.dataDir),error:null};}
+  catch(error){return {profile:null,error:plainError(error)};}
+}
+function connectionConfigured(p=connectionDisplay().profile){return Boolean(p&&(p.nameWitnessPolicy||p.rpcSources.length)&&(p.directPeers.length||p.arweavePeers.length));}
 function uiHandler(request){
   const u=new URL(request.url),name=u.pathname.slice(1);
   if(u.hostname!=='app'||!['index.html','styles.css','app.js','welcome.html','welcome.css','brand.css','mesh.svg','ario-full-black.svg','fonts/besley.woff2','fonts/plus-jakarta-sans.woff2'].includes(name))return new Response('Not found',{status:404});
@@ -301,7 +310,7 @@ handle('navigate',raw=>navigate(raw));handle('new-tab',raw=>newTab(raw||''));han
 handle('back',()=>historyMove(-1));handle('forward',()=>historyMove(1));handle('reload',reload);handle('stop',()=>stop());handle('home',()=>navigate(''));
 handle('toggle-bookmark',toggleBookmark);handle('get-browser-data',()=>library.snapshot());handle('remove-bookmark',url=>{library.remove(url);send({libraryChanged:true});});handle('clear-history',()=>library.clearHistory());handle('zoom',zoom);
 handle('panel',open=>{panelOpen=Boolean(open);layout();});handle('ready',()=>send());
-handle('get-settings',()=>({version:app.getVersion(),executable:app.getPath('exe'),connectionProfile:readProfile(runtime.dataDir),networkConnection:network?.status(),availableNetworks:bundledNetworks(coreRoot),rpcSources:readProfile(runtime.dataDir).rpcSources.join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:JSON.parse(fs.readFileSync(process.env.ARNS_IP_PEERS)).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'}));
+handle('get-settings',()=>{const displayed=connectionDisplay();return {version:app.getVersion(),executable:app.getPath('exe'),connectionProfile:displayed.profile,connectionError:displayed.error,networkConnection:network?.status(),availableNetworks:bundledNetworks(coreRoot),rpcSources:(displayed.profile?.rpcSources||[]).join('\n'),witnessQuorum,accessPolicy,trustedPeers:trustedPeers.join('\n'),directPeers:(displayed.profile?.directPeers||[]).join('\n'),bootstrapSources:'',peerId:'Reader only · no public listener or indexing'};});
 handle('inspect-network',async code=>{
   if(accessPolicy==='saved')throw new Error('Switch to Live access before connecting to a network.');
   if(networkJoining)throw new Error('A network connection is already in progress.');
@@ -420,7 +429,8 @@ async function start(){
   await toolbar.webContents.loadURL('arnsui://app/index.html');await newTab(process.argv.find(x=>x.startsWith('ar://'))||'');
   timer=setInterval(()=>{
     send();
-    if(monitorVisible&&accessPolicy!=='saved'&&!connectionCheck&&(Date.now()-lastConnectionCheck>60000||checkProfile!==JSON.stringify(readProfile(runtime.dataDir))))void runConnectionChecks().catch(()=>{});
+    const displayed=connectionDisplay();
+    if(displayed.profile&&monitorVisible&&accessPolicy!=='saved'&&!connectionCheck&&(Date.now()-lastConnectionCheck>60000||checkProfile!==JSON.stringify(displayed.profile)))void runConnectionChecks().catch(()=>{});
   },1000);send();
   void syncSearch().catch(()=>{});searchTimer=setInterval(()=>void syncSearch().catch(()=>{}),5000);
   if(accessPolicy!=='saved'){

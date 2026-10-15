@@ -20,7 +20,7 @@ export class SitePinner{
   for(const row of Object.values(this.rows)){if(row.status==='saving')row.status='interrupted';if(row.update?.status==='saving')row.update.status='interrupted';}
  }
  isReady(row){
-  const context=this.getNameContext();
+  let context;try{context=this.getNameContext();}catch{return false;}
   if(!row||!['document-saved','manifest-saved','linked-resources-saved'].includes(row.status)||row.saved!==row.total||row.failed)return false;
   // Older releases did not embed the dated binding in saved-site metadata.
   // A later observation of the same target cannot reconstruct the old date.

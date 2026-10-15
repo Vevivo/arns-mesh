@@ -72,5 +72,16 @@ test('shell lifecycle and privileged IPC with Electron doubles (not a browser ac
    await call('ready');const state=fake.messages.at(-1).data;assert.equal(state.tabs.length,1);assert.equal(state.url,'ar://unit-one/path?q=1');assert.equal(state.bookmarked,true);
    assert.equal(content.options.webPreferences.sandbox,true);assert.equal(content.options.webPreferences.nodeIntegration,false);assert.equal(content.options.webPreferences.contextIsolation,true);assert.equal(content.options.webPreferences.preload,fileURLToPath(new URL('../apps/browser/home-preload.cjs',import.meta.url)));
    assert.equal(state.peer.serving,false);assert.equal(state.discovery.enabled,false);assert.equal(state.network.requests,0);
+   const policyFile=path.join(dir,'name-witness-policy.json'),previous=fs.readFileSync(policyFile);
+   fs.writeFileSync(policyFile,'{');
+   try{
+    await call('navigate','unit-one');
+    assert.equal(content.webContents.response.status,502);
+    assert.match(await content.webContents.response.text(),/This page could not be reached/);
+    assert.equal(fake.messages.at(-1).data.phase,'error');
+    assert.equal(fake.messages.at(-1).data.connectionConfigured,false);
+    assert.ok(fake.messages.at(-1).data.connectionError);
+    const settings=call('get-settings');assert.equal(settings.connectionProfile,null);assert.ok(settings.connectionError);
+   }finally{fs.writeFileSync(policyFile,previous);}
  }finally{fake.app.quit();hook.deregister();fs.rmSync(dir,{recursive:true,force:true});}
 });

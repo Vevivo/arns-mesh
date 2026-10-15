@@ -8,6 +8,11 @@ import {createNameObservation,nameObservationSigningBytes,namePolicyId,witnessKe
 const program='11111111111111111111111111111111',target='A'.repeat(43),start=1800000000000,roundMs=60000,round=start/roundMs;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const peers=n=>Array.from({length:n},(_,i)=>({host:'127.0.0.1',port:5000+i}));
+async function withoutDeadlineWait(run){
+ const controller=new AbortController(),reason=new Error('finished couriers still waited for the long deadline');
+ const guard=setTimeout(()=>controller.abort(reason),1000);
+ try{return await run(controller.signal);}finally{clearTimeout(guard);}
+}
 function fixture(){
  const keys=Array.from({length:4},()=>crypto.generateKeyPairSync('ed25519'));
  const witnesses=keys.map((key,i)=>({domain:String.fromCharCode(97+i),publicKeyPem:key.publicKey.export({type:'spki',format:'pem'})}));
@@ -40,10 +45,10 @@ test('caller cancellation rejects with the original reason and aborts every in-f
  await assert.rejects(work,error=>error===reason);assert.equal(active,0);
 });
 
-test('missing current quorum waits for its deadline; expired full quorum is available only as dated history',async()=>{
+test('expired full quorum finishes after direct couriers are exhausted and remains available only as dated history',async()=>{
  const f=fixture(),observations=[0,1,2].map(i=>f.observation(i));f.setNow(start+roundMs+f.policy.leaseMs+1);
- const options={peers:peers(1),timeoutMs:30,directQuery:async()=>f.reply(observations)};
- const begin=Date.now();assert.equal(await f.run(options),null);assert(Date.now()-begin>=20);
+ const options={peers:peers(1),timeoutMs:12000,directQuery:async()=>f.reply(observations)};
+ assert.equal(await withoutDeadlineWait(signal=>f.run({...options,signal})),null);
  const history=await f.run({...options,mode:'historical'});
  assert.equal(history.verification.historical,true);assert.equal(history.verification.currentWindow,false);assert.equal(history.verification.observedAt,start+1000);
  assert.equal(history.verification.expiresAt,start+roundMs+f.policy.leaseMs);
@@ -51,11 +56,31 @@ test('missing current quorum waits for its deadline; expired full quorum is avai
 
 test('only sixteen numeric direct peers are contacted, with at most four simultaneous requests',async()=>{
  const f=fixture();let active=0,peak=0;const contacted=[];
- const result=await f.run({peers:[{host:'example.invalid',port:5000},...peers(25)],timeoutMs:60,directQuery:async(peer)=>{
-  contacted.push(peer);active++;peak=Math.max(peak,active);await tick();active--;return {ok:false,error:'unavailable'};
- }});
+ const result=await withoutDeadlineWait(signal=>f.run({signal,peers:[{host:'example.invalid',port:5000},...peers(25)],timeoutMs:12000,directQuery:async(peer)=>{
+  contacted.push(peer);active++;peak=Math.max(peak,active);await tick();active--;
+  if(peer.port%3===0)throw new Error('courier unavailable');
+  return peer.port%3===1?f.reply([f.observation(0)]):{ok:true,recordJson:'malformed'};
+ }}));
  assert.equal(result,null);assert.equal(contacted.length,16);assert(peak<=4);assert(peak>1);assert.equal(active,0);
  assert(contacted.every(peer=>peer.host==='127.0.0.1'));
+});
+
+test('no direct couriers and no discovery finishes without waiting for the deadline',async()=>{
+ const f=fixture();
+ assert.equal(await withoutDeadlineWait(signal=>f.run({signal,peers:[],timeoutMs:12000})),null);
+});
+
+test('all queued couriers are exhausted only after a pending honest final worker finishes',async()=>{
+ const f=fixture(),gates=new Map(),contacted=[];let completed=false;
+ const work=f.run({peers:peers(6),directQuery:peer=>{
+  contacted.push(peer.port);
+  if(peer.port<5004)return Promise.resolve(f.reply());
+  return new Promise(resolve=>gates.set(peer.port,resolve));
+ }}).finally(()=>{completed=true;});
+ await tick();assert.equal(contacted.length,6);assert.equal(gates.size,2);assert.equal(completed,false);
+ gates.get(5004)(f.reply([f.observation(0)]));await tick();assert.equal(completed,false);
+ gates.get(5005)(f.reply([f.observation(1),f.observation(2)]));
+ assert.deepEqual((await work).verification.domains,['a','b','c']);
 });
 
 test('all original votes in a reply are considered before a cached quorum can hide equivocation',async()=>{
@@ -67,7 +92,7 @@ test('all original votes in a reply are considered before a cached quorum can hi
 
 test('authenticated quorum rejection is preserved, but another honest response may restore quorum',async()=>{
  const f=fixture(),collector=f.collector();collector.add([0,1,2].map(i=>f.observation(i)));collector.add([f.observation(0,{txId:'B'.repeat(43)})]);
- await assert.rejects(f.run({collector,peers:[],timeoutMs:20}),error=>error.code==='name_certificate_quorum_rejected');
+ await assert.rejects(withoutDeadlineWait(signal=>f.run({collector,signal,peers:peers(4),timeoutMs:12000,directQuery:async()=>({ok:false})})),error=>error.code==='name_certificate_quorum_rejected');
  const result=await f.run({collector,peers:peers(1),directQuery:async()=>f.reply([f.observation(3)])});
  assert.deepEqual(result.verification.domains,['b','c','d']);
 });
@@ -97,9 +122,9 @@ function fakeDht(){
 }
 
 test('direct-IP and DHT votes share one collector and all discovery resources close at quorum',async()=>{
- const f=fixture(),transport=fakeDht();
- const work=f.run({peers:peers(1),dhtEnabled:true,createDhtTransport:async()=>transport,directQuery:async()=>f.reply([f.observation(0)])});
- await tick();assert.equal(transport.joined.length,2);
+ const f=fixture(),transport=fakeDht();let directFinished=false,completed=false;
+ const work=f.run({peers:peers(1),dhtEnabled:true,createDhtTransport:async()=>transport,directQuery:async()=>{directFinished=true;return f.reply([f.observation(0)]);}}).finally(()=>{completed=true;});
+ await tick();assert.equal(directFinished,true);assert.equal(transport.joined.length,2);assert.equal(completed,false);
  const one=new Socket(f.reply([f.observation(1)])),two=new Socket(f.reply([f.observation(2)]));
  transport.swarm.emit('connection',one);transport.swarm.emit('connection',two);
  const result=await work;assert.deepEqual(result.verification.domains,['a','b','c']);

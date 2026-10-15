@@ -29,7 +29,9 @@ const startedAt=Date.now(),maxFaults=count===4?1:3,threshold=count-maxFaults;
 let historicalClock=Math.floor(startedAt/ROUND)*ROUND-4*ROUND+1000;
 const now=()=>historicalClock??Date.now();
 const keys=Array.from({length:count},()=>crypto.generateKeyPairSync('ed25519'));
-const policy={schema:'arns-mesh-name-policy/v1',networkId:'same-controller-linux-qa-'+crypto.randomBytes(8).toString('hex'),chainId:'solana:'+GENESIS,registryProgramId:PROGRAM,threshold,maxFaults,roundMs:ROUND,leaseMs:120000,maxFutureSkewMs:1000,validFrom:historicalClock-ROUND,validUntil:startedAt+3600000,witnesses:keys.map((key,i)=>({domain:'same-controller-test-'+i,publicKeyPem:key.publicKey.export({type:'spki',format:'pem'})}))};
+// Two physical machines can differ by several seconds. This explicit fixture
+// policy allows five seconds; it does not change the application's verifier.
+const policy={schema:'arns-mesh-name-policy/v1',networkId:'same-controller-linux-qa-'+crypto.randomBytes(8).toString('hex'),chainId:'solana:'+GENESIS,registryProgramId:PROGRAM,threshold,maxFaults,roundMs:ROUND,leaseMs:120000,maxFutureSkewMs:5000,validFrom:historicalClock-ROUND,validUntil:startedAt+3600000,witnesses:keys.map((key,i)=>({domain:'same-controller-test-'+i,publicKeyPem:key.publicKey.export({type:'spki',format:'pem'})}))};
 const policyId=namePolicyId(policy),roots=[],services=[],signers=[];
 let server,timer,stopping=false,active=0;
 const report={schema:'arns-mesh-cross-machine-fixture/v1',scope:'Synthetic observations and one controller; real Linux durable signing state and HTTP, not independent operators or public-chain evidence',pid:process.pid,host,port,count,threshold,maxFaults,startedAt:new Date(startedAt).toISOString(),deadline:new Date(startedAt+ttl*1000).toISOString(),policyId,policy,targets:{correct:TARGET,wrong:WRONG},names:{alpha:'quorum of correct votes plus at most f conflicting votes',insufficient:'fewer than threshold original votes',wrong:'at most f wrong-target original votes',historical:'expired original full-quorum certificate'},requests:[],errors:[]};

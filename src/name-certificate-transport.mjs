@@ -91,6 +91,11 @@ export async function collectNameCertificates({
   try{const best=candidate();if(best){lastSemantic=null;finish(null,best);}}
   catch(error){finish(error);}
  };
+ const finishCandidate=()=>{
+  if(settled)return;
+  try{const best=candidate();finish(best?null:lastSemantic,best);}
+  catch(error){finish(error);}
+ };
  const feed=envelope=>{
   if(settled)return;
   const votes=responseVotes(envelope,name,policyId);if(!votes)return;
@@ -102,10 +107,7 @@ export async function collectNameCertificates({
  };
  signal?.addEventListener('abort',cancel,{once:true});
  if(signal?.aborted){cancel();return done;}
- timer=setTimeout(()=>{
-  try{const best=candidate();finish(best?null:lastSemantic,best);}
-  catch(error){finish(error);}
- },timeoutMs);
+ timer=setTimeout(finishCandidate,timeoutMs);
  consider();if(settled)return done;
  let cursor=0;
  const directWorker=async()=>{
@@ -115,7 +117,12 @@ export async function collectNameCertificates({
    catch(error){if(signal?.aborted)cancel();/* Untrusted courier or transport miss. */}
   }
  };
- for(let i=0;i<Math.min(4,addresses.length);i++)void directWorker();
+ const directWorkers=Array.from({length:Math.min(4,addresses.length)},()=>directWorker());
+ void Promise.allSettled(directWorkers).then(()=>{
+  // With discovery disabled, exhausted couriers cannot supply further evidence.
+  // Keep the deadline's exact quorum/error semantics, after every queued peer.
+  if(!dhtEnabled)finishCandidate();
+ });
  if(dhtEnabled)void (async()=>{
   let created;
   try{

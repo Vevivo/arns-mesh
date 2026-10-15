@@ -49,6 +49,12 @@ function pinner(t,f,{getNameContext=()=>f.context,fetchContent}={}){
  return {instance,calls,store,dir,item};
 }
 const readyRow=snapshot=>({name:snapshot.name,rootDataId:snapshot.txId,observedAt:snapshot.observedAt,snapshot,pinGroup:'fixture',status:'document-saved',total:1,saved:1,failed:0});
+test('revoked policy refuses saved readiness without breaking its status report',t=>{
+ const f=fixture(),p=pinner(t,f,{getNameContext:()=>{throw new Error('name_policy_revoked');}});
+ p.instance.rows.alpha=readyRow(f.snapshot);p.store.pins.fixture=[target];
+ assert.equal(p.instance.isReady(p.instance.rows.alpha),false);
+ assert.equal(p.instance.status().ready,0);assert.equal(p.calls.fetch,0);assert.equal(p.calls.legacy,0);
+});
 test('protected pinner refuses one publisher snapshot before fetching or changing saved metadata',async t=>{
  const f=fixture(),p=pinner(t,f),legacy={...f.snapshot,provenance:{kind:'local-rpc'}};
  await assert.rejects(p.instance.start('alpha',{snapshot:legacy}),/name_certificate_required/);
