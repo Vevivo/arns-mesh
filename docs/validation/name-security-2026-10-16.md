@@ -87,6 +87,12 @@ Missing and partial rows now return false before reading policy files. One synch
 
 A controlled 13,000-partial-row reproduction fell from 39,000 file reads and 2,961 ms to 3 reads and 4.99 ms. These are local measurements, not a server latency guarantee. Four new regressions cover large summaries, fresh subsequent reports, immediate revocation and refusal of caller-injected contexts. The complete follow-up Windows source run passed **576 of 581 tests**, with 0 failures and only 5 native Linux checks skipped, in 65.442 seconds. Final main-branch Linux and packaged-Windows checks run on the release revision before publication.
 
+The first follow-up also passed the full [Linux, Windows and packaged-Windows workflow](https://github.com/Vevivo/arns-mesh/actions/runs/38819984418). However, a longer live check still returned only **85 of 90** replies before the existing four-second desktop deadline. The shorter 30/30 sample was therefore not treated as the final responsiveness result.
+
+Profiling found that the periodic operator report still performed synchronous content-file scans and thousands of readiness checks. The next change uses asynchronous metadata scans and yields after 16 records in display/readiness reports. It shares scans only within one report, prevents overlapping reports and cancels pending work during shutdown. Name-policy activation, replacement and revocation are rechecked across the entire report. Synchronous storage-budget enforcement, original-content verification and actual saved-content authorization remain unchanged. New real filesystem, HTTP-progress, cancellation and policy-change tests cover these paths; final live measurements are recorded after deployment.
+
+A temporary diagnostic cleanup error caused one automatic service restart during the investigation. The same data directory and network identity were retained; the diagnostic tool was corrected and removed from the live process. That restart is not presented as an uninterrupted run.
+
 ## Remaining boundaries
 
 - A healthy source is needed to learn new name state. During an outage, the full certificate and necessary verified files must already exist on a reachable source. A fresh reader can use retained proof while its pinned policy is active; expired-policy history is limited to that reader's previously accepted certificate. Revocation still refuses access.

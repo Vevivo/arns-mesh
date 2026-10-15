@@ -3,9 +3,17 @@ import {acceptedReplicaBindings} from './supporter-replication.mjs';
 import {getProtectedNameContext} from './name-security-runtime.mjs';
 import {namePolicyId} from './name-certificates.mjs';
 import {NameCertificateCollector} from './name-certificate-collector.mjs';
+import {setImmediate as yieldToEventLoop} from 'node:timers/promises';
 
-export function supporterReadiness({snapshots,relay,pinners=[],contentStore,trustedPeerIds=[],ownPeerId,names,index=null,discovery=null,replication=null,getNameContext=getProtectedNameContext}){
+function readinessScan({snapshots,relay,pinners=[],contentStore,trustedPeerIds=[],ownPeerId,names,index=null,discovery=null,replication=null,getNameContext=getProtectedNameContext}){
  const context=getNameContext(),accepted=new Map();let conflicts=[];
+ const initialPolicyId=context?.policyId||null;
+ const checkContext=()=>{
+  const current=getNameContext();
+  if(Boolean(current)!==Boolean(context)||(current?.policyId||null)!==initialPolicyId)throw new Error('name_security_context_changed');
+  context?.assertCurrent();current?.assertCurrent();
+ };
+ function* scan(){
  const localNames=[...new Set([...(snapshots?.names()||[]),...pinners.flatMap(pinner=>Object.keys(pinner.rows||{})),...(context?.store.names?.()||[])])];
  if(context){
   for(const name of names?.length?[...new Set(names)]:localNames){
@@ -14,24 +22,27 @@ export function supporterReadiness({snapshots,relay,pinners=[],contentStore,trus
    const known=prepared?null:context.store.known(name);
    const row=prepared||(known?context.snapshotFrom(known):null);
    if(row){context.verifySnapshot(row,{name,mode:'historical',requireKnown:false});accepted.set(name,{...row,...(prepared?{prepared:true}:{})});}
+   yield;
   }
   context.assertCurrent();
  }else{
   const legacy=acceptedReplicaBindings(relay);conflicts=legacy.conflicts;
-  for(const row of legacy.bindings)accepted.set(row.name,row);
+  for(const row of legacy.bindings){accepted.set(row.name,row);yield;}
   if(trustedPeerIds.includes(ownPeerId))for(const name of localNames){
    const prepared=pinners.map(pinner=>{try{return pinner.readySnapshot(name,{trustedPeers:trustedPeerIds});}catch{return null;}}).find(row=>row?.provenance?.kind==='local-rpc');
    const row=prepared||snapshots.exportLocal(name);if(row&&!accepted.has(name))accepted.set(name,row);
+   yield;
   }
  }
  const requested=names?.length?[...new Set(names)]:[...new Set([...localNames,...accepted.keys()])];
  let acceptedNames=0,rootFiles=0,completeSites=0,retainedPreparedVersions=0;const missingNames=[],missingRoots=[],incompleteSites=[];
  for(const name of requested){
   const row=accepted.get(name);
-  if(!row){missingNames.push(name);continue;}acceptedNames++;
+  if(!row){missingNames.push(name);yield;continue;}acceptedNames++;
   if(contentStore.has(row.txId))rootFiles++;else missingRoots.push(name);
   if(row.prepared===true)retainedPreparedVersions++;
   if(pinners.some(pinner=>{const saved=pinner.rows[name];return saved?.rootDataId===row.txId&&saved.snapshot?.antId===row.antId&&pinner.isReady(saved);}))completeSites++;else incompleteSites.push(name);
+  yield;
  }
  const locallyPrepared=requested.length>0&&acceptedNames===requested.length&&completeSites===requested.length;
  const blockers=[];
@@ -49,6 +60,32 @@ export function supporterReadiness({snapshots,relay,pinners=[],contentStore,trus
   externalReachability:{status:'independent-reader-check-required',advertisedAddress:discovery?.address||null,acceptedByOtherPeers:discovery?.acceptedBy||0},
   replication:replication?.status?.()||replication,blockers,generalCoverage:false,
  };
+ }
+ return {steps:scan(),checkContext};
+}
+
+export function supporterReadiness(options){
+ const {steps}=readinessScan(options);
+ for(;;){const next=steps.next();if(next.done)return next.value;}
+}
+
+// Operator reporting may inspect thousands of stored names. Yield bounded
+// batches without caching authority or weakening any certificate/file check.
+export async function supporterReadinessAsync(options,{signal}={}){
+ signal?.throwIfAborted();
+ const {steps,checkContext}=readinessScan(options);let scanned=0;
+ try{
+  checkContext();
+  for(;;){
+   signal?.throwIfAborted();
+   const next=steps.next();
+   if(next.done){checkContext();signal?.throwIfAborted();return next.value;}
+   if(++scanned%16===0){
+    checkContext();await yieldToEventLoop(undefined,{signal});
+    signal?.throwIfAborted();checkContext();
+   }
+  }
+ }finally{steps.return();}
 }
 
 // This check uses only the explicitly selected supporter. Cached-only content

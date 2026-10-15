@@ -15,7 +15,8 @@ import {startDirectPeerServer,parsePeerAddresses,loadConfiguredPeers,loadDirectP
 import {PeerDiscovery} from '../../src/peer-discovery.mjs';
 import {SnapshotRelay,snapshotPage} from '../../src/snapshot-relay.mjs';
 import {SupporterReplication} from '../../src/supporter-replication.mjs';
-import {supporterReadiness} from '../../src/supporter-readiness.mjs';
+import {supporterReadinessAsync} from '../../src/supporter-readiness.mjs';
+import {collectOperatorStatus,captureOperatorReportContext} from '../../src/operator-status-report.mjs';
 import {peerAddress} from '../../src/peer-directory.mjs';
 import {SitePinner} from '../../src/site-pinner.mjs';
 import {writeOperatorStatus,startOperatorDashboard} from '../../src/operator-status.mjs';
@@ -110,13 +111,12 @@ const networkRenewalTimer=setInterval(renewNetwork,6*3600000);networkRenewalTime
 if(upstream)runtime.discovery.start();
 if(upstream)void refresh();const timer=setInterval(()=>{if(upstream)void refresh();},60000);
 const version=JSON.parse(fs.readFileSync(path.join(coreRoot,'package.json'))).version;
+const statusController=new AbortController();let statusRun=null;
 const publishStatus=()=>{
- // Share one fresh scan only within this synchronous report and per store identity.
- const contentScans=new Map(),statsFor=store=>{
-  if(!contentScans.has(store))contentScans.set(store,store.stats());
-  return contentScans.get(store);
- };
- const peerStatus=peer.status({contentStats:statsFor(peer.contentStore)}),discoveryStatus=peerDiscovery.status(),savedStatus=pinner.status({contentStats:statsFor(pinner.store)}),replicatedStatus=replicationPinner.status({contentStats:statsFor(replicationPinner.store)});
+ if(stopping||statusRun)return statusRun;
+ statusRun=(async()=>{
+ const signal=statusController.signal,assertReportContext=captureOperatorReportContext();
+ const {peerStatus,discoveryStatus,savedStatus,replicatedStatus}=await collectOperatorStatus({peer,pinner,replicationPinner,peerDiscovery,signal});
  const replicationStatus=replication.status({completeSites:replicatedStatus.ready});
  // Keep the dashboard's site summaries, not every nested binding and failed
  // file detail. Those remain in the private persistent preparation records.
@@ -127,13 +127,17 @@ const publishStatus=()=>{
   const {groups,...storage}=status.storage;
   return {...status,sites:status.sites.map(summarize),storage:{...storage,groupsCount:groups.length}};
  };
- const readiness=supporterReadiness({snapshots:runtime.snapshots,relay:snapshotRelay,pinners:[pinner,replicationPinner],contentStore:peer.contentStore,trustedPeerIds:acceptedPublishers(),ownPeerId:peer.witnessPeerId,index:peerStatus.sharedIndex,discovery:discoveryStatus,replication:replicationStatus});
+ const readiness=await supporterReadinessAsync({snapshots:runtime.snapshots,relay:snapshotRelay,pinners:[pinner,replicationPinner],contentStore:peer.contentStore,trustedPeerIds:acceptedPublishers(),ownPeerId:peer.witnessPeerId,index:peerStatus.sharedIndex,discovery:discoveryStatus,replication:replicationStatus},{signal});
+ signal.throwIfAborted();assertReportContext();
  const value={version,...peerStatus,onlinePreparation:onlinePreparation.status(),operatorRole:'service-provider',memory:process.memoryUsage(),transferBudget:transferBudgetStatus(),locationCache:locationCacheStatus(),retainedNames:runtime.snapshots.names().length,discovery:runtime.discovery.status(),peerDiscovery:discoveryStatus,snapshotRelay:snapshotRelay.status(),catalog:catalog?.status()||null,search:{...topicSearch.status(),documents:search.status(),metadata:searchMetadata.status()},network:network.status(),savedSites:summarizeSites(savedStatus),replicatedSites:summarizeSites(replicatedStatus),replication:replicationStatus,readiness};
- writeOperatorStatus(dataDir,value);
+ assertReportContext();writeOperatorStatus(dataDir,value);
  console.log(JSON.stringify({event:'peer-status',version,online:value.online,memory:value.memory,retainedNames:value.retainedNames,savedReady:savedStatus.ready,replicatedReady:replicatedStatus.ready,replication:replicationStatus,readiness:{locallyPrepared:readiness.locallyPrepared,names:readiness.names,files:readiness.files},snapshotRelay:value.snapshotRelay}));
+ })().catch(error=>{if(!statusController.signal.aborted)console.error(JSON.stringify({event:'operator-status-failed',error:String(error.message).slice(0,160)}));}).finally(()=>{statusRun=null;});
+ return statusRun;
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running]);closeNameSecurityRuntime();process.exit(0);}
+async function stop(){if(stopping)return;stopping=true;statusController.abort();certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running,statusRun]);closeNameSecurityRuntime();process.exit(0);}
 process.on('SIGINT',()=>{certificateWorker.stop();void stop();});process.on('SIGTERM',()=>{certificateWorker.stop();void stop();});
+await statusRun; // The startup event retains its initial-status-file contract.
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));

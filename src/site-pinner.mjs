@@ -51,6 +51,33 @@ export class SitePinner{
   try{const context=this.getNameContext();ready=sites.filter(row=>this.#readyWithContext(row,context)).length;}catch{}
   return {sites,storage,ready};
  }
+ async statusAsync({contentStats,signal}={}){
+  signal?.throwIfAborted();
+  const sites=Object.values(this.rows),storage=this.store.pinStats({contentStats});let ready=0,context;
+  try{context=this.getNameContext();}catch{return {sites,storage,ready:0};}
+  const policyId=context?.policyId||null;
+  const sameContext=()=>{
+   try{
+    const current=this.getNameContext();
+    if((current?.policyId||null)!==policyId)return false;
+    context?.assertCurrent();return true;
+   }catch{return false;}
+  };
+  // This is a display summary, not an authorization result. Yield to HTTP and
+  // cancellation after bounded batches; never carry a policy decision across
+  // a yield without rereading it. Public access paths remain synchronous/fresh.
+  for(let i=0;i<sites.length;i++){
+   signal?.throwIfAborted();
+   try{if(this.#readyWithContext(sites[i],context))ready++;}
+   catch{signal?.throwIfAborted();return {sites,storage,ready:0};}
+   if((i+1)%16===0){
+    await yieldToEventLoop();signal?.throwIfAborted();
+    if(!sameContext())return {sites,storage,ready:0};
+   }
+  }
+  signal?.throwIfAborted();
+  return {sites,storage,ready:sameContext()?ready:0};
+ }
  save(){fs.writeFileSync(this.file+'.tmp',JSON.stringify(this.rows),{mode:0o600});fs.renameSync(this.file+'.tmp',this.file);}
  // A pinned version must retain its own dated name binding. Later live
  // observations must not silently redirect a saved entry to unpinned bytes.
