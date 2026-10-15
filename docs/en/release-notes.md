@@ -1,6 +1,6 @@
 # ArNS Mesh 0.6.3
 
-This update adds optional independently witnessed ArNS name bindings while preserving direct-IP access, R84 content discovery and verification of original signed files. It also reduces supporter status work so large preparation/catalogue jobs do not stall normal requests. See the [dated execution record](../validation/name-security-2026-10-16.md) for tested behavior and final release checks.
+This update adds optional independently witnessed ArNS name bindings while preserving direct-IP access, R84 content discovery and verification of original signed files. It also yields during large status and catalogue work to reduce request pauses. See the [dated execution record](../validation/name-security-2026-10-16.md) for tested behavior and final release checks.
 
 ## Update
 
@@ -17,7 +17,7 @@ Use the **0.6.3** Windows package and supporter source together. Keep your exist
 - Direct-only lookups finish when all available couriers have replied; they still wait for pending honest replies and preserve DHT discovery where enabled.
 - Legacy retained-name recovery also refuses a mismatched requested name, conflicting evidence and failed protected acceptance; validation failures do not become recoverable storage warnings.
 
-The feature is opt-in. The existing community network keeps its current policy until independent operators enroll and a protected profile is explicitly accepted. This is a configured witness trust model, not a Solana consensus proof or an offline guarantee of the globally latest name state.
+The feature is opt-in. The existing community network keeps its trusted-publisher name model until independent operators enroll and a protected profile is explicitly accepted. This is a configured witness trust model, not a Solana consensus proof or an offline guarantee of the globally latest name state.
 
 ## Earlier supporter and content fixes retained
 

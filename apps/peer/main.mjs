@@ -75,7 +75,8 @@ peer.searchReply=req=>{
  if(req.witnessPeerId&&req.witnessPeerId!==peer.witnessPeerId)return (req.version===2?searchMirrors:legacySearchMirrors).mirror(searchTrust(),req.witnessPeerId,req.version===2?2:1)||{ok:false,error:'search_catalog_unavailable'};
  return req.version===2?topicSearch.reply():search.reply();
 };
-const searchPass=()=>search.pass().then(()=>topicSearch.pass()).catch(error=>{search.lastError=String(error.message).slice(0,160);});
+const searchController=new AbortController();
+const searchPass=()=>search.pass({signal:searchController.signal}).then(()=>topicSearch.passAsync({signal:searchController.signal})).catch(error=>{if(!searchController.signal.aborted)search.lastError=String(error.message).slice(0,160);});
 void searchPass();const searchTimer=setInterval(()=>void searchPass(),60000);
 const mirrorSearch=()=>Promise.allSettled([searchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000)}),legacySearchMirrors.sync({peers:loadDirectPeers(),trustedPeers:searchTrust(),signal:AbortSignal.timeout(45000),version:1})]);
 if(upstream)void mirrorSearch();const searchMirrorTimer=setInterval(()=>{if(upstream)void mirrorSearch();},15*60000);
@@ -137,7 +138,7 @@ const publishStatus=()=>{
 };
 publishStatus();const statusTimer=setInterval(publishStatus,60000);
 const dashboard=process.env.ARNS_OPERATOR_PORT?await startOperatorDashboard({dataDir,port:Number(process.env.ARNS_OPERATOR_PORT)}):null;
-async function stop(){if(stopping)return;stopping=true;statusController.abort();certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running,statusRun]);closeNameSecurityRuntime();process.exit(0);}
+async function stop(){if(stopping)return;stopping=true;statusController.abort();searchController.abort();certificateWorker.stop();clearInterval(timer);clearInterval(searchTimer);clearInterval(searchMirrorTimer);clearInterval(statusTimer);clearInterval(networkRenewalTimer);clearInterval(relayTimer);relayController.abort();replication.stop();await peerDiscovery.close();network.stop();runtime.discovery.stop();catalog?.stop();searchMetadata.stop();onlinePreparation.stop();await direct.close();await dashboard?.close();await peer.stop();await Promise.allSettled([certificateWorker.running,statusRun,search.running,topicSearch.running]);closeNameSecurityRuntime();process.exit(0);}
 process.on('SIGINT',()=>{certificateWorker.stop();void stop();});process.on('SIGTERM',()=>{certificateWorker.stop();void stop();});
 await statusRun; // The startup event retains its initial-status-file contract.
 console.log(JSON.stringify({event:'peer-started',...peer.status()}));

@@ -2,6 +2,8 @@ import {decodeVerifiedPayload} from './content-decoding.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {performance} from 'node:perf_hooks';
+import {setImmediate as yieldToEventLoop} from 'node:timers/promises';
 import {peerIdFromPublicKey,verifyRecord,sha256} from './common.mjs';
 import {validArName,validDataId} from './swarm-common.mjs';
 import {verifyStoredContent} from './content-store.mjs';
@@ -18,6 +20,29 @@ const topicGroups=[['game','games','gaming'],['art','arts'],['photo','photos','p
 const relatedTerms=term=>topicGroups.find(group=>group.includes(term))||[term];
 const fold=s=>s.normalize('NFKD').toLowerCase().replace(/\p{M}/gu,'').replace(/ı/g,'i');
 const atomic=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(value),{mode:0o600});fs.renameSync(file+'.tmp',file);};
+const atomicEncoded=(file,body)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',body,{mode:0o600});fs.renameSync(file+'.tmp',file);};
+async function atomicEncodedAsync(file,body,signal){
+ signal?.throwIfAborted();
+ const temporary=file+'.tmp';let wrote=false;
+ try{
+  await fs.promises.mkdir(path.dirname(file),{recursive:true});signal?.throwIfAborted();
+  wrote=true;await fs.promises.writeFile(temporary,body,{mode:0o600,signal});signal?.throwIfAborted();
+  // Rename is the commit point. Once it starts, finish exposing the matching
+  // record even if cancellation arrives while the atomic rename is pending.
+  await fs.promises.rename(temporary,file);wrote=false;
+ }catch(error){
+  if(wrote)await fs.promises.unlink(temporary).catch(()=>{});
+  signal?.throwIfAborted();throw error;
+ }
+}
+function scanBudget(signal){
+ let count=0,started=performance.now();
+ return async()=>{
+  signal?.throwIfAborted();
+  if(++count%16!==0&&performance.now()-started<8)return;
+  await yieldToEventLoop();signal?.throwIfAborted();started=performance.now();
+ };
+}
 function read(file,max){try{if(fs.statSync(file).size<=max)return JSON.parse(fs.readFileSync(file));}catch{}return null;}
 function entities(s){return s.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi,(all,n)=>{if(n[0]!=='#')return {amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' '}[n.toLowerCase()];const cp=n[1].toLowerCase()==='x'?parseInt(n.slice(2),16):Number(n.slice(1));return cp>0&&cp<=0x10ffff&&!(cp>=0xd800&&cp<=0xdfff)?String.fromCodePoint(cp):' ';});}
 // A bounded, non-executing text preview, not a DOM renderer or a full crawler.
@@ -49,7 +74,7 @@ export function extractSearchText(html){
  const title=clean(entities(titleText),160),text=clean(entities(bodyText),SEARCH_LIMITS.text);
  return {title,description,text,keywords};
 }
-function validateRecord(r){
+function* validateRecordSteps(r){
  if(![schema,topicSchema].includes(r?.schema)||!Number.isSafeInteger(r.revision)||r.revision<1||!Number.isFinite(Date.parse(r.generatedAt))||Date.parse(r.generatedAt)>Date.now()+30000||!Array.isArray(r.entries)||r.entries.length>limits(r).entries)throw new Error('invalid_search_catalog');
  const names=new Set();for(const x of r.entries){
   if(!validArName(x?.name)||names.has(x.name)||!validDataId(x.targetId)||(r.schema===topicSchema&&x.availability==='metadata'?x.documentId!==null:!validDataId(x.documentId))||!(r.schema===topicSchema?['metadata','document','prepared']:['document','prepared']).includes(x.availability))throw new Error('invalid_search_entry');names.add(x.name);
@@ -57,9 +82,11 @@ function validateRecord(r){
   if(x.keywords!==undefined&&(!Array.isArray(x.keywords)||x.keywords.length>12||x.keywords.some(w=>typeof w!=='string'||!w||clean(w,48)!==w)||new Set(x.keywords).size!==x.keywords.length))throw new Error('invalid_search_keywords');
   if(x.metadataAt!==undefined&&(!Number.isFinite(Date.parse(x.metadataAt))||Date.parse(x.metadataAt)>Date.now()+30000))throw new Error('invalid_search_date');
   for(const key of ['observedAt','indexedAt'])if(!Number.isFinite(Date.parse(x[key]))||Date.parse(x[key])>Date.now()+30000)throw new Error('invalid_search_date');
+  yield;
  }
  return r;
 }
+function validateRecord(r){const steps=validateRecordSteps(r);for(;;){const next=steps.next();if(next.done)return next.value;}}
 export function verifySearchEnvelope(e,trustedPeers){
  if(!e?.ok||typeof e.recordJson!=='string'||Buffer.byteLength(e.recordJson)>TOPIC_LIMITS.recordBytes||Buffer.byteLength(JSON.stringify(e))>TOPIC_LIMITS.envelopeBytes||typeof e.witnessPublicKeyPem!=='string'||e.witnessPublicKeyPem.length>256||typeof e.signature!=='string'||!/^[A-Za-z0-9_-]{86}$/.test(e.signature))throw new Error('invalid_search_envelope');
  if(!trustedPeers.includes(e.witnessPeerId)||peerIdFromPublicKey(e.witnessPublicKeyPem)!==e.witnessPeerId)throw new Error('untrusted_search_publisher');
@@ -75,14 +102,21 @@ export class SearchPublisher{
   this.record={schema,revision:1,generatedAt:new Date().toISOString(),entries:[]};
   try{const saved=read(file,SEARCH_LIMITS.recordBytes);if(saved)this.record=validateRecord(saved);}catch{}
  }
- async pass(){if(this.running)return this.running;this.running=this._pass().finally(()=>this.running=null);return this.running;}
- async _pass(){
-  const names=this.snapshots.names().filter(name=>{const snapshot=this.snapshots.exportLocal(name);return snapshot&&this.contentStore.has(snapshot.txId);}).sort((a,b)=>Number(Boolean(this.pinner?.rows[b]))-Number(Boolean(this.pinner?.rows[a]))||a.localeCompare(b)),rows=new Map(this.record.entries.map(r=>[r.name,r]));
+ async pass({signal}={}){signal?.throwIfAborted();if(this.running)return this.running;this.running=this._pass({signal}).finally(()=>this.running=null);return this.running;}
+ async _pass({signal}={}){
+  signal?.throwIfAborted();const checkpoint=scanBudget(signal),names=[];
+  for(const name of this.snapshots.names()){
+   const snapshot=this.snapshots.exportLocal(name);if(snapshot&&this.contentStore.has(snapshot.txId))names.push(name);
+   await checkpoint();
+  }
+  names.sort((a,b)=>Number(Boolean(this.pinner?.rows[b]))-Number(Boolean(this.pinner?.rows[a]))||a.localeCompare(b));
+  const rows=new Map(this.record.entries.map(r=>[r.name,r]));
   // Never attach old keywords to a newly observed target. Also remove evicted
   // documents; retained client catalogues still label availability as dated.
-  for(const [name,row] of rows){const s=this.snapshots.exportLocal(name);if(!s||s.txId!==row.targetId||!this.contentStore.has(row.targetId)||!this.contentStore.has(row.documentId))rows.delete(name);}
-  const verified=async id=>{const raw=this.contentStore.get(id,{maxBytes:2*SEARCH_LIMITS.documentBytes});if(!raw)throw new Error('search_content_missing');if(raw.length>2*SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const r=await verifyStoredContent(raw,id);if(r.payload.length>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const view=await decodeVerifiedPayload(r,{maxOutputBytes:SEARCH_LIMITS.documentBytes});return {...r,decodedBody:view.body};};
+  for(const [name,row] of rows){const s=this.snapshots.exportLocal(name);if(!s||s.txId!==row.targetId||!this.contentStore.has(row.targetId)||!this.contentStore.has(row.documentId))rows.delete(name);await checkpoint();}
+  const verified=async id=>{signal?.throwIfAborted();const raw=this.contentStore.get(id,{maxBytes:2*SEARCH_LIMITS.documentBytes});if(!raw)throw new Error('search_content_missing');if(raw.length>2*SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const r=await verifyStoredContent(raw,id);signal?.throwIfAborted();if(r.payload.length>SEARCH_LIMITS.documentBytes)throw new Error('search_document_limit');const view=await decodeVerifiedPayload(r,{maxOutputBytes:SEARCH_LIMITS.documentBytes,signal});return {...r,decodedBody:view.body};};
   for(let count=0;count<Math.min(32,names.length);count++){
+   signal?.throwIfAborted();
    const name=names[this.cursor++%names.length],snapshot=this.snapshots.exportLocal(name);if(!snapshot)continue;
    try{
     let id=snapshot.txId,document=await verified(id);
@@ -93,12 +127,12 @@ export class SearchPublisher{
     if(!fields.title&&!fields.description&&!fields.text){rows.delete(name);continue;}
     const ready=this.pinner?.rows[name];
     rows.set(name,{name,targetId:snapshot.txId,documentId:id,...fields,observedAt:snapshot.observedAt,indexedAt:new Date().toISOString(),availability:ready?.rootDataId===snapshot.txId&&this.pinner.isReady(ready)?'prepared':'document'});
-   }catch(error){rows.delete(name);this.lastError=String(error.message).slice(0,160);}
-   await new Promise(resolve=>setImmediate(resolve));
+   }catch(error){signal?.throwIfAborted();rows.delete(name);this.lastError=String(error.message).slice(0,160);}
+   await yieldToEventLoop();signal?.throwIfAborted();
   }
   const next={schema,revision:Math.max(Date.now(),this.record.revision+1),generatedAt:new Date().toISOString(),entries:[]};
   for(const row of [...rows.values()].sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt)||a.name.localeCompare(b.name))){if(next.entries.length>=SEARCH_LIMITS.entries)break;next.entries.push(row);if(Buffer.byteLength(JSON.stringify(next))>SEARCH_LIMITS.recordBytes){next.entries.pop();break;}}
-  atomic(this.file,next);this.record=next;this.envelope=null;return this.status();
+  await atomicEncodedAsync(this.file,JSON.stringify(next),signal);this.record=next;this.envelope=null;return this.status();
  }
  reply(){return this.envelope??=this.sign(this.record);}
  status(){return {entries:this.record.entries.length,limit:SEARCH_LIMITS.entries,generatedAt:this.record.generatedAt,scope:'verified cached HTML entry documents',lastError:this.lastError};}
@@ -144,14 +178,14 @@ export class SearchCatalog{
 // A versioned catalogue keeps old readers on their original small HTML catalogue.
 export class TopicSearchPublisher{
  constructor({file,snapshots,documents,metadata,current=()=>true,sign}){
-  Object.assign(this,{file,snapshots,documents,metadata,current,sign});this.lastError=null;
+  Object.assign(this,{file,snapshots,documents,metadata,current,sign});this.lastError=null;this.running=null;
   this.record={schema:topicSchema,revision:1,generatedAt:new Date().toISOString(),entries:[]};
   try{const saved=read(file,TOPIC_LIMITS.recordBytes);if(saved)this.record=validateRecord(saved);}catch{}
  }
- pass(){
+ *_build(){
   const docs=new Map(this.documents.record.entries.map(x=>[x.name,x])),entries=[];
   for(const name of this.snapshots.names().sort()){
-   const snapshot=this.snapshots.exportLocal(name);if(!snapshot||!this.current(name,snapshot))continue;
+   const snapshot=this.snapshots.exportLocal(name);if(!snapshot||!this.current(name,snapshot)){yield;continue;}
    const d=docs.get(name),document=d?.targetId===snapshot.txId?d:null,m=this.metadata?.get(name,snapshot);
    const row={name,targetId:snapshot.txId,documentId:document?.documentId||null,
     title:clean(document?.title||m?.title||name,160),description:clean(m?.description||document?.description||'',320),text:clean(document?.text||'',SEARCH_LIMITS.text),
@@ -159,13 +193,37 @@ export class TopicSearchPublisher{
     observedAt:snapshot.observedAt,indexedAt:document?.indexedAt||m?.metadataAt||snapshot.observedAt,
     availability:document?.availability||'metadata',...(m?{metadataAt:m.metadataAt}:{})};
    entries.push(row);
+   yield;
   }
   // Prefer prepared entry pages and root names when the explicit size cap is hit.
   entries.sort((a,b)=>Number(b.availability!=='metadata')-Number(a.availability!=='metadata')||Number(a.name.includes('_'))-Number(b.name.includes('_'))||a.name.localeCompare(b.name));
   const next={schema:topicSchema,revision:Math.max(Date.now(),this.record.revision+1),generatedAt:new Date().toISOString(),entries:[]};
-  let bytes=Buffer.byteLength(JSON.stringify(next));
-  for(const row of entries){const size=Buffer.byteLength(JSON.stringify(row))+1;if(next.entries.length>=TOPIC_LIMITS.entries||bytes+size>TOPIC_LIMITS.recordBytes)break;next.entries.push(row);bytes+=size;}
-  validateRecord(next);atomic(this.file,next);this.record=next;this.envelope=null;return this.status();
+  const empty=JSON.stringify(next),encodedRows=[];let bytes=Buffer.byteLength(empty);
+  for(const row of entries){const encoded=JSON.stringify(row),size=Buffer.byteLength(encoded)+1;if(next.entries.length>=TOPIC_LIMITS.entries||bytes+size>TOPIC_LIMITS.recordBytes)break;next.entries.push(row);encodedRows.push(encoded);bytes+=size;yield;}
+  yield* validateRecordSteps(next);
+  // Reuse each bounded row encoding instead of serializing the whole catalogue
+  // again after its size check. This is byte-identical to JSON.stringify(next).
+  return {record:next,body:empty.slice(0,-2)+encodedRows.join(',')+']}'};
+ }
+ pass(){
+  // Keep the existing synchronous API; never let it race an async publisher's
+  // temporary file or replace the record halfway through a background pass.
+  if(this.running)throw new Error('search_catalog_busy');
+  const steps=this._build();for(;;){const next=steps.next();if(next.done){atomicEncoded(this.file,next.value.body);this.record=next.value.record;this.envelope=null;return this.status();}}
+ }
+ async passAsync({signal}={}){
+  signal?.throwIfAborted();if(this.running)return this.running;
+  this.running=(async()=>{
+   const steps=this._build(),checkpoint=scanBudget(signal);
+   try{
+    for(;;){
+     signal?.throwIfAborted();const next=steps.next();
+     if(next.done){await atomicEncodedAsync(this.file,next.value.body,signal);this.record=next.value.record;this.envelope=null;return this.status();}
+     await checkpoint();
+    }
+   }finally{steps.return();}
+  })().finally(()=>this.running=null);
+  return this.running;
  }
  reply(){return this.envelope??=this.sign(this.record);}
  status(){return {entries:this.record.entries.length,withTopics:this.record.entries.filter(x=>x.keywords?.length||x.description).length,limit:TOPIC_LIMITS.entries,generatedAt:this.record.generatedAt,lastError:this.lastError};}

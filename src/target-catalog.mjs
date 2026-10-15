@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {performance} from 'node:perf_hooks';
 import {MAINNET_PROGRAM_IDS,deserializeArnsRecord,deserializeAntRecord,getArnsRecordPDA,getAntRecordPDA} from '@ar.io/sdk';
 import {ANT_RECORD_DISCRIMINATOR} from '@ar.io/solana-contracts/ant';
 import {rpcIp} from './ip-transport.mjs';
@@ -10,6 +11,19 @@ const ARNS_DISC=Buffer.from([53,158,42,125,7,132,104,188]);
 const validId=id=>/^[A-Za-z0-9_-]{43}$/.test(id);
 const filter=bytes=>({memcmp:{offset:0,bytes:Buffer.from(bytes).toString('base64'),encoding:'base64'}});
 const sha=name=>crypto.createHash('sha256').update(name).digest();
+// PDA work varies with CPU load. Limit each batch by elapsed work as well as
+// record count; a single derivation remains indivisible and is still verified.
+function validationCheckpoint(signal){
+ let count=32,started=performance.now();
+ return async()=>{
+  signal?.throwIfAborted();
+  if(count>=32||performance.now()-started>=8){
+   await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();
+   count=0;started=performance.now();
+  }
+  count++;
+ };
+}
 // PDA derivation is deterministic, not a name observation. Keep only derived
 // addresses; owner, raw name hash, lease and binding are rechecked every time.
 const registryPdas=new Map();
@@ -30,9 +44,10 @@ async function antPda(mint,undername,program=MAINNET_PROGRAM_IDS.ant){
  antPdas.set(key,value);return value;
 }
 export async function decodeRegistry(response,{signal}={}){
+ signal?.throwIfAborted();
  if(!Number.isSafeInteger(response?.context?.slot)||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_registry_response');
- const records=[],quarantine=[];
- for(const [index,row] of response.value.entries()){if(index%32===0){await new Promise(resolve=>setImmediate(resolve));signal?.throwIfAborted();}try{
+ const records=[],quarantine=[],checkpoint=validationCheckpoint(signal);
+ for(const row of response.value){await checkpoint();try{
   if(row.account.owner!==MAINNET_PROGRAM_IDS.arns)throw new Error('owner_mismatch');
   const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(ARNS_DISC))throw new Error('discriminator_mismatch');
   const rec=deserializeArnsRecord(raw);
@@ -44,6 +59,7 @@ export async function decodeRegistry(response,{signal}={}){
   if(rec.type==='lease'&&Number(rec.endTimestamp)*1000<=Date.now())continue;
   records.push({name:rec.name,mint:String(rec.processId)});
  }catch(e){quarantine.push({address:row.pubkey,error:e.message});}}
+ signal?.throwIfAborted();
  return {records:records.sort((a,b)=>a.name.localeCompare(b.name)),quarantine,slot:response.context.slot};
 }
 export class TargetCatalog {
@@ -122,10 +138,9 @@ export class TargetCatalog {
     const result=await this.rpc(this.endpoint,'getProgramAccounts',[antProgram.programId,{encoding:'base64',commitment:'finalized',withContext:true,minContextSlot:antProgram.slot,filters:[filter(ANT_RECORD_DISCRIMINATOR),{memcmp:{offset:8,bytes:record.mint,encoding:'base58'}}]}],{signal,timeout:15000});
     const previousSlot=Math.max(this.state.slot,antProgram.slot,mintSlots.get(record.mint)||0);
     if(!Number.isSafeInteger(result?.context?.slot)||result.context.slot<previousSlot||!Array.isArray(result.value)||result.value.length>10000)throw new Error('invalid_ant_scan');
-    const targets={};
-    for(const [index,row] of result.value.entries()){
-     if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
-     signal?.throwIfAborted();
+    const targets={},validationTurn=validationCheckpoint(signal);
+    for(const row of result.value){
+     await validationTurn();
      if(row.account.owner!==antProgram.programId)throw new Error('ant_owner_mismatch');
      const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
      const ant=deserializeAntRecord(raw),pda=await antPda(record.mint,ant.undername,antProgram.programId);
@@ -135,6 +150,7 @@ export class TargetCatalog {
      const name=ant.undername==='@'?record.name:ant.undername+'_'+record.name;
      targets[name]={baseName:record.name,mint:record.mint,antProgram:antProgram.programId,dataId:ant.transactionId,slot:result.context.slot,observedAt:Date.now(),ttlSeconds:ant.ttlSeconds,trust:'rpc-observation-not-inclusion-proof'};
     }
+    signal?.throwIfAborted();
     const oldNames=byBase.get(record.name)||new Set(),newNames=Object.keys(targets);
     if(targetCount-oldNames.size+newNames.length>this.maxTargets)throw new Error('catalog_target_limit');
     for(const name of oldNames)delete this.state.targets[name];
@@ -162,9 +178,9 @@ export class TargetCatalog {
   if(!Number.isSafeInteger(response?.context?.slot)||response.context.slot<slot||!Array.isArray(response.value)||response.value.length>50000)throw new Error('invalid_ant_catalog_scan');
   const namesByMint=new Map(),targets=Object.fromEntries(Object.entries(this.state.targets).filter(([,r])=>r.antProgram&&r.antProgram!==MAINNET_PROGRAM_IDS.ant));let unregistered=0;
   for(const r of this.state.registry){if(!namesByMint.has(r.mint))namesByMint.set(r.mint,[]);namesByMint.get(r.mint).push(r.name);}
-  for(const [index,row] of response.value.entries()){
-   if(index%32===0)await new Promise(resolve=>setImmediate(resolve));
-   signal?.throwIfAborted();
+  const validationTurn=validationCheckpoint(signal);
+  for(const row of response.value){
+   await validationTurn();
    if(row.account.owner!==MAINNET_PROGRAM_IDS.ant)throw new Error('ant_owner_mismatch');
    const raw=Buffer.from(row.account.data[0],'base64');if(!raw.subarray(0,8).equals(Buffer.from(ANT_RECORD_DISCRIMINATOR)))throw new Error('ant_discriminator_mismatch');
    const ant=deserializeAntRecord(raw),mint=String(ant.mint),pda=await antPda(mint,ant.undername);
@@ -179,6 +195,7 @@ export class TargetCatalog {
     targets[name]={baseName,mint,antProgram:MAINNET_PROGRAM_IDS.ant,dataId:ant.transactionId,slot:response.context.slot,observedAt:Date.now(),ttlSeconds:ant.ttlSeconds,trust:'rpc-observation-not-inclusion-proof'};
    }
   }
+  signal?.throwIfAborted();
   if(Object.keys(targets).length>this.maxTargets)throw new Error('catalog_target_limit');
   // Publish only a completely decoded observation. An invalid/partial scan
   // leaves the previous table intact and the per-ANT path can continue.
